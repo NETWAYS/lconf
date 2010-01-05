@@ -1,0 +1,78 @@
+#!/bin/bash
+
+# welcome message
+function WizardWelcome {
+	echo "##############################"
+	echo "#    LConf Install Wizard    #"
+	echo "##############################"
+	echo ""
+	echo "...simple, stupid, but works!"
+	echo ""
+}
+
+# print interaction message
+function WizardInteraction {
+	echo ""
+	echo "=> USER INTERACTION NEEDED!"
+}
+
+# ask needed stuff
+function WizardAsk {
+	WizardInteraction
+	echo "Install files in..."
+	echo -n "[/usr/local/LConf]: "
+	read PREFIX
+	if [ "$PREFIX" = "" ]; then
+		PREFIX=/usr/local/LConf
+	fi
+	echo PREFIX = $PREFIX
+
+	WizardInteraction
+	echo "Install files with user..."
+	echo -n "[nagios]: "
+	read USER
+	if [ "$USER" = "" ]; then
+		USER=nagios
+	fi
+	echo USER = $USER
+
+	WizardInteraction
+	echo "Install files with group..."
+	echo -n "[nagios]: "
+	read GROUP
+	if [ "$GROUP" = "" ]; then
+		GROUP=nagios
+	fi
+	echo GROUP = $GROUP
+
+	WizardInteraction
+	echo "You can find LDAP schema files in..."
+	echo "HINT: find /etc -name *.schema"
+	echo -n "[/etc/ldap/schema]: "
+	read DIR_SCHEMA
+	if [ "$DIR_SCHEMA" = "" ]; then
+		DIR_SCHEMA=/etc/ldap/schema
+	fi
+	echo LDAP schema dir = $DIR_SCHEMA
+
+	WizardInteraction
+	echo "Your ldap rootdn is..."
+	echo -n "[dc=example,dc=org]: "
+	read ROOTDN
+	if [ "$ROOTDN" = "" ]; then
+		ROOTDN="dc=example,dc=org"
+	fi
+	echo LDAP rootdn = $ROOTDN
+}
+
+function WizardManualy {
+	WizardInteraction
+	echo "1) copy the following line into your ldap server config:"
+	echo "include	$DIR_SCHEMA/netways.schema"
+	echo ""
+	echo "2) restart your ldap server"
+	echo ""
+	echo "3) import the LConf default set (including examples) into your LDAP:"
+	echo "ldapadd -x -D \"<your-ldap-bind-dn>\" -W -f $DIR_SOURCE/base.ldif"
+	echo ""
+}

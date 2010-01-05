@@ -1,0 +1,75 @@
+dn: ou=LConf,@domain@
+ou: LConf
+objectClass: organizationalUnit
+
+dn: ou=NagiosConfig,ou=LConf,@domain@
+ou: NagiosConfig
+objectClass: nagiosStructuralObject
+
+dn: ou=Templates,ou=LConf,@domain@
+ou: Templates
+objectClass: nagiosStructuralObject
+
+dn: ou=Examples,ou=LConf,@domain@
+ou: Examples
+objectClass: nagiosStructuralObject
+
+dn: cn=example-timeperiod,ou=Examples,ou=LConf,@domain@
+cn: example-timeperiod
+nagiosAlias: 24 Hours A Day, 7 Days A Week
+description: 24x7
+nagiosTimeperiodValue: sunday 00:00-24:00
+nagiosTimeperiodValue: monday 00:00-24:00
+nagiosTimeperiodValue: tuesday 00:00-24:00
+nagiosTimeperiodValue: wednesday 00:00-24:00
+nagiosTimeperiodValue: thursday 00:00-24:00
+nagiosTimeperiodValue: friday 00:00-24:00
+nagiosTimeperiodValue: saturday 00:00-24:00
+objectClass: nagiosTimeperiod
+
+dn: cn=example-command,ou=Examples,ou=LConf,@domain@
+cn: example-command
+nagiosCommandline: $USER1$/check_users -w 50 -c 100
+objectClass: nagiosCommand
+
+dn: cn=example-contact,ou=Examples,ou=LConf,@domain@
+cn: example-contact
+nagiosAlias: example-contact
+nagiosEmail: user@example.net
+nagiosPager: +491701234567
+objectClass: nagiosContact
+
+dn: cn=example-contactgroup,ou=Examples,ou=LConf,@domain@
+cn: example-contactgroup
+nagiosAlias: example-contactgroup
+nagiosMembers: example-contact
+objectClass: nagiosContactgroup
+
+dn: cn=example-host,ou=Examples,ou=LConf,@domain@
+cn: example-host
+nagiosAddress: 127.0.0.1
+nagiosAlias: example-host
+objectClass: nagiosHost
+
+dn: cn=example-hostgroup,ou=Examples,ou=LConf,@domain@
+cn: example-hostgroup
+nagiosAlias: example-hostgroup
+nagiosMembers: example-host
+objectClass: nagiosHostgroup
+
+dn: cn=example-service,ou=Examples,ou=LConf,@domain@
+cn: example-service
+nagiosCheckcommand: example-command
+objectClass: nagiosService
+
+dn: ou=example-structural-object,ou=Examples,ou=LConf,@domain@
+ou: example-structural-object
+objectClass: nagiosStructuralObject
+
+dn: ou=example-alias,ou=Examples,ou=LConf,@domain@
+objectClass: top
+objectClass: alias
+objectClass: extensibleObject
+ou: example-alias
+aliasedObjectName: ou=example-target
+

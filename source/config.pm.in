@@ -1,0 +1,82 @@
+#!/usr/bin/perl -w
+
+# way to ldap server
+$optLDAPServer  = '127.0.0.1';
+$optLDAPDN      = 'ou=LConf,@domain@';
+
+# ldap account (user / pass)
+$optLDAPBindDN  = 'cn=admin,@domain@';
+$optLDAPBindPW  = 'nagios.test';
+
+# export script's user
+$optExportUser  = 'nagios';
+
+# configured ldap items
+# WARNING! DO NOT CHANGE THIS!!
+%itemMap = (
+	# .2.1   | nagios attributes (generally)
+	nagiosalias					=> 'alias',
+	nagiostimeperiodvalue				=> '',
+	nagioscommandline				=> 'command_line',
+	nagiosmembers					=> 'members',
+
+	# .2.2   | nagios attributes (contact)
+	nagiosemail					=> 'email',
+	nagiospager					=> 'pager',
+	nagioscontactservicenotificationperiod		=> 'service_notification_period',
+	nagioscontacthostnotificationperiod		=> 'host_notification_period',
+	nagioscontactservicenotificationoptions		=> 'service_notification_options',
+	nagioscontacthostnotificationoptions		=> 'host_notification_options',
+	nagioscontactservicenotificationcommands	=> 'service_notification_commands',
+	nagioscontacthostnotificationcommands		=> 'host_notification_commands',
+	nagioscontactservicenotificationsenabled	=> 'service_notifications_enabled',
+	nagioscontacthostnotificationsenabled		=> 'host_notifications_enabled',
+
+	# .2.3   | nagios attributes (host)
+	nagiosaddress					=> 'address',
+	nagiosparent					=> 'parent',
+	nagioshostcustomvar				=> 'PLACEHOLDER',
+	nagioshostcontacts				=> 'contacts',
+	nagioshostcontactgroups				=> 'contact_groups',
+	nagioshostnotificationoptions			=> 'notification_options',
+	nagioshostnotificationinterval			=> 'notification_interval',
+	nagioshostnotificationperiod			=> 'notification_period',
+	nagioshostcheckperiod				=> 'check_period',
+	nagioshostcheckinterval				=> 'check_interval',
+	nagioshostcheckretryinterval			=> 'retry_interval',
+	nagioshostcheckmaxcheckattempts			=> 'max_check_attempts',
+	nagioshostprocessperfdata			=> 'process_perf_data',
+	nagioshostactivechecksenabled			=> 'active_checks_enabled',
+	nagioshostpassivechecksenabled			=> 'passive_checks_enabled',
+	nagioshostflapdetectionenabled			=> 'flap_detection_enabled',
+	nagioshostflapdetectionoptions			=> 'flap_detection_options',
+	nagioshosteventhandler				=> 'event_handler',
+	nagioshostnotesurl				=> 'notes_url',
+	nagioshostactionurl				=> 'action_url',
+	nagioshostdisable				=> '',
+
+	# .2.4   | nagios attributes (service)
+	nagioscheckcommand				=> 'check_command',
+	nagiosservicecustomvar				=> 'PLACEHOLDER',
+        nagiosservicecontacts				=> 'contacts',
+        nagiosservicecontactgroups			=> 'contact_groups',
+        nagiosservicenotificationoptions		=> 'notification_options',
+        nagiosservicenotificationinterval		=> 'notification_interval',
+        nagiosservicenotificationperiod			=> 'notification_period',
+        nagiosservicecheckperiod			=> 'check_period',
+        nagiosservicecheckinterval			=> 'check_interval',
+        nagiosservicecheckretryinterval			=> 'retry_interval',
+        nagiosservicecheckmaxcheckattempts		=> 'max_check_attempts',
+        nagiosserviceprocessperfdata			=> 'process_perf_data',
+        nagiosserviceactivechecksenabled		=> 'active_checks_enabled',
+        nagiosservicepassivechecksenabled		=> 'passive_checks_enabled',
+        nagiosserviceflapdetectionenabled		=> 'flap_detection_enabled',
+        nagiosserviceflapdetectionoptions		=> 'flap_detection_options',
+        nagiosserviceeventhandler			=> 'event_handler',
+        nagiosservicenotesurl				=> 'notes_url',
+        nagiosserviceactionurl				=> 'action_url',
+        nagiosservicedisable				=> '',
+
+	# special stuff ;-)
+	cn						=> 'PLACEHOLDER'
+);

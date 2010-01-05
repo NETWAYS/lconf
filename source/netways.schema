@@ -1,0 +1,482 @@
+#
+# LConf
+# NETWAYS GmbH <support@netways.de>
+#
+# Main OID: 1.3.6.1.4.1.26840
+# Sub  OID: .144
+#
+# OID Tree:
+#	.144
+#	  |__.1 structural attributes
+#         |
+#	  |__.2 nagios attributes
+#	  |   |
+#	  |   |__.1 generally
+#         |   |
+#         |   |__.2 contact
+#         |   |
+#	  |   |__.3 host
+#	  |   |
+#	  |   |__.4 service
+#	  |
+#	  |__.3 objectclass templates
+#         |
+#	  |__.4 structural objectclasses
+#         |
+#	  |__.5 nagios objectclasses
+#
+
+
+#
+# .1   | structural attributes
+#
+
+
+#
+# .2.1   | nagios attributes (generally)
+#
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.1.1 NAME 'nagiosAlias'
+        DESC 'Nagios Alias (alias test)'
+        EQUALITY caseIgnoreMatch
+        SUBSTR caseIgnoreSubstringsMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.1.2 NAME 'nagiosTimeperiodValue'
+        DESC 'Nagios Timeperiod Value (monday  00:00-24:00)'
+        EQUALITY caseIgnoreMatch
+        SUBSTR caseIgnoreSubstringsMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.1.3 NAME 'nagiosCommandline'
+	DESC 'Nagios Comamnd Line (command_line $USER1$/check_users -w 50 -c 100)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.1.4 NAME 'nagiosMembers'
+	DESC 'Nagios Members (members test1,test2,test3)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{512} SINGLE-VALUE )
+
+
+#
+# .2.2   | nagios attributes (contact)
+#
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.2.1 NAME 'nagiosEmail'
+	DESC 'Nagios E-Mail (email test.user@test.net)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.2.2 NAME 'nagiosPager'
+	DESC 'Nagios Pager (pager +491701234567)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.2.3 NAME 'nagiosContactServiceNotificationPeriod'
+	DESC 'Nagios Contact Service Notification Period (service_notification_period 24x7)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.2.4 NAME 'nagiosContactHostNotificationPeriod'
+	DESC 'Nagios Contact Host Notification Period (host_notification_period 24x7)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.2.5 NAME 'nagiosContactServiceNotificationOptions'
+	DESC 'Nagios Contact Service Notification Options (service_notification_options c,r)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.2.6 NAME 'nagiosContactHostNotificationOptions'
+	DESC 'Nagios Contact Host Notification Options (host_notification_options d,u,r)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.2.7 NAME 'nagiosContactServiceNotificationCommands'
+	DESC 'Nagios Contact Service Notification Commands (service_notification_commands service-notify-by-mail)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.2.8 NAME 'nagiosContactHostNotificationCommands'
+	DESC 'Nagios Contact Host Notification Commands (host_notification_commands host-notify-by-mail)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.2.9 NAME 'nagiosContactServiceNotificationsEnabled'
+	DESC 'Nagios Contact Service Notification Enabled (service_notifications_enabled 1)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.2.10 NAME 'nagiosContactHostNotificationsEnabled'
+	DESC 'Nagios Contact Host Notification Enabled (host_notifications_enabled 1)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+
+
+#
+# .2.3   | nagios attributes (host)
+#
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.3.1 NAME 'nagiosAddress'
+	DESC 'Nagios Address (address 192.168.1.1)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.3.2 NAME 'nagiosParent'
+	DESC 'Nagios Parent (parent switch_nr1)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.3.500 NAME 'nagiosHostCustomvar'
+	DESC 'Nagios Custom Variable (_MyCustomVar Ingolstadt)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{512} )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.3.501 NAME 'nagiosHostContacts'
+	DESC 'Nagios Contact (contacts admin)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.3.502 NAME 'nagiosHostContactgroups'
+	DESC 'Nagios Contact Group (contact_groups admins)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.3.503 NAME 'nagiosHostNotificationOptions'
+	DESC 'Nagios Notification Options (notification_options w,u,c,r)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.3.504 NAME 'nagiosHostNotificationInterval'
+	DESC 'Nagios Notification Interval (notification_interval 60)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.3.505 NAME 'nagiosHostNotificationPeriod'
+	DESC 'Nagios Notification Period (notification_period 24x7)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.3.506 NAME 'nagiosHostCheckPeriod'
+	DESC 'Nagios Check Period (check_period 24x7)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.3.507 NAME 'nagiosHostCheckInterval'
+	DESC 'Nagios Check Interval (check_interval 5)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.3.508 NAME 'nagiosHostCheckRetryInterval'
+	DESC 'Nagios Retry Interval (retry_interval 1)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.3.509 NAME 'nagiosHostCheckMaxCheckAttempts'
+	DESC 'Nagios Max Check Attempts (max_check_attempts 3)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.3.510 NAME 'nagiosHostProcessPerfData'
+	DESC 'Nagios Process Perf Data (process_perf_data 1)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.3.511 NAME 'nagiosHostActiveChecksEnabled'
+	DESC 'Nagios Active Checks Enabled (active_checks_enabled 1)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.3.512 NAME 'nagiosHostPassiveChecksEnabled'
+	DESC 'Nagios Passive Checks Enabled (passive_checks_enabled 1)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.3.513 NAME 'nagiosHostFlapDetectionEnabled'
+	DESC 'Nagios Flap Detection Enabled (flap_detection_enabled 1)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.3.514 NAME 'nagiosHostFlapDetectionOptions'
+	DESC 'Nagios Flap Detection Options (flap_detection_options o,d,u)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.3.515 NAME 'nagiosHostEventhandler'
+	DESC 'Nagios Eventhandler (event_handler restart-httpd)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.3.516 NAME 'nagiosHostNotesURL'
+	DESC 'Nagios Notes URL (notes_url http://www.google.de)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{512} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.3.517 NAME 'nagiosHostActionURL'
+	DESC 'Nagios Action URL (action_url http://www.google.de)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{512} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.3.518 NAME 'nagiosHostDisable'
+	DESC 'Nagios Disable (Disable all below this entry)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+
+
+#
+# .2.4   | nagios attributes (service)
+#
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.4.1 NAME 'nagiosCheckcommand'
+	DESC 'Nagios Check Command (check_command check_disk $ARG1$ $ARG2$)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.4.500 NAME 'nagiosServiceCustomvar'
+	DESC 'Nagios Custom Variable (_MyCustomVar Ingolstadt)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{512} )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.4.501 NAME 'nagiosServiceContacts'
+        DESC 'Nagios Contact (contacts admin)'
+        EQUALITY caseIgnoreMatch
+        SUBSTR caseIgnoreSubstringsMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.4.502 NAME 'nagiosServiceContactgroups'
+        DESC 'Nagios Contact Group (contact_groups admins)'
+        EQUALITY caseIgnoreMatch
+        SUBSTR caseIgnoreSubstringsMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.4.503 NAME 'nagiosServiceNotificationOptions'
+        DESC 'Nagios Notification Options (notification_options w,u,c,r)'
+        EQUALITY caseIgnoreMatch
+        SUBSTR caseIgnoreSubstringsMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.4.504 NAME 'nagiosServiceNotificationInterval'
+        DESC 'Nagios Notification Interval (notification_interval 60)'
+        EQUALITY caseIgnoreMatch
+        SUBSTR caseIgnoreSubstringsMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.4.505 NAME 'nagiosServiceNotificationPeriod'
+        DESC 'Nagios Notification Period (notification_period 24x7)'
+        EQUALITY caseIgnoreMatch
+        SUBSTR caseIgnoreSubstringsMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.4.506 NAME 'nagiosServiceCheckPeriod'
+        DESC 'Nagios Check Period (check_period 24x7)'
+        EQUALITY caseIgnoreMatch
+        SUBSTR caseIgnoreSubstringsMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.4.507 NAME 'nagiosServiceCheckInterval'
+        DESC 'Nagios Check Interval (check_interval 5)'
+        EQUALITY caseIgnoreMatch
+        SUBSTR caseIgnoreSubstringsMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.4.508 NAME 'nagiosServiceCheckRetryInterval'
+        DESC 'Nagios Retry Interval (retry_interval 1)'
+        EQUALITY caseIgnoreMatch
+        SUBSTR caseIgnoreSubstringsMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.4.509 NAME 'nagiosServiceCheckMaxCheckAttempts'
+        DESC 'Nagios Max Check Attempts (max_check_attempts 3)'
+        EQUALITY caseIgnoreMatch
+        SUBSTR caseIgnoreSubstringsMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.4.510 NAME 'nagiosServiceProcessPerfData'
+        DESC 'Nagios Process Perf Data (process_perf_data 1)'
+        EQUALITY caseIgnoreMatch
+        SUBSTR caseIgnoreSubstringsMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.4.511 NAME 'nagiosServiceActiveChecksEnabled'
+        DESC 'Nagios Active Checks Enabled (active_checks_enabled 1)'
+        EQUALITY caseIgnoreMatch
+        SUBSTR caseIgnoreSubstringsMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.4.512 NAME 'nagiosServicePassiveChecksEnabled'
+        DESC 'Nagios Passive Checks Enabled (passive_checks_enabled 1)'
+        EQUALITY caseIgnoreMatch
+        SUBSTR caseIgnoreSubstringsMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.4.513 NAME 'nagiosServiceFlapDetectionEnabled'
+        DESC 'Nagios Flap Detection Enabled (flap_detection_enabled 1)'
+        EQUALITY caseIgnoreMatch
+        SUBSTR caseIgnoreSubstringsMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.4.514 NAME 'nagiosServiceFlapDetectionOptions'
+        DESC 'Nagios Flap Detection Options (flap_detection_options o,d,u)'
+        EQUALITY caseIgnoreMatch
+        SUBSTR caseIgnoreSubstringsMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.4.515 NAME 'nagiosServiceEventhandler'
+        DESC 'Nagios Eventhandler (event_handler restart-httpd)'
+        EQUALITY caseIgnoreMatch
+        SUBSTR caseIgnoreSubstringsMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.4.516 NAME 'nagiosServiceNotesURL'
+        DESC 'Nagios Notes URL (notes_url http://www.google.de)'
+        EQUALITY caseIgnoreMatch
+        SUBSTR caseIgnoreSubstringsMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{512} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.4.517 NAME 'nagiosServiceActionURL'
+        DESC 'Nagios Action URL (action_url http://www.google.de)'
+        EQUALITY caseIgnoreMatch
+        SUBSTR caseIgnoreSubstringsMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{512} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.4.518 NAME 'nagiosServiceDisable'
+        DESC 'Nagios Disable (Disable all below this entry)'
+        EQUALITY caseIgnoreMatch
+        SUBSTR caseIgnoreSubstringsMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+
+
+#
+# .3   | objectclass templates
+#
+
+objectclass ( 1.3.6.1.4.1.26840.144.3.1 NAME 'nagiosTemplateHost'
+	DESC 'Template for a Nagios host'
+	SUP top
+	MAY ( nagiosHostCustomvar $ nagiosHostContacts $ nagiosHostContactgroups $
+		nagiosHostNotificationOptions $ nagiosHostNotificationInterval $ nagiosHostNotificationPeriod $ 
+		nagiosHostCheckPeriod $ nagiosHostCheckInterval $ nagiosHostCheckRetryInterval $ nagiosHostCheckMaxCheckAttempts $
+		nagiosHostProcessPerfData $ nagiosHostActiveChecksEnabled $ nagiosHostPassiveChecksEnabled $
+		nagiosHostFlapDetectionEnabled $ nagiosHostFlapDetectionOptions $ nagiosHostEventhandler $
+		nagiosHostNotesURL $ nagiosHostActionURL $ nagiosHostDisable $
+		nagiosParent $ nagiosCheckcommand ) )
+
+objectclass ( 1.3.6.1.4.1.26840.144.3.2 NAME 'nagiosTemplateService'
+	DESC 'Tempalte for a Nagios service'
+	SUP top
+	MAY ( nagiosServiceCustomvar $ nagiosServiceContacts $ nagiosServiceContactgroups $
+		nagiosServiceNotificationOptions $ nagiosServiceNotificationInterval $ nagiosServiceNotificationPeriod $
+		nagiosServiceCheckPeriod $ nagiosServiceCheckInterval $ nagiosServiceCheckRetryInterval $ nagiosServiceCheckMaxCheckAttempts $
+		nagiosServiceProcessPerfData $ nagiosServiceActiveChecksEnabled $ nagiosServicePassiveChecksEnabled $
+		nagiosServiceFlapDetectionEnabled $ nagiosServiceFlapDetectionOptions $ nagiosServiceEventhandler $
+		nagiosServiceNotesURL $ nagiosServiceActionURL $ nagiosServiceDisable ) )
+
+
+#
+# .4   | structural objectclasses
+#
+
+objectclass ( 1.3.6.1.4.1.26840.144.4.1 NAME 'nagiosStructuralObject'
+	DESC 'Structural Obeject'
+	SUP top
+	MUST ( ou )
+	MAY ( description $
+		nagiosHostCustomvar $ nagiosHostContacts $ nagiosHostContactgroups $
+		nagiosHostNotificationOptions $ nagiosHostNotificationInterval $ nagiosHostNotificationPeriod $
+		nagiosHostCheckPeriod $ nagiosHostCheckInterval $ nagiosHostCheckRetryInterval $ nagiosHostCheckMaxCheckAttempts $
+		nagiosHostProcessPerfData $ nagiosHostActiveChecksEnabled $ nagiosHostPassiveChecksEnabled $
+		nagiosHostFlapDetectionEnabled $ nagiosHostFlapDetectionOptions $ nagiosHostEventhandler $
+		nagiosHostNotesURL $ nagiosHostActionURL $ nagiosHostDisable $
+		nagiosParent $ nagiosCheckcommand $
+		nagiosServiceCustomvar $ nagiosServiceContacts $ nagiosServiceContactgroups $
+		nagiosServiceCheckPeriod $ nagiosServiceCheckInterval $ nagiosServiceCheckRetryInterval $ nagiosServiceCheckMaxCheckAttempts $
+		nagiosServiceProcessPerfData $ nagiosServiceActiveChecksEnabled $ nagiosServicePassiveChecksEnabled $
+		nagiosServiceFlapDetectionEnabled $ nagiosServiceFlapDetectionOptions $ nagiosServiceEventhandler $
+		nagiosServiceNotesURL $ nagiosServiceActionURL $ nagiosServiceDisable) )
+
+
+#
+# .5   | structural objectclasses
+#
+
+objectclass ( 1.3.6.1.4.1.26840.144.5.1 NAME 'nagiosTimeperiod'
+        DESC 'Nagios Timeperiod'
+        SUP top
+        MUST ( cn $ nagiosAlias )
+        MAY ( description $ nagiosTimeperiodValue ) )
+
+objectclass ( 1.3.6.1.4.1.26840.144.5.2 NAME 'nagiosCommand'
+	DESC 'Nagios Command'
+	SUP top
+	MUST ( cn $ nagiosCommandline )
+	MAY ( description ) )
+
+objectclass ( 1.3.6.1.4.1.26840.144.5.3 NAME 'nagiosContact'
+	DESC 'NagiosContact'
+	SUP top
+	MUST ( cn $ nagiosAlias )
+	MAY ( description $ nagiosEmail $ nagiosPager $
+		nagiosContactServiceNotificationPeriod   $ nagiosContactHostNotificationPeriod $
+		nagiosContactServiceNotificationOptions  $ nagiosContactHostNotificationOptions $
+		nagiosContactServiceNotificationCommands $ nagiosContactHostNotificationCommands $
+		nagiosContactServiceNotificationsEnabled $ nagiosContactHostNotificationsEnabled ) )
+
+objectclass ( 1.3.6.1.4.1.26840.144.5.4 NAME 'nagiosContactgroup'
+	DESC 'Nagios Host Group'
+	SUP top
+	MUST ( cn $ nagiosAlias $ nagiosMembers )
+	MAY ( description ) )
+
+objectclass ( 1.3.6.1.4.1.26840.144.5.5 NAME 'nagiosHost'
+	DESC 'Nagios Host'
+	SUP nagiosTemplateHost
+	MUST ( cn $ nagiosAddress )
+	MAY ( description $ nagiosAlias $ nagiosHostCustomvar ) )
+
+objectclass ( 1.3.6.1.4.1.26840.144.5.6 NAME 'nagiosHostgroup'
+	DESC 'Nagios Hostgroup'
+	SUP top
+	MUST ( cn $ nagiosAlias $ nagiosMembers )
+	MAY ( description ) )
+
+objectclass ( 1.3.6.1.4.1.26840.144.5.7 NAME 'nagiosService'
+	DESC 'Nagios Service'
+	SUP nagiosTemplateService
+	MUST ( cn $ nagiosCheckcommand )
+	MAY ( description $ nagiosServiceCustomvar ) )
