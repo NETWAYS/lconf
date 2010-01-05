@@ -1,0 +1,294 @@
+#!/usr/bin/perl -w
+
+# COPYRIGHT:
+#  
+# This software is Copyright (c) 2010 NETWAYS GmbH, Tobias Redel 
+#                                <support@netways.de>
+# 
+# (Except where explicitly superseded by other copyright notices)
+# 
+# 
+# LICENSE:
+# 
+# This work is made available to you under the terms of Version 2 of
+# the GNU General Public License. A copy of that license should have
+# been provided with this software, but in any event can be snarfed
+# from http://www.fsf.org.
+# 
+# This work is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301 or visit their web page on the internet at
+# http://www.fsf.org.
+# 
+# 
+# CONTRIBUTION SUBMISSION POLICY:
+# 
+# (The following paragraph is not intended to limit the rights granted
+# to you to modify and distribute this software under the terms of
+# the GNU General Public License and is only of importance to you if
+# you choose to contribute your changes and enhancements to the
+# community by submitting them to NETWAYS GmbH.)
+# 
+# By intentionally submitting any modifications, corrections or
+# derivatives to this work, or any other work intended for use with
+# this Software, to NETWAYS GmbH, you confirm that
+# you are the copyright holder for those contributions and you grant
+# NETWAYS GmbH a nonexclusive, worldwide, irrevocable,
+# royalty-free, perpetual, license to use, copy, create derivative
+# works based on those contributions, and sublicense and distribute
+# those contributions and any derivatives thereof.
+#
+# Nagios and the Nagios logo are registered trademarks of Ethan Galstad.
+
+
+=head1 NAME
+
+LConfSlaveExport.pl - export an nagios config from LConf to a slave cluster
+
+=head1 SYNOPSIS
+
+LConfSlaveExport.pl  -s <name of slave server>
+                     -n <path to nagios config>
+              	     -v
+                     -h
+                     -V
+
+Export an nagios config from LConf to a slave cluster
+
+=head1 OPTIONS
+
+=over
+
+=item -s|--slave <name of slave server>
+
+Export config to this server
+
+=item -n|--nagiosconfig <path to nagios config>
+
+Path to exported nagios config
+
+=item -v|--verbose <path to logfile>
+
+Verbose mode. If no logfile is specified, verbose output will be printend to STDOUT
+
+=item -h|--help
+
+print help page
+
+=item -V|--version
+
+print plugin version
+
+=cut
+
+
+use strict;
+use Getopt::Long qw(:config no_ignore_case bundling);
+use Pod::Usage;
+use Net::LDAP;
+
+# version string
+my $version = '0.1';
+
+# define states
+our @state = ('OK', 'WARNING', 'ERROR');
+
+# get command-line parameters
+my ($optSlave, $optNagiosConfig, $optVerbose, $optHelp, $optVersion);
+
+GetOptions(
+	"s|slave=s"		=> \$optSlave,
+	"n|nagiosconfig=s"	=> \$optNagiosConfig,
+	"v|verbose:s"           => \$optVerbose,
+	"h|help"                => \$optHelp,
+	"V|version"             => \$optVersion
+);
+
+# import config
+use lib '@prefix@';
+use etc::config;
+use vars qw($optLDAPServer $optLDAPDN $optExportUser);
+
+
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
+# help and version page and sample config...
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
+
+# should print version?
+if (defined $optVersion) { print $version."\n"; exit 0; }
+
+# should print help?
+if ($optHelp || !$optSlave || !$optNagiosConfig) { pod2usage(1); }
+
+
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
+# let's go!
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
+
+# fist of all... check if we're ready to run
+LeaveScript(2, "Variable '\$optLDAPServer' not set in config.pm'")      if !$optLDAPServer;
+LeaveScript(2, "Variable '\$optLDAPDN' not set in config.pm'")		if !$optLDAPDN;
+LeaveScript(2, "Variable '\$optExportUser' not set in config.pm'")	if !$optExportUser;
+
+# export with right user?
+LeaveScript(2, "You're not user '$optExportUser'!") if $ENV{USER} ne $optExportUser;
+
+#
+# NOW, WE'RE READY TO RUN :)
+#
+
+# define vars
+my $optBaseDN = 'ou=NagiosConfig,'.$optLDAPDN;
+my @export;
+
+# connect to LDAP server
+my $ldap = LDAPconnect();
+
+# get global stuff to export
+my $exportGLOBAL = LDAPsearch($ldap, $optBaseDN, "sub", "description=LCONF->EXPORT->GLOBAL");
+@export = getPaths($exportGLOBAL, @export);
+
+# get slaves cluster dn
+my $exportSLAVE = LDAPsearch($ldap, $optBaseDN, "sub", "description=LCONF->EXPORT->CLUSTER*$optSlave*");
+@export = getPaths($exportSLAVE, @export);
+
+# disconnect from LDAP Server
+$ldap->unbind();
+
+# first, clean remote dir
+beVerbose("CLEAN", "ssh $optSlave 'rm -r $optNagiosConfig/*'");
+qx(ssh $optSlave 'rm -r $optNagiosConfig/*');
+
+# copy config to client
+foreach(@export) {
+	beVerbose("COPY", "scp -r $_ $optSlave:$optNagiosConfig");
+	qx(scp -r $_ $optSlave:$optNagiosConfig);
+}
+
+# reload nagios on slave
+beVerbose("RELOAD", "ssh $optSlave '/etc/init.d/nagios reload'");
+my $result = qx(ssh $optSlave '/etc/init.d/nagios reload');
+print $result;
+
+
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
+# functions...
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
+
+sub beVerbose {
+        my $type = shift;
+        my $text = shift;
+
+        if (defined $optVerbose) {
+                # generate message
+                my $message = localtime(time)." | Verbose: $type: $text\n";
+
+                # should write log to file or STDOUT?
+                if ($optVerbose ne "") {
+                        open(LOGF,">>$optVerbose") || die $!;
+                        print LOGF $message;
+                        close(LOGF);
+                } else {
+                        print $message;
+                }
+	}
+}
+
+sub LeaveScript {
+        my $exitCode = $_[0];
+        my $comment  = $_[1];
+
+        print $state[$exitCode]." - $comment\n";
+        exit $exitCode;
+}
+
+sub LDAPconnect {
+        my $ldap = Net::LDAP->new ($optLDAPServer) or die "Can't connect to LDAP Server '$optLDAPServer'";
+        return $ldap;
+}
+
+sub LDAPsearch {
+        my $ldap   = shift;
+        my $base   = shift;
+        my $scope  = shift;
+        my $filter = shift;
+        my $return;
+
+        # get entries
+        my $result = $ldap->search ( base       => $base,
+                                     scope      => $scope,
+                                     deref      => 'never',
+                                     filter     => "$filter");
+
+        beVerbose("LDAP SEARCH", "SEARCH '$filter' ON '$base'");
+
+        # convert result to a hash
+        my $href = $result->as_struct;
+
+        # get an array of the DN names
+        my @arrayOfDNs  = keys %$href;
+
+        # process each DN using it as a key
+        foreach (@arrayOfDNs) {
+                $return->{$_}->{dn} = $_;
+                my $valref = $$href{$_};
+
+                # get an array of the attribute names
+                # passed for this one DN.
+                my @arrayOfAttrs = sort keys %$valref;
+
+                foreach my $attrName(@arrayOfAttrs) {
+                        # can't handle binary data => skip!
+                        next if ( $attrName =~ /;binary$/ );
+
+                        # attribute name as the hash
+                        my $attrVal =  @$valref{$attrName};
+
+                        # convert to an ordinary hash
+                        my $counter = scalar @$attrVal;
+                        while($counter != 0) {
+                                $counter--;
+                                if ($attrName eq "nagioshostcustomvar" || $attrName eq "nagiosservicecustomvar" || $attrName eq "nagiostimeperiodvalue") {
+                                        my ($val1, $val2) = (split(/ *\| */, @$attrVal[$counter]))[0,1];
+                                        $return->{$_}->{$attrName}->{$val1} = $val2;
+                                } else {
+                                        $return->{$_}->{$attrName} = @$attrVal[$counter];
+                                }
+                        }
+                }
+        }
+
+        # and return the hash
+        return $return;
+}
+
+sub getPaths {
+	my $result = shift;
+	my @to_return = @_;
+
+	foreach my $val1 (keys %{$result}) {
+		# set up main path
+		my $path = $optNagiosConfig;
+
+		# delete base dn
+		$val1 =~ s/,$optBaseDN//;
+
+		# split dn into an array and build path
+		my @ARRAY = split(/\,/, $val1);
+		@ARRAY = reverse(@ARRAY);
+		foreach my $val2 (@ARRAY) {
+			$val2 =~ s/ou=/\//;
+			$path .= $val2;
+		}
+
+		push(@to_return, $path);
+	}
+
+	return @to_return;
+}
