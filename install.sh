@@ -67,6 +67,11 @@ cat $DIR_SOURCE/LConfImport.pl.in | sed s/@prefix@/$PREFIX_QUOTED/ > $DIR_SOURCE
 ScriptOutput INSTALL "LConf Importer"
 install -g $USER -o $GROUP -m 750 $DIR_SOURCE/LConfImport.pl $PREFIX/
 
+ScriptOutput CREATE "LConf Slave Exporter"
+cat $DIR_SOURCE/LConfSlaveExport.pl.in | sed s/@prefix@/$PREFIX_QUOTED/ > $DIR_SOURCE/LConfSlaveExport.pl
+ScriptOutput INSTALL "LConf Slave Exporter"
+install -g $USER -o $GROUP -m 750 $DIR_SOURCE/LConfSlaveExport.pl $PREFIX/
+
 ScriptOutput INSTALL "LDAP schema file"
 install -g root -o root -m 644 $DIR_SOURCE/netways.schema $DIR_SCHEMA/
 
