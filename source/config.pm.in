@@ -34,7 +34,7 @@ $optExportUser  = 'nagios';
 
 	# .2.3   | nagios attributes (host)
 	nagiosaddress					=> 'address',
-	nagiosparent					=> 'parent',
+	nagiosparent					=> 'parents',
 	nagioshostcustomvar				=> 'PLACEHOLDER',
 	nagioshostcontacts				=> 'contacts',
 	nagioshostcontactgroups				=> 'contact_groups',
