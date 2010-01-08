@@ -256,6 +256,12 @@ attributetype ( 1.3.6.1.4.1.26840.144.2.3.518 NAME 'nagiosHostDisable'
 	SUBSTR caseIgnoreSubstringsMatch
 	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
 
+attributetype ( 1.3.6.1.4.1.26840.144.2.3.519 NAME 'nagiosHostgroups'
+	DESC 'Nagios Hostgroup (hostgroup example-hostgroup)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{512} SINGLE-VALUE )
+
 
 #
 # .2.4   | nagios attributes (service)
@@ -395,7 +401,7 @@ objectclass ( 1.3.6.1.4.1.26840.144.3.1 NAME 'nagiosTemplateHost'
 		nagiosHostProcessPerfData $ nagiosHostActiveChecksEnabled $ nagiosHostPassiveChecksEnabled $
 		nagiosHostFlapDetectionEnabled $ nagiosHostFlapDetectionOptions $ nagiosHostEventhandler $
 		nagiosHostNotesURL $ nagiosHostActionURL $ nagiosHostDisable $
-		nagiosParent $ nagiosCheckcommand ) )
+		nagiosParent $ nagiosCheckcommand $ nagiosHostgroups ) )
 
 objectclass ( 1.3.6.1.4.1.26840.144.3.2 NAME 'nagiosTemplateService'
 	DESC 'Tempalte for a Nagios service'
@@ -423,7 +429,7 @@ objectclass ( 1.3.6.1.4.1.26840.144.4.1 NAME 'nagiosStructuralObject'
 		nagiosHostProcessPerfData $ nagiosHostActiveChecksEnabled $ nagiosHostPassiveChecksEnabled $
 		nagiosHostFlapDetectionEnabled $ nagiosHostFlapDetectionOptions $ nagiosHostEventhandler $
 		nagiosHostNotesURL $ nagiosHostActionURL $ nagiosHostDisable $
-		nagiosParent $ nagiosCheckcommand $
+		nagiosParent $ nagiosCheckcommand $ nagiosHostgroups $
 		nagiosServiceCustomvar $ nagiosServiceContacts $ nagiosServiceContactgroups $
 		nagiosServiceCheckPeriod $ nagiosServiceCheckInterval $ nagiosServiceCheckRetryInterval $ nagiosServiceCheckMaxCheckAttempts $
 		nagiosServiceProcessPerfData $ nagiosServiceActiveChecksEnabled $ nagiosServicePassiveChecksEnabled $

@@ -2,7 +2,7 @@
 
 # COPYRIGHT:
 #  
-# This software is Copyright (c) 2009 NETWAYS GmbH, Tobias Redel 
+# This software is Copyright (c) 2010 NETWAYS GmbH, Tobias Redel 
 #                                <support@netways.de>
 # 
 # (Except where explicitly superseded by other copyright notices)
@@ -145,6 +145,7 @@ qx(rm -r $optOutputDir/* 2>/dev/null);
 
 # define vars
 my $optBaseDN = 'ou=NagiosConfig,'.$optLDAPDN;
+my @HOSTGROUPS;
 
 # connect to LDAP server
 my $ldap = LDAPconnect();
@@ -222,14 +223,15 @@ foreach my $client (keys %{$CLIENTS}) {
 
 # build dir structure
 createDirs($optBaseDN, $optOutputDir);
+mkdir("$optOutputDir/hostgroups/");
 
 # write config
 genTimeperiods();
 genCommands();
 genContacts();
 genContactgroups();
+genHostgroups();
 genHostConfig();
-genHostgroup();
 
 # disconnect from LDAP Server
 $ldap->unbind();
@@ -312,9 +314,12 @@ sub LDAPsearch {
                         my $counter = scalar @$attrVal;
                         while($counter != 0) {
                                 $counter--;
-                                if ($attrName eq "nagioshostcustomvar" || $attrName eq "nagiosservicecustomvar" || $attrName eq "nagiostimeperiodvalue") {
-                                        my ($val1, $val2) = (split(/ *\| */, @$attrVal[$counter]))[0,1];
-                                        $return->{$_}->{$attrName}->{$val1} = $val2;
+                                if ($attrName eq "nagioshostcustomvar" || $attrName eq "nagiosservicecustomvar") {
+					@$attrVal[$counter] =~ m/(.*) (.*)/;
+					$return->{$_}->{$attrName}->{$1} = $2;
+				} elsif ($attrName eq "nagiostimeperiodvalue") {
+					@$attrVal[$counter] =~ m/(.*) +([-\w:]+)/;
+					$return->{$_}->{$attrName}->{$1} = $2;
                                 } else {
                                         $return->{$_}->{$attrName} = @$attrVal[$counter];
                                 }
@@ -337,18 +342,15 @@ sub addHostAttributes {
                        if ($itemMap{$val2}) {
                                # only host attributes
                                if ($val2 =~ /nagioshost/ || $val2 eq 'nagiosaddress' || $val2 eq 'nagiosparent' || $val2 eq 'nagioscheckcommand' || $val2 eq 'nagiosalias') {
-					if ($val2 eq "nagioshostcustomvar") {
-						#$CLIENTS->{$host.",".$optBaseDN}->{$_}->{$1} = $2;
-
-#						print "\t$val2 => $result->{$val1}->{$val2}\n";
-
-						foreach my $val3 (keys %{$result->{$val1}->{$val2}}) {
-							$val3 =~ m/([\w\d]+) (.*)/;
-							$CLIENTS->{$host.",".$optBaseDN}->{$val2}->{$1} = $2;
-						}
-					} else {
+					#if ($val2 eq "nagioshostcustomvar") {
+					#	foreach my $val3 (keys %{$result->{$val1}->{$val2}}) {
+					#		print $val3."\n";
+					#		#$val3 =~ m/([\w\d]+) (.*)/;
+					#		$CLIENTS->{$host.",".$optBaseDN}->{$val2}->{$1} = $2;
+					#	}
+					#} else {
 						$CLIENTS->{$host.",".$optBaseDN}->{$val2} = $result->{$val1}->{$val2};
-					}
+					#}
                                }
                        }
                }
@@ -425,15 +427,15 @@ sub addServiceAttributes {
 			if ($itemMap{$val2}) {
 				# only service attributes
 				if ($val2 =~ /nagiosservice/ || $val2 eq 'nagioscheckcommand') {
-					if ($val2 eq "nagiosservicecustomvar") {
-						foreach my $val3 (keys %{$result->{$val1}->{$val2}}) {
-							$val3 =~ m/([\w\d]+) (.*)/;
-							$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2}->{$1} = $2;
-						}
-					} else {
+					#if ($val2 eq "nagiosservicecustomvar") {
+					#	foreach my $val3 (keys %{$result->{$val1}->{$val2}}) {
+					#		$val3 =~ m/([\w\d]+) (.*)/;
+					#		$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2}->{$1} = $2;
+					#	}
+					#} else {
 #						print "\t\t$val2 => $result->{$val1}->{$val2}\n";
 						$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2} = $result->{$val1}->{$val2};
-					}
+					#}
 				}
 			}
 		}
@@ -606,7 +608,7 @@ sub genTimeperiods {
 					print FH "\ttimeperiod_name\t$result->{$timeperiod}->{$_}\n";
 				} elsif ($_ eq 'nagiostimeperiodvalue') {
 					foreach my $timeperiod_value (keys %{$result->{$timeperiod}->{$_}}) {
-						print FH "\t$timeperiod_value\n";
+						print FH "\t$timeperiod_value\t$result->{$timeperiod}->{$_}->{$timeperiod_value}\n";
 					}
 				} else {
 					print FH "\t$itemMap{$_}\t$result->{$timeperiod}->{$_}\n";
@@ -745,43 +747,65 @@ sub genContactgroups {
 	}
 }
 
-sub genHostgroup {
-	# get all hostgroups
-	my $result = LDAPsearch($ldap, $optBaseDN, "sub", "objectclass=nagiosHostgroup");
-	foreach my $hostgroup (keys %{$result}) {
-		# build file path
-                my $writeFile = $optOutputDir.'/';
-                my $path = $result->{$hostgroup}->{dn};
-                $path =~ s/,$optBaseDN//;
-                my @path = split(",", $path);
-                @path = reverse(@path);
-                foreach my $items (@path) {
-                        # file or folder?
-                        if ($items =~ /cn/) {
-                                my $val = (split(/\=/, $items))[1];
-                                $writeFile .= $val.'.cfg';
-                        } else {
-                                my $val = (split(/\=/, $items))[1];
-                                $writeFile .= $val.'/';
-                        }
-                }
+sub genHostgroups {
+	# get hostgroups (from client attributes)
+	foreach my $client (keys %{$CLIENTS}) {
+		if (defined $CLIENTS->{$client}->{nagioshostgroups}) {
+			if ($CLIENTS->{$client}->{nagioshostgroups} =~ /,/) {
+				my @val = split(/\s*,\s*/, $CLIENTS->{$client}->{nagioshostgroups});
+       				foreach(@val) { push(@HOSTGROUPS, $_); }
+			} else {
+				push(@HOSTGROUPS, $CLIENTS->{$client}->{nagioshostgroups});
+			}
+		}
+	}
+
+	# write hostgroup files (for client attributes)
+	foreach my $hostgroup (@HOSTGROUPS) {
+		# set file path
+		my $writeFile = $optOutputDir."/hostgroups/$hostgroup.cfg";
 
 		# open target file
 		open(FH, ">$writeFile") || die "Can't write data: $!\n";
 
 		print FH "define hostgroup {\n";
-		foreach (keys %{$result->{$hostgroup}}) {
-			if ($itemMap{$_}) {
-				if ($_ eq 'cn') {
-					print FH "\thostgroup_name\t$result->{$hostgroup}->{$_}\n";
-				} else {
-					print FH "\t$itemMap{$_}\t$result->{$hostgroup}->{$_}\n";
-				}
-			}
-		}
+		print FH "\thostgroup_name\t$hostgroup\n";
+		print FH "\talias\t$hostgroup\n";
 		print FH "}\n";
 
 		# close target file
 		close(FH);
+	}
+
+	# get hostgroups (from objectclass 'nagiosHostgroup') and write files
+	my $result = LDAPsearch($ldap, $optBaseDN, "sub", "objectclass=nagiosHostgroup");
+	foreach my $val1 (keys %{$result}) {
+		# set file path
+		my $writeFile = $optOutputDir."/hostgroups/$result->{$val1}->{cn}.cfg";
+
+		# open target file
+		open(FH, ">$writeFile") || die "Can't write data: $!\n";
+
+		print FH "define hostgroup {\n";
+		print FH "\thostgroup_name\t$result->{$val1}->{cn}\n";
+		print FH "\talias\t$result->{$val1}->{nagiosalias}\n";
+		print FH "}\n";
+
+		# add hosts of this hostgroup to $CLIENT hash;
+		# client config will write the membership
+		my @val = split(/\s*,\s*/, $result->{$val1}->{nagiosmembers});
+		foreach(@val) {
+			# search full name im client hash :(
+			foreach my $client (keys %{$CLIENTS}) {
+				# if real name was found, add to $CLIENT hash
+				if ($client =~ /^cn=$_,/) {
+					if ($CLIENTS->{$client}->{nagioshostgroups}) {
+						 $CLIENTS->{$client}->{nagioshostgroups} =  $CLIENTS->{$client}->{nagioshostgroups}.','.$result->{$val1}->{cn};
+					} else {
+						$CLIENTS->{$client}->{nagioshostgroups} = $result->{$val1}->{cn};
+					}
+				}
+			}
+		}
 	}
 }

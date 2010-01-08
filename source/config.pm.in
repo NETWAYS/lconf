@@ -53,6 +53,7 @@ $optExportUser  = 'nagios';
 	nagioshosteventhandler				=> 'event_handler',
 	nagioshostnotesurl				=> 'notes_url',
 	nagioshostactionurl				=> 'action_url',
+	nagioshostgroups				=> 'hostgroups',
 	nagioshostdisable				=> '',
 
 	# .2.4   | nagios attributes (service)
