@@ -342,15 +342,7 @@ sub addHostAttributes {
                        if ($itemMap{$val2}) {
                                # only host attributes
                                if ($val2 =~ /nagioshost/ || $val2 eq 'nagiosaddress' || $val2 eq 'nagiosparent' || $val2 eq 'nagioscheckcommand' || $val2 eq 'nagiosalias') {
-					#if ($val2 eq "nagioshostcustomvar") {
-					#	foreach my $val3 (keys %{$result->{$val1}->{$val2}}) {
-					#		print $val3."\n";
-					#		#$val3 =~ m/([\w\d]+) (.*)/;
-					#		$CLIENTS->{$host.",".$optBaseDN}->{$val2}->{$1} = $2;
-					#	}
-					#} else {
-						$CLIENTS->{$host.",".$optBaseDN}->{$val2} = $result->{$val1}->{$val2};
-					#}
+					$CLIENTS->{$host.",".$optBaseDN}->{$val2} = $result->{$val1}->{$val2};
                                }
                        }
                }
@@ -396,15 +388,13 @@ sub addServices {
 			@search = reverse(@search);
 
 			# search at base
-			#my $searchDN = $optBaseDN;
 			my $searchDN = $searchTree;
 			my $result = LDAPsearch($ldap, $searchDN, "base", "objectclass=*");
 			my $CLIENTS = addServiceAttributes($result, "$service", $CLIENTS, $host);
 
 			# and search rest of the tree
 			foreach(@search) {
-				#$searchDN = $_.",".$searchDN;
-				$searchDN = $_.",".$searchTree;
+				$searchDN = $_.",".$searchDN;
 				my $result = LDAPsearch($ldap, $searchDN, "base", "objectclass=*");
 				$CLIENTS = addServiceAttributes($result, "$service", $CLIENTS, $host);
 			}
@@ -427,15 +417,7 @@ sub addServiceAttributes {
 			if ($itemMap{$val2}) {
 				# only service attributes
 				if ($val2 =~ /nagiosservice/ || $val2 eq 'nagioscheckcommand') {
-					#if ($val2 eq "nagiosservicecustomvar") {
-					#	foreach my $val3 (keys %{$result->{$val1}->{$val2}}) {
-					#		$val3 =~ m/([\w\d]+) (.*)/;
-					#		$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2}->{$1} = $2;
-					#	}
-					#} else {
-#						print "\t\t$val2 => $result->{$val1}->{$val2}\n";
-						$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2} = $result->{$val1}->{$val2};
-					#}
+					$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2} = $result->{$val1}->{$val2};
 				}
 			}
 		}
@@ -649,7 +631,6 @@ sub genCommands {
 		print FH "define command {\n";
 		foreach (keys %{$result->{$command}}) {
 			if ($itemMap{$_}) {
-				#print "$_ => $itemMap{$_} => $result->{$command}->{$_}\n";
 				if ($_ eq 'cn') {
 					print FH "\tcommand_name\t$result->{$command}->{$_}\n";
 				} else {
