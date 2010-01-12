@@ -54,34 +54,34 @@ if [ $RETURN -lt 3 ]; then
 fi
 
 ScriptOutput INSTALL "Dir structure"
-install -d -g $USER -o $GROUP -m 750 $PREFIX
-install -d -g $USER -o $GROUP -m 750 $PREFIX/etc
+install -d -o $USER -g $GROUP -m 750 $PREFIX
+install -d -o $USER -g $GROUP -m 750 $PREFIX/etc
 
 ScriptOutput CREATE "LConf Exporter"
 cat $DIR_SOURCE/LConfExport.pl.in | sed s/@prefix@/$PREFIX_QUOTED/ > $DIR_SOURCE/LConfExport.pl
 ScriptOutput INSTALL "LConf Exporter"
-install -g $USER -o $GROUP -m 750 $DIR_SOURCE/LConfExport.pl $PREFIX/
+install -o $USER -g $GROUP -m 750 $DIR_SOURCE/LConfExport.pl $PREFIX/
 
 ScriptOutput CREATE "LConf Importer"
 cat $DIR_SOURCE/LConfImport.pl.in | sed s/@prefix@/$PREFIX_QUOTED/ > $DIR_SOURCE/LConfImport.pl
 ScriptOutput INSTALL "LConf Importer"
-install -g $USER -o $GROUP -m 750 $DIR_SOURCE/LConfImport.pl $PREFIX/
+install -o $USER -g $GROUP -m 750 $DIR_SOURCE/LConfImport.pl $PREFIX/
 
 ScriptOutput CREATE "LConf Slave Exporter"
 cat $DIR_SOURCE/LConfSlaveExport.pl.in | sed s/@prefix@/$PREFIX_QUOTED/ > $DIR_SOURCE/LConfSlaveExport.pl
 ScriptOutput INSTALL "LConf Slave Exporter"
-install -g $USER -o $GROUP -m 750 $DIR_SOURCE/LConfSlaveExport.pl $PREFIX/
+install -o $USER -g $GROUP -m 750 $DIR_SOURCE/LConfSlaveExport.pl $PREFIX/
 
 ScriptOutput INSTALL "LDAP schema file"
-install -g root -o root -m 644 $DIR_SOURCE/netways.schema $DIR_SCHEMA/
+install -o root -g root -m 644 $DIR_SOURCE/netways.schema $DIR_SCHEMA/
 
 ScriptOutput INSTALL "Default templates"
-install -g $USER -o $GROUP -m 640 $DIR_SOURCE/default-templates.cfg $PREFIX/etc/
+install -o $USER -g $GROUP -m 640 $DIR_SOURCE/default-templates.cfg $PREFIX/etc/
 
 ScriptOutput CREATE "LConf config file"
 cat $DIR_SOURCE/config.pm.in | sed s/@domain@/$ROOTDN/ > $DIR_SOURCE/config.pm
 ScriptOutput INSTALL "LConf config file"
-install -g $USER -o $GROUP -m 700 $DIR_SOURCE/config.pm $PREFIX/etc/
+install -o $USER -g $GROUP -m 700 $DIR_SOURCE/config.pm $PREFIX/etc/
 
 ScriptOutput CREATE "LDAP base ldif"
 cat $DIR_SOURCE/base.ldif.in | sed s/@domain@/$ROOTDN/ > $DIR_SOURCE/base.ldif

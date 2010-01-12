@@ -388,7 +388,7 @@ sub addServices {
 			@search = reverse(@search);
 
 			# search at base
-			my $searchDN = $searchTree;
+			my $searchDN = $optBaseDN;
 			my $result = LDAPsearch($ldap, $searchDN, "base", "objectclass=*");
 			my $CLIENTS = addServiceAttributes($result, "$service", $CLIENTS, $host);
 
@@ -435,27 +435,6 @@ sub addAlias {
 	foreach my $alias (keys %{$result}) {
 		my $searchDN = $result->{$alias}->{aliasedobjectname};
 		my $val = LDAPsearch($ldap, $searchDN, "sub", "objectclass=nagiosService");
-
-		foreach my $val1 (keys %{$val}) {
-			# get base name
-			my $service = $val->{$val1}->{cn};
-
-			# remove LDAP DN and split into pieces
-			$val1 =~ s/,$optLDAPDN//;
-			my @search = split(",", $val1); 
-			@search = reverse(@search);
-
-			# reset searchDN
-			$searchDN = $optLDAPDN;
-			my $result = LDAPsearch($ldap, $searchDN, "base", "objectclass=*");
-			my $CLIENTS = addServiceAttributes($result, "$service", $CLIENTS, $host); 
-
-			foreach(@search) {
-				$searchDN = $_.",".$searchDN;
-				my $result = LDAPsearch($ldap, $searchDN, "base", "objectclass=*");
-				my $CLIENTS = addServiceAttributes($result, "$service", $CLIENTS, $host); 
-			}       
-		}       
 
 		$CLIENTS = addServices($val, $host, $CLIENTS, $searchDN);
 	}       
