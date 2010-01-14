@@ -315,7 +315,7 @@ sub LDAPsearch {
                         while($counter != 0) {
                                 $counter--;
                                 if ($attrName eq "nagioshostcustomvar" || $attrName eq "nagiosservicecustomvar") {
-					@$attrVal[$counter] =~ m/(.*) (.*)/;
+					@$attrVal[$counter] =~ m/([\d\w]*) (.*)/;
 					$return->{$_}->{$attrName}->{$1} = $2;
 				} elsif ($attrName eq "nagiostimeperiodvalue") {
 					@$attrVal[$counter] =~ m/(.*) +([-\w:]+)/;
@@ -332,24 +332,30 @@ sub LDAPsearch {
 }
 
 sub addHostAttributes {
-       my $result  = shift;
-       my $host    = shift;
-       my $CLIENTS = shift;
+	my $result  = shift;
+	my $host    = shift;
+	my $CLIENTS = shift;
 
-       foreach my $val1 (keys %{$result}) {
-               foreach my $val2 (keys %{$result->{$val1}}) {
-                       # only defined attributes
-                       if ($itemMap{$val2}) {
-                               # only host attributes
-                               if ($val2 =~ /nagioshost/ || $val2 eq 'nagiosaddress' || $val2 eq 'nagiosparent' || $val2 eq 'nagioscheckcommand' || $val2 eq 'nagiosalias') {
+	foreach my $val1 (keys %{$result}) {
+		foreach my $val2 (keys %{$result->{$val1}}) {
+			# only defined attributes
+			if ($itemMap{$val2}) {
+				# only host attributes
+				if ($val2 =~ /nagioshost/ || $val2 eq 'nagiosaddress' || $val2 eq 'nagiosparent' || $val2 eq 'nagioscheckcommand' || $val2 eq 'nagiosalias') {
 					$CLIENTS->{$host.",".$optBaseDN}->{$val2} = $result->{$val1}->{$val2};
-                               }
-                       }
-               }
-       }
+				}
+			}
+		}
 
-       # return
-       return $CLIENTS;
+		# host dependencies
+		if ($result->{$val1}->{nagioshostdependency}) {
+			$CLIENTS->{$host.",".$optBaseDN}->{DEPENDENCY}->{$result->{$val1}->{nagioshostdependency}}->{nagioshostdependencyexecutionfailurecriteria} = $result->{$val1}->{nagioshostdependencyexecutionfailurecriteria} if $result->{$val1}->{nagioshostdependencyexecutionfailurecriteria};
+			$CLIENTS->{$host.",".$optBaseDN}->{DEPENDENCY}->{$result->{$val1}->{nagioshostdependency}}->{nagioshostdependencynotificationfailurecriteria} = $result->{$val1}->{nagioshostdependencynotificationfailurecriteria} if $result->{$val1}->{nagioshostdependencynotificationfailurecriteria};
+		}
+	}
+
+	# return
+	return $CLIENTS;
 }
 
 sub addServices {
@@ -365,14 +371,7 @@ sub addServices {
 		foreach my $val2 (keys %{$result->{$val1}}) {
 			# only defined attributes
 			if ($val2 =~ /nagiosservice/ || $val2 eq 'nagioscheckcommand') {
-				if ($val2 eq "nagiosservicecustomvar") {
-					foreach my $val3 (keys %{$result->{$val1}->{$val2}}) {
-						$val3 =~ m/([\w\d]+) (.*)/;
-						$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$result->{$val1}->{cn}}->{$val2}->{$1} = $2;
-					}
-				} else {
-					$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$result->{$val1}->{cn}}->{$val2} = $result->{$val1}->{$val2};
-				}
+				$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$result->{$val1}->{cn}}->{$val2} = $result->{$val1}->{$val2};
 			}
 		}
 
@@ -410,7 +409,6 @@ sub addServiceAttributes {
 	my $CLIENTS  = shift;
 	my $host     = shift;
 
-
 	foreach my $val1 (keys %{$result}) {
 		foreach my $val2 (keys %{$result->{$val1}}) {
 			# only defined attributes
@@ -420,6 +418,13 @@ sub addServiceAttributes {
 					$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2} = $result->{$val1}->{$val2};
 				}
 			}
+		}
+
+		# service dependencies
+		if ($result->{$val1}->{nagiosservicedependency}) {
+			my ($depHost, $depService) = (split(/ *-> */, $result->{$val1}->{nagiosservicedependency}))[0,1];
+			$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{DEPENDENCY}->{$depHost}->{$depService}->{nagiosservicedependencyexecutionfailurecriteria} = $result->{$val1}->{nagiosservicedependencyexecutionfailurecriteria} if $result->{$val1}->{nagiosservicedependencyexecutionfailurecriteria};
+			$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{DEPENDENCY}->{$depHost}->{$depService}->{nagiosservicedependencynotificationfailurecriteria} = $result->{$val1}->{nagiosservicedependencynotificationfailurecriteria} if $result->{$val1}->{nagiosservicedependencynotificationfailurecriteria};
 		}
 	}
 
@@ -489,14 +494,15 @@ sub genHostConfig {
 		# only gen config if nagioshostdisable is not set
 		if (!defined $CLIENTS->{$client}->{nagioshostdisable}) {
 			# open target file
-			open(FH, ">$writeFile") || die "Can't write data: $!\n";
+			open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
 
 			# generate host definition
 			print FH "define host {\n";
 			print FH "\tuse\tgeneric-host\n";
 			print FH "\thost_name\t$host_name\n";
 			foreach (keys %{$CLIENTS->{$client}}) {
-				if ($_ =~ /nagioshost/ || $_ eq 'nagiosaddress' || $_ eq 'nagiosparent' || $_ eq 'nagioscheckcommand' || $_ eq 'nagiosalias' && $_ ne 'nagioshostdisable') {
+				# generate all host attributes, except host dependency stuff
+				if ($_ !~ /nagioshostdependency/ && $_ =~ /nagioshost/ || $_ eq 'nagiosaddress' || $_ eq 'nagiosparent' || $_ eq 'nagioscheckcommand' || $_ eq 'nagiosalias' && $_ ne 'nagioshostdisable') {
 					if ($_ eq 'nagioshostcustomvar') {
 						foreach my $customvar (keys %{$CLIENTS->{$client}->{$_}}) {
 							print FH "\t$customvar\t$CLIENTS->{$client}->{$_}->{$customvar}\n";
@@ -517,7 +523,8 @@ sub genHostConfig {
 					print FH "\tservice_description\t$service\n";
 					print FH "\thost_name\t$host_name\n";
 					foreach(keys %{$CLIENTS->{$client}->{SERVICES}->{$service}}) {
-						if ($_ =~ /nagiosservice/ || $_ eq 'nagioscheckcommand') {
+						# generate all service attributes, except service dependency stuff
+						if ($_ !~ /nagiosservicedependency/ && $_ =~ /nagiosservice/ || $_ eq 'nagioscheckcommand') {
 							if ($_ eq 'nagiosservicecustomvar') {
 								foreach my $customvar (keys %{$CLIENTS->{$client}->{SERVICES}->{$service}->{$_}}) {
 									print FH "\t$customvar\t$CLIENTS->{$client}->{SERVICES}->{$service}->{$_}->{$customvar}\n";
@@ -529,6 +536,53 @@ sub genHostConfig {
 					}
 					print FH "}\n";
 					print FH "\n";
+				}
+			}
+
+			# generate host dependencies
+			foreach my $hostdep(keys %{$CLIENTS->{$client}->{DEPENDENCY}}) {
+				# only if host is not disabled
+				if (!$CLIENTS->{$client}->{nagioshostdisable}) {
+					print FH "define hostdependency {\n";
+					print FH "\thost_name\t$hostdep\n";
+					print FH "\tdependent_host_name\t$CLIENTS->{$client}->{cn}\n";
+	
+					foreach(keys %{$CLIENTS->{$client}->{DEPENDENCY}->{$hostdep}}) {
+						print FH "\t$itemMap{$_}\t$CLIENTS->{$client}->{DEPENDENCY}->{$hostdep}->{$_}\n" if $itemMap{$_};
+					}
+					
+					print FH "}\n";
+					print FH "\n";
+				}
+			}
+
+			# generate service dependencies
+			foreach my $service(keys %{$CLIENTS->{$client}->{SERVICES}}) {
+				# only if service is not disabled
+				if (!$CLIENTS->{$client}->{SERVICES}->{$service}->{nagiosservicedisable}) {
+					foreach my $hostdep(keys %{$CLIENTS->{$client}->{SERVICES}->{$service}->{DEPENDENCY}}) {
+						foreach my $servicedep(keys %{$CLIENTS->{$client}->{SERVICES}->{$service}->{DEPENDENCY}->{$hostdep}}) {
+							print FH "define servicedependency {\n";
+	
+							# special stuff for inheritance :-(
+							if ($hostdep eq "\$HOSTNAME\$") {
+								print FH "\thost_name\t$CLIENTS->{$client}->{cn}\n";
+							} else {
+								print FH "\thost_name\t$hostdep\n";
+							}
+	
+							print FH "\tservice_description\t$servicedep\n";
+							print FH "\tdependent_host_name\t$CLIENTS->{$client}->{cn}\n";
+							print FH "\tdependent_service_description\t$service\n";
+	
+							foreach(keys %{$CLIENTS->{$client}->{SERVICES}->{$service}->{DEPENDENCY}->{$hostdep}->{$servicedep}}) {
+								print FH "\t$itemMap{$_}\t$CLIENTS->{$client}->{SERVICES}->{$service}->{DEPENDENCY}->{$hostdep}->{$servicedep}->{$_}\n";
+							}
+	
+							print FH "}\n";
+							print FH "\n";
+						}
+					}
 				}
 			}
 
@@ -560,7 +614,7 @@ sub genTimeperiods {
                 }
 
 		# open target file
-		open(FH, ">$writeFile") || die "Can't write data: $!\n";
+		open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
 
 		print FH "define timeperiod {\n";
 		foreach (keys %{$result->{$timeperiod}}) {
@@ -605,7 +659,7 @@ sub genCommands {
 		}
 
 		# open target file
-		open(FH, ">$writeFile") || die "Can't write data: $!\n";
+		open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
 
 		print FH "define command {\n";
 		foreach (keys %{$result->{$command}}) {
@@ -646,7 +700,7 @@ sub genContacts {
                 }
 
 		# open target file
-		open(FH, ">$writeFile") || die "Can't write data: $!\n";
+		open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
 
 		print FH "define contact {\n";
 		print FH "\tuse generic-contact\n";
@@ -688,7 +742,7 @@ sub genContactgroups {
                 }
 
 		# open target file
-		open(FH, ">$writeFile") || die "Can't write data: $!\n";
+		open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
 
 		print FH "define contactgroup {\n";
 		foreach (keys %{$result->{$contactgroup}}) {
@@ -726,7 +780,7 @@ sub genHostgroups {
 		my $writeFile = $optOutputDir."/hostgroups/$hostgroup.cfg";
 
 		# open target file
-		open(FH, ">$writeFile") || die "Can't write data: $!\n";
+		open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
 
 		print FH "define hostgroup {\n";
 		print FH "\thostgroup_name\t$hostgroup\n";
@@ -744,7 +798,7 @@ sub genHostgroups {
 		my $writeFile = $optOutputDir."/hostgroups/$result->{$val1}->{cn}.cfg";
 
 		# open target file
-		open(FH, ">$writeFile") || die "Can't write data: $!\n";
+		open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
 
 		print FH "define hostgroup {\n";
 		print FH "\thostgroup_name\t$result->{$val1}->{cn}\n";

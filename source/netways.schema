@@ -262,6 +262,24 @@ attributetype ( 1.3.6.1.4.1.26840.144.2.3.519 NAME 'nagiosHostgroups'
 	SUBSTR caseIgnoreSubstringsMatch
 	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{512} SINGLE-VALUE )
 
+attributetype ( 1.3.6.1.4.1.26840.144.2.3.520 NAME 'nagiosHostDependency'
+	DESC 'Nagios Host Dependency (example-host)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.3.521 NAME 'nagiosHostDependencyExecutionFailureCriteria'
+	DESC 'Execution Failure Criteria (execution_failure_criteria [o,d,u,p,n])'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.3.522 NAME 'nagiosHostDependencyNotificationFailureCriteria'
+	DESC 'Notification Failure Criteria (notification_failure_cirteria [o,d,u,p,n])'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+
 
 #
 # .2.4   | nagios attributes (service)
@@ -387,6 +405,24 @@ attributetype ( 1.3.6.1.4.1.26840.144.2.4.518 NAME 'nagiosServiceDisable'
         SUBSTR caseIgnoreSubstringsMatch
         SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
 
+attributetype ( 1.3.6.1.4.1.26840.144.2.4.519 NAME 'nagiosServiceDependency'
+	DESC 'Nagios Service Dependency (example-host -> example-service)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.4.520 NAME 'nagiosServiceDependencyExecutionFailureCriteria'
+	DESC 'Execution Failure Criteria (execution_failure_criteria [o,d,u,p,n])'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.4.521 NAME 'nagiosServiceDependencyNotificationFailureCriteria'
+	DESC 'Notification Failure Criteria (notification_failure_cirteria [o,d,u,p,n])'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+
 
 #
 # .3   | objectclass templates
@@ -401,7 +437,8 @@ objectclass ( 1.3.6.1.4.1.26840.144.3.1 NAME 'nagiosTemplateHost'
 		nagiosHostProcessPerfData $ nagiosHostActiveChecksEnabled $ nagiosHostPassiveChecksEnabled $
 		nagiosHostFlapDetectionEnabled $ nagiosHostFlapDetectionOptions $ nagiosHostEventhandler $
 		nagiosHostNotesURL $ nagiosHostActionURL $ nagiosHostDisable $
-		nagiosParent $ nagiosCheckcommand $ nagiosHostgroups ) )
+		nagiosParent $ nagiosCheckcommand $ nagiosHostgroups $
+		nagiosHostDependency $ nagiosHostDependencyExecutionFailureCriteria $ nagiosHostDependencyNotificationFailureCriteria ) )
 
 objectclass ( 1.3.6.1.4.1.26840.144.3.2 NAME 'nagiosTemplateService'
 	DESC 'Tempalte for a Nagios service'
@@ -411,7 +448,8 @@ objectclass ( 1.3.6.1.4.1.26840.144.3.2 NAME 'nagiosTemplateService'
 		nagiosServiceCheckPeriod $ nagiosServiceCheckInterval $ nagiosServiceCheckRetryInterval $ nagiosServiceCheckMaxCheckAttempts $
 		nagiosServiceProcessPerfData $ nagiosServiceActiveChecksEnabled $ nagiosServicePassiveChecksEnabled $
 		nagiosServiceFlapDetectionEnabled $ nagiosServiceFlapDetectionOptions $ nagiosServiceEventhandler $
-		nagiosServiceNotesURL $ nagiosServiceActionURL $ nagiosServiceDisable ) )
+		nagiosServiceNotesURL $ nagiosServiceActionURL $ nagiosServiceDisable $
+		nagiosServiceDependency $ nagiosServiceDependencyExecutionFailureCriteria $ nagiosServiceDependencyNotificationFailureCriteria ) )
 
 
 #
@@ -430,11 +468,13 @@ objectclass ( 1.3.6.1.4.1.26840.144.4.1 NAME 'nagiosStructuralObject'
 		nagiosHostFlapDetectionEnabled $ nagiosHostFlapDetectionOptions $ nagiosHostEventhandler $
 		nagiosHostNotesURL $ nagiosHostActionURL $ nagiosHostDisable $
 		nagiosParent $ nagiosCheckcommand $ nagiosHostgroups $
+		nagiosHostDependency $ nagiosHostDependencyExecutionFailureCriteria $ nagiosHostDependencyNotificationFailureCriteria $
 		nagiosServiceCustomvar $ nagiosServiceContacts $ nagiosServiceContactgroups $
 		nagiosServiceCheckPeriod $ nagiosServiceCheckInterval $ nagiosServiceCheckRetryInterval $ nagiosServiceCheckMaxCheckAttempts $
 		nagiosServiceProcessPerfData $ nagiosServiceActiveChecksEnabled $ nagiosServicePassiveChecksEnabled $
 		nagiosServiceFlapDetectionEnabled $ nagiosServiceFlapDetectionOptions $ nagiosServiceEventhandler $
-		nagiosServiceNotesURL $ nagiosServiceActionURL $ nagiosServiceDisable) )
+		nagiosServiceNotesURL $ nagiosServiceActionURL $ nagiosServiceDisable $
+		nagiosServiceDependency $ nagiosServiceDependencyExecutionFailureCriteria $ nagiosServiceDependencyNotificationFailureCriteria ) )
 
 
 #

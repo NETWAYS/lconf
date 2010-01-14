@@ -171,6 +171,10 @@ foreach(@export) {
 	qx(scp -r $_ $optSlave:$optNagiosConfig);
 }
 
+# copy hostgroups to client
+beVerbose("COPY", "scp -r $optNagiosConfig/hostgroups $optSlave:$optNagiosConfig");
+qx(scp -r $optNagiosConfig/hostgroups $optSlave:$optNagiosConfig);
+
 # reload nagios on slave
 beVerbose("RELOAD", "ssh $optSlave '/etc/init.d/nagios reload'");
 my $result = qx(ssh $optSlave '/etc/init.d/nagios reload');

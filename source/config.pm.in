@@ -6,7 +6,7 @@ $optLDAPDN      = 'ou=LConf,@domain@';
 
 # ldap account (user / pass)
 $optLDAPBindDN  = 'cn=admin,@domain@';
-$optLDAPBindPW  = 'nagios.test';
+$optLDAPBindPW  = '';
 
 # export script's user
 $optExportUser  = 'nagios';
@@ -54,6 +54,9 @@ $optExportUser  = 'nagios';
 	nagioshostnotesurl				=> 'notes_url',
 	nagioshostactionurl				=> 'action_url',
 	nagioshostgroups				=> 'hostgroups',
+	nagioshostdependency				=> 'PLACEHOLDER',
+	nagioshostdependencyexecutionfailurecriteria	=> 'execution_failure_criteria',
+	nagioshostdependencynotificationfailurecriteria	=> 'notification_failure_criteria',
 	nagioshostdisable				=> '',
 
 	# .2.4   | nagios attributes (service)
@@ -76,6 +79,9 @@ $optExportUser  = 'nagios';
         nagiosserviceeventhandler			=> 'event_handler',
         nagiosservicenotesurl				=> 'notes_url',
         nagiosserviceactionurl				=> 'action_url',
+	nagiosservicedependency				=> 'PLACEHOLDER',
+	nagiosservicedependencyexecutionfailurecriteria	=> 'execution_failure_criteria',
+	nagiosservicedependencynotificationfailurecriteria => 'notification_failure_criteria',
         nagiosservicedisable				=> '',
 
 	# special stuff ;-)
