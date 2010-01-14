@@ -380,14 +380,21 @@ sub addServices {
 			my $service = $result->{$val1}->{cn};
 
 			# remove basedn from dn
-			$val1 =~ s/,$optBaseDN//;
+			my $val5 = $optBaseDN;
+			if ($val1 !~ /$val5/) {
+				my @val6 = split(/,/, $val5);
+				$val5 = ''; shift(@val6);
+				foreach(@val6) { $val5 .= ','.$_; }
+				$val5 =~ s/,//;
+			}
+			$val1 =~ s/,$val5//;
 
 			# split and reverse the DN
 			my @search = split(",", $val1);
 			@search = reverse(@search);
 
 			# search at base
-			my $searchDN = $optBaseDN;
+			my $searchDN = $val5;
 			my $result = LDAPsearch($ldap, $searchDN, "base", "objectclass=*");
 			my $CLIENTS = addServiceAttributes($result, "$service", $CLIENTS, $host);
 
