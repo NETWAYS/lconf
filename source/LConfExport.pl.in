@@ -342,7 +342,12 @@ sub addHostAttributes {
 			if ($itemMap{$val2}) {
 				# only host attributes
 				if ($val2 =~ /nagioshost/ || $val2 eq 'nagiosaddress' || $val2 eq 'nagiosparent' || $val2 eq 'nagioscheckcommand' || $val2 eq 'nagiosalias') {
-					$CLIENTS->{$host.",".$optBaseDN}->{$val2} = $result->{$val1}->{$val2};
+					if ($result->{$val1}->{$val2} =~ /^\s*\+/) {
+						$result->{$val1}->{$val2} =~ s/\+/,/;
+						$CLIENTS->{$host.",".$optBaseDN}->{$val2} = $CLIENTS->{$host.",".$optBaseDN}->{$val2}.$result->{$val1}->{$val2};
+					} else {
+						$CLIENTS->{$host.",".$optBaseDN}->{$val2} = $result->{$val1}->{$val2};
+					}
 				}
 			}
 		}
@@ -422,7 +427,12 @@ sub addServiceAttributes {
 			if ($itemMap{$val2}) {
 				# only service attributes
 				if ($val2 =~ /nagiosservice/ || $val2 eq 'nagioscheckcommand') {
-					$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2} = $result->{$val1}->{$val2};
+					if ($result->{$val1}->{$val2} =~ /^\s*\+/) {
+						$result->{$val1}->{$val2} =~ s/\+/,/;
+						$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2} = $CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2}.$result->{$val1}->{$val2};
+					} else {
+						$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2} = $result->{$val1}->{$val2};
+					}
 				}
 			}
 		}
