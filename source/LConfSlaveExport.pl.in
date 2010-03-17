@@ -94,7 +94,7 @@ use Pod::Usage;
 use Net::LDAP;
 
 # version string
-my $version = '0.1';
+my $version = '0.8';
 
 # define states
 our @state = ('OK', 'WARNING', 'ERROR');
@@ -176,9 +176,9 @@ beVerbose("COPY", "scp -r $optNagiosConfig/hostgroups $optSlave:$optNagiosConfig
 qx(scp -r $optNagiosConfig/hostgroups $optSlave:$optNagiosConfig);
 
 # reload nagios on slave
-beVerbose("RELOAD", "ssh $optSlave '/etc/init.d/nagios reload'");
-my $result = qx(ssh $optSlave '/etc/init.d/nagios reload');
-print $result;
+#beVerbose("RELOAD", "ssh $optSlave '/etc/init.d/icinga reload'");
+#my $result = qx(ssh $optSlave '/etc/init.d/icinga reload');
+#print $result;
 
 
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #

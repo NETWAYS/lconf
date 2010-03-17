@@ -4,12 +4,18 @@
 $optLDAPServer  = '127.0.0.1';
 $optLDAPDN      = 'ou=LConf,@domain@';
 
-# ldap account (user / pass)
-$optLDAPBindDN  = 'cn=admin,@domain@';
-$optLDAPBindPW  = '';
-
 # export script's user
-$optExportUser  = 'nagios';
+$optExportUser  = '@user@';
+
+# options for slave sync (if used)
+$optSlaveSyncHosts     = 'host1, host2, host3';
+$optSlaveSyncDirLocal  = '/usr/local/icinga/var/perfdata-local';
+$optSlaveSyncDirRemote = '/usr/local/icinga/var/perfdata-remote';
+$optSlaveSyncDirSpool  = '/usr/local/icinga/var/spool/checkresults';
+$optSlaveSyncPidFile   = '@prefix@/etc/LConfSlaveSync.pid';
+$optSlaveSyncExtCmd    = '/usr/local/icinga/var/rw/icinga.cmd';
+$optSlaveSyncGet       = '60';
+$optSlaveSyncPush      = '30';
 
 # configured ldap items
 # WARNING! DO NOT CHANGE THIS!!

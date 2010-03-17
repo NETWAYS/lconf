@@ -2,7 +2,7 @@
 
 # COPYRIGHT:
 #  
-# This software is Copyright (c) 2009 NETWAYS GmbH, Tobias Redel
+# This software is Copyright (c) 2010 NETWAYS GmbH, Tobias Redel
 #                                <support@netways.de>
 # 
 # (Except where explicitly superseded by other copyright notices)
@@ -94,7 +94,7 @@ use Net::LDAP;
 use POSIX;
 
 # version string
-my $version = '0.1';
+my $version = '0.8';
 
 # define states
 our @state = ('OK', 'WARNING', 'ERROR');
@@ -113,7 +113,7 @@ GetOptions(
 # import config
 use lib '@prefix@';
 use etc::config;
-use vars qw($optLDAPServer $optLDAPDN $optLDAPBindDN $optLDAPBindPW %itemMap);
+use vars qw($optLDAPServer $optLDAPDN %itemMap);
 
 
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
@@ -134,8 +134,20 @@ if ($optHelp) { pod2usage(1); }
 # fist of all... check if we're ready to run
 LeaveScript(2, "Variable '\$optLDAPServer' not set in config.pm'")      if !$optLDAPServer;
 LeaveScript(2, "Variable '\$optLDAPDN' not set in config.pm'")          if !$optLDAPDN;
-LeaveScript(2, "Variable '\$optLDAPBindDN' not set in config.pm'")      if !$optLDAPBindDN;
-LeaveScript(2, "Variable '\$optLDAPBindPW' not set in config.pm'")      if !$optLDAPBindPW;
+#LeaveScript(2, "Variable '\$optLDAPBindDN' not set in config.pm'")      if !$optLDAPBindDN;
+#LeaveScript(2, "Variable '\$optLDAPBindPW' not set in config.pm'")      if !$optLDAPBindPW;
+
+# ask user after BindDN and BindPW
+my ($optLDAPBindDN, $optLDAPBindPW);
+print "Please provide your LDAP user/pass to 'LConfImport.pl'\n";
+print "The import will need it to add config to ldap.\n\n";
+print "LDAP BindDN (eg. 'cn=admin,dc=netways,dc=org'): ";
+chop($optLDAPBindDN=<STDIN>);
+print "LDAP BindPW: ";
+system('stty','-echo');
+chop($optLDAPBindPW=<STDIN>);
+system('stty','echo');
+print "\n\n";
 
 # define vars
 my @OBJECTSCACHE;
@@ -286,6 +298,7 @@ if ($optObjectsCache) {
 					my $entry = Net::LDAP::Entry->new;
 					$entry->dn("cn=$contactgroup,$targetDN");
 					$entry->add(objectClass => 'nagiosContactgroup');
+					$entry->add(cn => "$contactgroup");
 					beVerbose("LDAP ADD", "cn=$contactgroup,$targetDN");
 
 					foreach(keys %{$CONTACTGROUPS->{$contactgroup}}) {
@@ -309,6 +322,7 @@ if ($optObjectsCache) {
 					my $entry = Net::LDAP::Entry->new;
 					$entry->dn("cn=$hostgroup,$targetDN");
 					$entry->add(objectClass => 'nagiosHostgroup');
+					$entry->add(cn => "$hostgroup");
 					beVerbose("LDAP ADD", "cn=$hostgroup,$targetDN");
 
 					foreach(keys %{$HOSTGROUPS->{$hostgroup}}) {
@@ -353,6 +367,7 @@ if ($optObjectsCache) {
 						my $entry = Net::LDAP::Entry->new;
 						$entry->dn("cn=$service,$targetDN");
 						$entry->add(objectClass => 'nagiosService');
+						$entry->add(cn => "$service");
 						beVerbose("LDAP ADD", "cn=$service,$targetDN");
 
 						foreach(keys %{$SERVICES->{$host}->{$service}}) {
@@ -433,7 +448,8 @@ sub LDAPconnect {
         my $ldap = Net::LDAP->new($optLDAPServer) or die "Can't connect to LDAP Server '$optLDAPServer'";
         my $mesg=$ldap->bind("$optLDAPBindDN", password => "$optLDAPBindPW" );
 
-        beVerbose("LDAP CONNECT", "connect to Host: $optLDAPServer, User: $optLDAPBindDN, Pass: ******");
+	beVerbose("LDAP CONNECT", "connect to Host: $optLDAPServer, User: $optLDAPBindDN, Pass: ******");
+	LeaveScript(2, "Can't connect to ldap server! Wrong user and/or password?") if $mesg->{resultCode} != 0;
 
         return $ldap;
 }
@@ -554,9 +570,13 @@ sub checkDN {
 	my $result = LDAPsearch($ldap, $dn, "base", "objectclass=*");
 
 	if (!defined $result) {
+		# get ou attribute
+		$dn =~ m/(\w+)=([\w\d]+).*/;
+
 		my $entry = Net::LDAP::Entry->new;
 		$entry->dn($dn);
 		$entry->add ( objectClass => 'nagiosStructuralObject' );
+		$entry->add ( $1 => "$2" );
 		my $result = $entry->update ( $ldap );
 		beVerbose("LDAP ADD", $dn);
 		beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error) if $result->code != 0;
@@ -610,7 +630,7 @@ sub compareAttributes {
 				foreach(keys %{$to_delete}) {
 					# delete old entries
 					my $result = $ldap->modify($_, delete => { $val1 => $val2 });
-					beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error) if $result->code != 0;
+					beVerbose("LDAP DELETE", "ERROR - CODE: ".$result->code." - ".$result->error) if $result->code != 0;
 				}
 
 				# add entry on hirarchical top entry

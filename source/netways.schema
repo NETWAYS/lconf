@@ -470,6 +470,7 @@ objectclass ( 1.3.6.1.4.1.26840.144.4.1 NAME 'nagiosStructuralObject'
 		nagiosParent $ nagiosCheckcommand $ nagiosHostgroups $
 		nagiosHostDependency $ nagiosHostDependencyExecutionFailureCriteria $ nagiosHostDependencyNotificationFailureCriteria $
 		nagiosServiceCustomvar $ nagiosServiceContacts $ nagiosServiceContactgroups $
+		nagiosServiceNotificationOptions $ nagiosServiceNotificationInterval $ nagiosServiceNotificationPeriod $
 		nagiosServiceCheckPeriod $ nagiosServiceCheckInterval $ nagiosServiceCheckRetryInterval $ nagiosServiceCheckMaxCheckAttempts $
 		nagiosServiceProcessPerfData $ nagiosServiceActiveChecksEnabled $ nagiosServicePassiveChecksEnabled $
 		nagiosServiceFlapDetectionEnabled $ nagiosServiceFlapDetectionOptions $ nagiosServiceEventhandler $
@@ -518,8 +519,8 @@ objectclass ( 1.3.6.1.4.1.26840.144.5.5 NAME 'nagiosHost'
 objectclass ( 1.3.6.1.4.1.26840.144.5.6 NAME 'nagiosHostgroup'
 	DESC 'Nagios Hostgroup'
 	SUP top
-	MUST ( cn $ nagiosAlias $ nagiosMembers )
-	MAY ( description ) )
+	MUST ( cn $ nagiosAlias )
+	MAY ( description $ nagiosMembers ) )
 
 objectclass ( 1.3.6.1.4.1.26840.144.5.7 NAME 'nagiosService'
 	DESC 'Nagios Service'

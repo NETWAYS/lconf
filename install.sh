@@ -72,16 +72,23 @@ cat $DIR_SOURCE/LConfSlaveExport.pl.in | sed s/@prefix@/$PREFIX_QUOTED/ > $DIR_S
 ScriptOutput INSTALL "LConf Slave Exporter"
 install -o $USER -g $GROUP -m 750 $DIR_SOURCE/LConfSlaveExport.pl $PREFIX/
 
+ScriptOutput CREATE "LConf Slave Syncer"
+cat $DIR_SOURCE/LConfSlaveSync.pl.in | sed s/@prefix@/$PREFIX_QUOTED/ > $DIR_SOURCE/LConfSlaveSync.pl
+ScriptOutput INSTALL "LConf Slave Syncer"
+install -o $USER -g $GROUP -m 750 $DIR_SOURCE/LConfSlaveSync.pl $PREFIX/
+
+ScriptOutput CREATE "LConf config file"
+cat $DIR_SOURCE/config.pm.in | sed s/@domain@/$ROOTDN/ > $DIR_SOURCE/config.pm.tmp1
+cat $DIR_SOURCE/config.pm.tmp1 | sed s/@user@/$USER/ > $DIR_SOURCE/config.pm.tmp2
+cat $DIR_SOURCE/config.pm.tmp2 | sed s/@prefix@/$PREFIX_QUOTED/ > $DIR_SOURCE/config.pm
+ScriptOutput INSTALL "LConf config file"
+install -o $USER -g $GROUP -m 700 $DIR_SOURCE/config.pm $PREFIX/etc/
+
 ScriptOutput INSTALL "LDAP schema file"
 install -o root -g root -m 644 $DIR_SOURCE/netways.schema $DIR_SCHEMA/
 
 ScriptOutput INSTALL "Default templates"
 install -o $USER -g $GROUP -m 640 $DIR_SOURCE/default-templates.cfg $PREFIX/etc/
-
-ScriptOutput CREATE "LConf config file"
-cat $DIR_SOURCE/config.pm.in | sed s/@domain@/$ROOTDN/ > $DIR_SOURCE/config.pm
-ScriptOutput INSTALL "LConf config file"
-install -o $USER -g $GROUP -m 700 $DIR_SOURCE/config.pm $PREFIX/etc/
 
 ScriptOutput CREATE "LDAP base ldif"
 cat $DIR_SOURCE/base.ldif.in | sed s/@domain@/$ROOTDN/ > $DIR_SOURCE/base.ldif

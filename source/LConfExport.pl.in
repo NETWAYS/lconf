@@ -1,40 +1,40 @@
 #!/usr/bin/perl -w
 
 # COPYRIGHT:
-#  
-# This software is Copyright (c) 2010 NETWAYS GmbH, Tobias Redel 
+#
+# This software is Copyright (c) 2010 NETWAYS GmbH, Tobias Redel
 #                                <support@netways.de>
-# 
+#
 # (Except where explicitly superseded by other copyright notices)
-# 
-# 
+#
+#
 # LICENSE:
-# 
+#
 # This work is made available to you under the terms of Version 2 of
 # the GNU General Public License. A copy of that license should have
 # been provided with this software, but in any event can be snarfed
 # from http://www.fsf.org.
-# 
+#
 # This work is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301 or visit their web page on the internet at
 # http://www.fsf.org.
-# 
-# 
+#
+#
 # CONTRIBUTION SUBMISSION POLICY:
-# 
+#
 # (The following paragraph is not intended to limit the rights granted
 # to you to modify and distribute this software under the terms of
 # the GNU General Public License and is only of importance to you if
 # you choose to contribute your changes and enhancements to the
 # community by submitting them to NETWAYS GmbH.)
-# 
+#
 # By intentionally submitting any modifications, corrections or
 # derivatives to this work, or any other work intended for use with
 # this Software, to NETWAYS GmbH, you confirm that
@@ -49,16 +49,17 @@
 
 =head1 NAME
 
-LConfExport.pl - export an nagios config from LConf
+LConfExport.pl - export a nagios config from LConf
 
 =head1 SYNOPSIS
 
-LConfExport.pl  -o <path to objects.cache>
-                -v
-                -h
-                -V
+LConfExport.pl  -o <output dir>
+		[-v]
+		[-d]
+		[-h]
+		[-V]
 
-Import an existing nagios config
+Export a nagios config from LConf
 
 =head1 OPTIONS
 
@@ -68,9 +69,13 @@ Import an existing nagios config
 
 output dir for config
 
-=item -v|--verbose <path to logfile>
+=item -v|--verbose [<path to logfile>]
 
 Verbose mode. If no logfile is specified, verbose output will be printend to STDOUT
+
+=item -d|--debug [<path to logfile>]
+
+Debug mode. If no logfile is specified, debug output will be printed to STDOUT
 
 =item -h|--help
 
@@ -89,19 +94,19 @@ use Pod::Usage;
 use Net::LDAP;
 
 # version string
-my $version = '0.5';
+my $version = '0.8';
 
 # define states
 our @state = ('OK', 'WARNING', 'ERROR');
 
 # get command-line parameters
-my ($optOutputDir, $optVerbose, $optHelp, $optVersion);
-
+my ($optOutputDir, $optVerbose, $optDebug, $optHelp, $optVersion);
 GetOptions(
-	"o|output=s"		=> \$optOutputDir,
-	"v|verbose:s"           => \$optVerbose,
-	"h|help"                => \$optHelp,
-	"V|version"             => \$optVersion
+	"o|output=s"	=> \$optOutputDir,
+	"v|verbose:s"	=> \$optVerbose,
+	"d|debug:s"	=> \$optDebug,
+	"h|help"	=> \$optHelp,
+	"V|version"	=> \$optVersion,
 );
 
 # import config
@@ -111,7 +116,7 @@ use vars qw($optLDAPServer $optLDAPDN $optExportUser %itemMap);
 
 
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
-# help and version page and sample config...
+# help and version page
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
 
 # should print version?
@@ -126,7 +131,7 @@ if ($optHelp || !$optOutputDir) { pod2usage(1); }
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
 
 # fist of all... check if we're ready to run
-LeaveScript(2, "Variable '\$optLDAPServer' not set in config.pm'")      if !$optLDAPServer;
+LeaveScript(2, "Variable '\$optLDAPServer' not set in config.pm'")	if !$optLDAPServer;
 LeaveScript(2, "Variable '\$optLDAPDN' not set in config.pm'")		if !$optLDAPDN;
 LeaveScript(2, "Variable '\$optExportUser' not set in config.pm'")	if !$optExportUser;
 
@@ -145,13 +150,19 @@ qx(rm -r $optOutputDir/* 2>/dev/null);
 
 # define vars
 my $optBaseDN = 'ou=NagiosConfig,'.$optLDAPDN;
-my @HOSTGROUPS;
+my $INHERIT;
 
 # connect to LDAP server
 my $ldap = LDAPconnect();
 
 # get all clients to monitor
 my $CLIENTS = LDAPsearch($ldap, $optBaseDN, "sub", "objectclass=nagiosHost");
+
+# run custom script (pre)
+if (-f 'custom/pre.pl') {
+	require 'custom/pre.pl';
+	$CLIENTS = CustomPre($CLIENTS);
+}
 
 # inherited host and service configuration
 foreach my $client (keys %{$CLIENTS}) {
@@ -162,10 +173,36 @@ foreach my $client (keys %{$CLIENTS}) {
 	my @search = split(",", $client);
 	@search = reverse(@search);
 
-	# build host configuration
+	# debug output
+	DebugOutput("CREATE HOSTOBJECT $client");
+	DebugOutput("BUILD HOSTATTRIBUTES for $client");
+
+	# search aliases for host
 		# search at base
 		my $searchDN = $optBaseDN;
-		my $result = LDAPsearch($ldap, $searchDN, "base", "objectclass=*");
+		my $result = LDAPsearch($ldap, $searchDN, "single", "objectclass=alias");
+		foreach(keys %{$result}) {
+			DebugOutput("Link ou=$result->{$_}->{ou} found on $searchDN");
+			my $result = LDAPsearch($ldap, $result->{$_}->{aliasedobjectname}, "base", "objectclass=*");
+			$CLIENTS = addHostAttributes($result, $client, $CLIENTS);
+		}
+
+
+		# and search rest of the three
+		foreach(@search) {
+			$searchDN = $_.",".$searchDN;
+			my $result = LDAPsearch($ldap, $searchDN, "single", "objectclass=alias");
+			foreach(keys %{$result}) {
+				DebugOutput("Link ou=$result->{$_}->{ou} found on $searchDN");
+				my $result = LDAPsearch($ldap, $result->{$_}->{aliasedobjectname}, "base", "objectclass=*");
+				$CLIENTS = addHostAttributes($result, $client, $CLIENTS);
+			}
+		}
+
+	# search main for host
+		# search at base
+		$searchDN = $optBaseDN;
+		$result = LDAPsearch($ldap, $searchDN, "base", "objectclass=*");
 		$CLIENTS = addHostAttributes($result, $client, $CLIENTS);
 
 		# and search rest of the tree
@@ -175,35 +212,28 @@ foreach my $client (keys %{$CLIENTS}) {
 			$CLIENTS = addHostAttributes($result, $client, $CLIENTS);
 		}
 
-	# search aliases for host
-		# search at base
+	DebugOutput("BUILD SERVICEATTRIBUTES for $client");
+
+	# search aliases for services
+		# reset search base
 		$searchDN = $optBaseDN;
 		$result = LDAPsearch($ldap, $searchDN, "single", "objectclass=alias");
+		foreach(keys %{$result}) {
+			DebugOutput("Link ou=$result->{$_}->{ou} found on $searchDN");
+			$CLIENTS = addAlias($result, $client, $CLIENTS);
+		}
 
-		# and search rest of the three
+		# and search rest of the tree (from top to item)
 		foreach(@search) {
 			$searchDN = $_.",".$searchDN;
-			my $result = LDAPsearch($ldap, $searchDN, "single", "objectclass=alias");
+			$result = LDAPsearch($ldap, $searchDN, "single", "objectclass=alias");
 			foreach(keys %{$result}) {
-				my $result = LDAPsearch($ldap, $result->{$_}->{aliasedobjectname}, "base", "objectclass=*");
-				$CLIENTS = addHostAttributes($result, $client, $CLIENTS);
+				DebugOutput("Link ou=$result->{$_}->{ou} found on $searchDN");
+				$CLIENTS = addAlias($result, $client, $CLIENTS);
 			}
 		}
 
-	# search aliases for service
-                # reset search base
-                $searchDN = $optBaseDN;
-                $result = LDAPsearch($ldap, $searchDN, "single", "objectclass=alias");
-                $CLIENTS = addAlias($result, $client, $CLIENTS);
-
-                # and search rest of the tree
-                foreach(@search) {
-                        $searchDN = $_.",".$searchDN;
-                        $result = LDAPsearch($ldap, $searchDN, "single", "objectclass=alias");
-                        $CLIENTS = addAlias($result, $client, $CLIENTS);
-                }
-		
-	# which service belongs to this host?
+	# search main for services
 		# reset search base
 		$searchDN = $optBaseDN;
 		$result = LDAPsearch($ldap, $searchDN, "single", "objectclass=nagiosService");
@@ -221,9 +251,16 @@ foreach my $client (keys %{$CLIENTS}) {
 		$CLIENTS = addServices($result, $client, $CLIENTS, $optBaseDN);
 }
 
-# build dir structure
+# run custom script (mid)
+if (-f 'custom/mid.pl') {
+	require 'custom/mid.pl';
+	$CLIENTS = CustomMid($CLIENTS);
+}
+
+# build dir structure and copy generic templates
 createDirs($optBaseDN, $optOutputDir);
 mkdir("$optOutputDir/hostgroups/");
+copyGeneric('@prefix@/etc/default-templates.cfg', $optOutputDir);
 
 # write config
 genTimeperiods();
@@ -231,7 +268,14 @@ genCommands();
 genContacts();
 genContactgroups();
 genHostgroups();
+HostgroupServiceMapping();
 genHostConfig();
+
+# run custom script (post)
+if (-f 'custom/post.pl') {
+        require 'custom/post.pl';
+        $CLIENTS = CustomPost($CLIENTS);
+}
 
 # disconnect from LDAP Server
 $ldap->unbind();
@@ -242,93 +286,111 @@ $ldap->unbind();
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
 
 sub beVerbose {
-        my $type = shift;
-        my $text = shift;
+	my $type = shift;
+	my $text = shift;
 
-        if (defined $optVerbose) {
-                # generate message
-                my $message = localtime(time)." | Verbose: $type: $text\n";
+	if (defined $optVerbose) {
+		# generate message
+		my $message = localtime(time)." | Verbose: $type: $text\n";
 
-                # should write log to file or STDOUT?
-                if ($optVerbose ne "") {
-                        open(LOGF,">>$optVerbose") || die $!;
-                        print LOGF $message;
-                        close(LOGF);
-                } else {
-                        print $message;
-                }
+		# should write log to file or STDOUT?
+		if ($optVerbose ne "") {
+			open(LOGF,">>$optVerbose") || die $!;
+			print LOGF $message;
+			close(LOGF);
+		} else {
+			print $message;
+		}
+	}
+}
+
+sub DebugOutput {
+	my $text = shift;
+
+	if (defined $optDebug) {
+		# generate message
+		my $message = localtime(time)." | Debug: $text\n";
+
+		# should write log to file or STDOUT?
+		if ($optDebug ne "") {
+			open(LOGF,">>$optDebug") || die $!;
+			print LOGF $message;
+			close(LOGF);
+		} else {
+			print $message;
+		}
 	}
 }
 
 sub LeaveScript {
-        my $exitCode = $_[0];
-        my $comment  = $_[1];
+	my $exitCode = $_[0];
+	my $comment  = $_[1];
 
-        print $state[$exitCode]." - $comment\n";
-        exit $exitCode;
+	print $state[$exitCode]." - $comment\n";
+	exit $exitCode;
 }
 
 sub LDAPconnect {
-        my $ldap = Net::LDAP->new ($optLDAPServer) or die "Can't connect to LDAP Server '$optLDAPServer'";
-        return $ldap;
+	my $ldap = Net::LDAP->new ($optLDAPServer) or die "Can't connect to LDAP Server '$optLDAPServer'";
+	return $ldap;
 }
 
 sub LDAPsearch {
-        my $ldap   = shift;
-        my $base   = shift;
-        my $scope  = shift;
-        my $filter = shift;
-        my $return;
+	my $ldap   = shift;
+	my $base   = shift;
+	my $scope  = shift;
+	my $filter = shift;
+	my $return;
 
-        # get entries
-        my $result = $ldap->search ( base       => $base,
-                                     scope      => $scope,
-                                     deref      => 'never',
-                                     filter     => "$filter");
+	# get entries
+	my $result = $ldap->search ( base       => $base,
+				     scope      => $scope,
+				     deref      => 'never',
+				     filter     => "$filter");
 
-        beVerbose("LDAP SEARCH", "SEARCH '$filter' ON '$base'");
+	beVerbose("LDAP SEARCH", "SEARCH '$filter' ON '$base'");
 
-        # convert result to a hash
-        my $href = $result->as_struct;
+	# convert result to a hash
+	my $href = $result->as_struct;
 
-        # get an array of the DN names
-        my @arrayOfDNs  = keys %$href;
+	# get an array of the DN names
+	my @arrayOfDNs  = keys %$href;
 
-        # process each DN using it as a key
-        foreach (@arrayOfDNs) {
-                $return->{$_}->{dn} = $_;
-                my $valref = $$href{$_};
+	# process each DN using it as a key
+	foreach (@arrayOfDNs) {
+		$return->{$_}->{dn} = $_;
+		my $valref = $$href{$_};
 
-                # get an array of the attribute names
-                # passed for this one DN.
-                my @arrayOfAttrs = sort keys %$valref;
+		# get an array of the attribute names
+		# passed for this one DN.
+		my @arrayOfAttrs = sort keys %$valref;
 
-                foreach my $attrName(@arrayOfAttrs) {
-                        # can't handle binary data => skip!
-                        next if ( $attrName =~ /;binary$/ );
+		foreach my $attrName(@arrayOfAttrs) {
+			# can't handle binary data => skip!
+			next if ( $attrName =~ /;binary$/ );
 
-                        # attribute name as the hash
-                        my $attrVal =  @$valref{$attrName};
+			# attribute name as the hash
+			my $attrVal =  @$valref{$attrName};
 
-                        # convert to an ordinary hash
-                        my $counter = scalar @$attrVal;
-                        while($counter != 0) {
-                                $counter--;
-                                if ($attrName eq "nagioshostcustomvar" || $attrName eq "nagiosservicecustomvar") {
+			# convert to an ordinary hash
+			my $counter = scalar @$attrVal;
+			while($counter != 0) {
+				$counter--;
+				if ($attrName eq "nagioshostcustomvar" || $attrName eq "nagiosservicecustomvar") {
 					@$attrVal[$counter] =~ m/([\d\w]*) (.*)/;
 					$return->{$_}->{$attrName}->{$1} = $2;
 				} elsif ($attrName eq "nagiostimeperiodvalue") {
 					@$attrVal[$counter] =~ m/(.*) +([-\w:]+)/;
 					$return->{$_}->{$attrName}->{$1} = $2;
-                                } else {
-                                        $return->{$_}->{$attrName} = @$attrVal[$counter];
-                                }
-                        }
-                }
-        }
+				} else {
+					$return->{$_}->{$attrName} = @$attrVal[$counter];
+				}
+			}
+		}
+	}
 
-        # and return the hash
-        return $return;
+	# and return the hash
+	return $return;
 }
 
 sub addHostAttributes {
@@ -342,12 +404,23 @@ sub addHostAttributes {
 			if ($itemMap{$val2}) {
 				# only host attributes
 				if ($val2 =~ /nagioshost/ || $val2 eq 'nagiosaddress' || $val2 eq 'nagiosparent' || $val2 eq 'nagioscheckcommand' || $val2 eq 'nagiosalias') {
+					DebugOutput("Attribute $val2 [$result->{$val1}->{$val2}] found in $val1; valency: hostattribute => store!");
 					if ($result->{$val1}->{$val2} =~ /^\s*\+/) {
 						$result->{$val1}->{$val2} =~ s/\+/,/;
 						$CLIENTS->{$host.",".$optBaseDN}->{$val2} = $CLIENTS->{$host.",".$optBaseDN}->{$val2}.$result->{$val1}->{$val2};
 					} else {
-						$CLIENTS->{$host.",".$optBaseDN}->{$val2} = $result->{$val1}->{$val2};
+						if ($val2 =~ /nagioshostcustomvar/) {
+							foreach(keys %{$result->{$val1}->{$val2}}) {
+								$CLIENTS->{$host.",".$optBaseDN}->{nagioshostcustomvar}->{$_} = $result->{$val1}->{$val2}->{$_};
+								$INHERIT->{$host.",".$optBaseDN}->{nagioshostcustomvar}->{$_} = $result->{$val1}->{dn};
+							}
+						} else {
+							$CLIENTS->{$host.",".$optBaseDN}->{$val2} = $result->{$val1}->{$val2};
+							$INHERIT->{$host.",".$optBaseDN}->{$val2} = $result->{$val1}->{dn};
+						}
 					}
+				} else {
+					DebugOutput("Attribute $val2 [$result->{$val1}->{$val2}] found in $val1; valency: no hostattribute => drop!");
 				}
 			}
 		}
@@ -363,22 +436,30 @@ sub addHostAttributes {
 	return $CLIENTS;
 }
 
+sub addAlias {
+	my $result  = shift;
+	my $host    = shift;
+	my $CLIENTS = shift;
+
+	foreach my $alias (keys %{$result}) {
+		my $searchDN = $result->{$alias}->{aliasedobjectname};
+		my $val = LDAPsearch($ldap, $searchDN, "sub", "objectclass=nagiosService");
+		$CLIENTS = addServices($val, $host, $CLIENTS, $searchDN);
+	}
+
+	# return
+	return $CLIENTS;
+}
+
 sub addServices {
-	my $result      = shift;
-	my $host        = shift;
-	my $CLIENTS     = shift;
-	my $searchTree  = shift;
+	my $result	= shift;
+	my $host	= shift;
+	my $CLIENTS	= shift;
+	my $searchTree	= shift;
 
 	# list service
 	foreach my $val1 (keys %{$result}) {
-
-		# list service attributes
-		foreach my $val2 (keys %{$result->{$val1}}) {
-			# only defined attributes
-			if ($val2 =~ /nagiosservice/ || $val2 eq 'nagioscheckcommand') {
-				$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$result->{$val1}->{cn}}->{$val2} = $result->{$val1}->{$val2};
-			}
-		}
+		DebugOutput("Service $result->{$val1}->{cn} found in $val1");
 
 		# interited service attributes
 			# determine service name
@@ -421,19 +502,27 @@ sub addServiceAttributes {
 	my $CLIENTS  = shift;
 	my $host     = shift;
 
-	foreach my $val1 (keys %{$result}) {
+        foreach my $val1 (keys %{$result}) {
 		foreach my $val2 (keys %{$result->{$val1}}) {
-			# only defined attributes
-			if ($itemMap{$val2}) {
-				# only service attributes
-				if ($val2 =~ /nagiosservice/ || $val2 eq 'nagioscheckcommand') {
-					if ($result->{$val1}->{$val2} =~ /^\s*\+/) {
-						$result->{$val1}->{$val2} =~ s/\+/,/;
-						$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2} = $CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2}.$result->{$val1}->{$val2};
+			# only service attributes
+			if ($val2 =~ /nagiosservice/ || $val2 eq 'nagioscheckcommand' || $val2 eq 'dn') {
+				DebugOutput("Attribute $val2 [$result->{$val1}->{$val2}] found in $val1; valency: serviceattribute => store!");
+				if ($result->{$val1}->{$val2} =~ /^\s*\+/) {
+					$result->{$val1}->{$val2} =~ s/\+/,/;
+					$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2} = $CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2}.$result->{$val1}->{$val2};
+				} else {
+					if ($val2 =~ /nagiosservicecustomvar/) {
+						foreach(keys %{$result->{$val1}->{$val2}}) {
+							$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{nagiosservicecustomvar}->{$_} = $result->{$val1}->{$val2}->{$_};
+							$INHERIT->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{nagiosservicecustomvar}->{$_} = $result->{$val1}->{dn};
+						}
 					} else {
 						$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2} = $result->{$val1}->{$val2};
+						$INHERIT->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2} = $result->{$val1}->{dn};
 					}
 				}
+			} else {
+				DebugOutput("Attribute $val2 [$result->{$val1}->{$val2}] found in $val1; valency: no serviceattribute => drop");
 			}
 		}
 
@@ -444,22 +533,6 @@ sub addServiceAttributes {
 			$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{DEPENDENCY}->{$depHost}->{$depService}->{nagiosservicedependencynotificationfailurecriteria} = $result->{$val1}->{nagiosservicedependencynotificationfailurecriteria} if $result->{$val1}->{nagiosservicedependencynotificationfailurecriteria};
 		}
 	}
-
-	# return
-	return $CLIENTS;
-}
-
-sub addAlias {
-	my $result  = shift;
-	my $host    = shift;
-	my $CLIENTS = shift;
-
-	foreach my $alias (keys %{$result}) {
-		my $searchDN = $result->{$alias}->{aliasedobjectname};
-		my $val = LDAPsearch($ldap, $searchDN, "sub", "objectclass=nagiosService");
-
-		$CLIENTS = addServices($val, $host, $CLIENTS, $searchDN);
-	}       
 
 	# return
 	return $CLIENTS;
@@ -481,18 +554,24 @@ sub createDirs {
 			beVerbose('CREATE DIR', $folder);
 		}
 
-	        createDirs($_, $folder);
+		createDirs($_, $folder);
 	}
 }
 
-sub genHostConfig {
-	# do for each client
-	foreach my $client (keys %{$CLIENTS}) {
-		my $host_name;
+sub copyGeneric {
+	my $source = shift;
+	my $target = shift;
 
+	qx(cp $source $target/);
+}
+
+sub genTimeperiods {
+	# get all timeperiods
+	my $result = LDAPsearch($ldap, $optBaseDN, "sub", "objectclass=nagiosTimeperiod");
+	foreach my $timeperiod (keys %{$result}) {
 		# build file path
 		my $writeFile = $optOutputDir.'/';
-		my $path = $CLIENTS->{$client}->{dn};
+		my $path = $result->{$timeperiod}->{dn};
 		$path =~ s/,$optBaseDN//;
 		my @path = split(",", $path);
 		@path = reverse(@path);
@@ -501,134 +580,11 @@ sub genHostConfig {
 			if ($items =~ /cn/) {
 				my $val = (split(/\=/, $items))[1];
 				$writeFile .= $val.'.cfg';
-				$host_name = $val;
 			} else {
 				my $val = (split(/\=/, $items))[1];
 				$writeFile .= $val.'/';
 			}
 		}
-
-		# only gen config if nagioshostdisable is not set
-		if (!defined $CLIENTS->{$client}->{nagioshostdisable}) {
-			# open target file
-			open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
-
-			# generate host definition
-			print FH "define host {\n";
-			print FH "\tuse\tgeneric-host\n";
-			print FH "\thost_name\t$host_name\n";
-			foreach (keys %{$CLIENTS->{$client}}) {
-				# generate all host attributes, except host dependency stuff
-				if ($_ !~ /nagioshostdependency/ && $_ =~ /nagioshost/ || $_ eq 'nagiosaddress' || $_ eq 'nagiosparent' || $_ eq 'nagioscheckcommand' || $_ eq 'nagiosalias' && $_ ne 'nagioshostdisable') {
-					if ($_ eq 'nagioshostcustomvar') {
-						foreach my $customvar (keys %{$CLIENTS->{$client}->{$_}}) {
-							print FH "\t$customvar\t$CLIENTS->{$client}->{$_}->{$customvar}\n";
-						}
-					} else {
-						print FH "\t$itemMap{$_}\t$CLIENTS->{$client}->{$_}\n";
-					}
-				}
-			}
-			print FH "}\n";
-			print FH "\n";
-
-			# generate service definition
-			foreach my $service(keys %{$CLIENTS->{$client}->{SERVICES}}) {
-				if (!$CLIENTS->{$client}->{SERVICES}->{$service}->{nagiosservicedisable} && $service ne "INFO") {
-					print FH "define service {\n";
-					print FH "\tuse\tgeneric-service\n";
-					print FH "\tservice_description\t$service\n";
-					print FH "\thost_name\t$host_name\n";
-					foreach(keys %{$CLIENTS->{$client}->{SERVICES}->{$service}}) {
-						# generate all service attributes, except service dependency stuff
-						if ($_ !~ /nagiosservicedependency/ && $_ =~ /nagiosservice/ || $_ eq 'nagioscheckcommand') {
-							if ($_ eq 'nagiosservicecustomvar') {
-								foreach my $customvar (keys %{$CLIENTS->{$client}->{SERVICES}->{$service}->{$_}}) {
-									print FH "\t$customvar\t$CLIENTS->{$client}->{SERVICES}->{$service}->{$_}->{$customvar}\n";
-								}
-							} else {
-								print FH "\t$itemMap{$_}\t$CLIENTS->{$client}->{SERVICES}->{$service}->{$_}\n";
-							}
-						}
-					}
-					print FH "}\n";
-					print FH "\n";
-				}
-			}
-
-			# generate host dependencies
-			foreach my $hostdep(keys %{$CLIENTS->{$client}->{DEPENDENCY}}) {
-				# only if host is not disabled
-				if (!$CLIENTS->{$client}->{nagioshostdisable}) {
-					print FH "define hostdependency {\n";
-					print FH "\thost_name\t$hostdep\n";
-					print FH "\tdependent_host_name\t$CLIENTS->{$client}->{cn}\n";
-	
-					foreach(keys %{$CLIENTS->{$client}->{DEPENDENCY}->{$hostdep}}) {
-						print FH "\t$itemMap{$_}\t$CLIENTS->{$client}->{DEPENDENCY}->{$hostdep}->{$_}\n" if $itemMap{$_};
-					}
-					
-					print FH "}\n";
-					print FH "\n";
-				}
-			}
-
-			# generate service dependencies
-			foreach my $service(keys %{$CLIENTS->{$client}->{SERVICES}}) {
-				# only if service is not disabled
-				if (!$CLIENTS->{$client}->{SERVICES}->{$service}->{nagiosservicedisable}) {
-					foreach my $hostdep(keys %{$CLIENTS->{$client}->{SERVICES}->{$service}->{DEPENDENCY}}) {
-						foreach my $servicedep(keys %{$CLIENTS->{$client}->{SERVICES}->{$service}->{DEPENDENCY}->{$hostdep}}) {
-							print FH "define servicedependency {\n";
-	
-							# special stuff for inheritance :-(
-							if ($hostdep eq "\$HOSTNAME\$") {
-								print FH "\thost_name\t$CLIENTS->{$client}->{cn}\n";
-							} else {
-								print FH "\thost_name\t$hostdep\n";
-							}
-	
-							print FH "\tservice_description\t$servicedep\n";
-							print FH "\tdependent_host_name\t$CLIENTS->{$client}->{cn}\n";
-							print FH "\tdependent_service_description\t$service\n";
-	
-							foreach(keys %{$CLIENTS->{$client}->{SERVICES}->{$service}->{DEPENDENCY}->{$hostdep}->{$servicedep}}) {
-								print FH "\t$itemMap{$_}\t$CLIENTS->{$client}->{SERVICES}->{$service}->{DEPENDENCY}->{$hostdep}->{$servicedep}->{$_}\n";
-							}
-	
-							print FH "}\n";
-							print FH "\n";
-						}
-					}
-				}
-			}
-
-			# close target file
-			close(FH);
-		}
-	}
-}
-
-sub genTimeperiods {
-	# get all timeperiods
-	my $result = LDAPsearch($ldap, $optBaseDN, "sub", "objectclass=nagiosTimeperiod");
-	foreach my $timeperiod (keys %{$result}) {
-                # build file path
-                my $writeFile = $optOutputDir.'/';
-                my $path = $result->{$timeperiod}->{dn};
-                $path =~ s/,$optBaseDN//;
-                my @path = split(",", $path);
-                @path = reverse(@path);
-                foreach my $items (@path) {
-                        # file or folder?
-                        if ($items =~ /cn/) {
-                                my $val = (split(/\=/, $items))[1];
-                                $writeFile .= $val.'.cfg';
-                        } else {
-                                my $val = (split(/\=/, $items))[1];
-                                $writeFile .= $val.'/';
-                        }
-                }
 
 		# open target file
 		open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
@@ -699,22 +655,22 @@ sub genContacts {
 	# get all contacts
 	my $result = LDAPsearch($ldap, $optBaseDN, "sub", "objectclass=nagiosContact");
 	foreach my $contact (keys %{$result}) {
-                # build file path
+		# build file path
 		my $writeFile = $optOutputDir.'/';
 		my $path = $result->{$contact}->{dn};
 		$path =~ s/,$optBaseDN//;
 		my @path = split(",", $path);
 		@path = reverse(@path);
-                foreach my $items (@path) {
-                        # file or folder?
-                        if ($items =~ /cn/) {
-                                my $val = (split(/\=/, $items))[1];
-                                $writeFile .= $val.'.cfg';
-                        } else {
-                                my $val = (split(/\=/, $items))[1];
-                                $writeFile .= $val.'/';
-                        }
-                }
+		foreach my $items (@path) {
+			# file or folder?
+			if ($items =~ /cn/) {
+				my $val = (split(/\=/, $items))[1];
+				$writeFile .= $val.'.cfg';
+			} else {
+				my $val = (split(/\=/, $items))[1];
+				$writeFile .= $val.'/';
+			}
+		}
 
 		# open target file
 		open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
@@ -741,22 +697,22 @@ sub genContactgroups {
 	# get all contactgroups
 	my $result = LDAPsearch($ldap, $optBaseDN, "sub", "objectclass=nagiosContactgroup");
 	foreach my $contactgroup (keys %{$result}) {
-	        # build file path
-                my $writeFile = $optOutputDir.'/';
-                my $path = $result->{$contactgroup}->{dn};
-                $path =~ s/,$optBaseDN//;
-                my @path = split(",", $path);
-                @path = reverse(@path);
-                foreach my $items (@path) {
-                        # file or folder?
-                        if ($items =~ /cn/) {
-                                my $val = (split(/\=/, $items))[1];
-                                $writeFile .= $val.'.cfg';
-                        } else {
-                                my $val = (split(/\=/, $items))[1];
-                                $writeFile .= $val.'/';
-                        }
-                }
+		# build file path
+		my $writeFile = $optOutputDir.'/';
+		my $path = $result->{$contactgroup}->{dn};
+		$path =~ s/,$optBaseDN//;
+		my @path = split(",", $path);
+		@path = reverse(@path);
+		foreach my $items (@path) {
+			# file or folder?
+			if ($items =~ /cn/) {
+				my $val = (split(/\=/, $items))[1];
+				$writeFile .= $val.'.cfg';
+			} else {
+				my $val = (split(/\=/, $items))[1];
+				$writeFile .= $val.'/';
+			}
+		}
 
 		# open target file
 		open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
@@ -779,26 +735,27 @@ sub genContactgroups {
 }
 
 sub genHostgroups {
+	my @HOSTGROUPS;
+
 	# get hostgroups (from client attributes)
 	foreach my $client (keys %{$CLIENTS}) {
 		if (defined $CLIENTS->{$client}->{nagioshostgroups}) {
 			if ($CLIENTS->{$client}->{nagioshostgroups} =~ /,/) {
 				my @val = split(/\s*,\s*/, $CLIENTS->{$client}->{nagioshostgroups});
-       				foreach(@val) { push(@HOSTGROUPS, $_); }
+				foreach(@val) { push(@HOSTGROUPS, $_); }
 			} else {
 				push(@HOSTGROUPS, $CLIENTS->{$client}->{nagioshostgroups});
 			}
 		}
 	}
 
-	# write hostgroup files (for client attributes)
+	# write hostgroup files
 	foreach my $hostgroup (@HOSTGROUPS) {
 		# set file path
 		my $writeFile = $optOutputDir."/hostgroups/$hostgroup.cfg";
 
 		# open target file
 		open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
-
 		print FH "define hostgroup {\n";
 		print FH "\thostgroup_name\t$hostgroup\n";
 		print FH "\talias\t$hostgroup\n";
@@ -823,7 +780,7 @@ sub genHostgroups {
 		print FH "}\n";
 
 		# add hosts of this hostgroup to $CLIENT hash;
-		# client config will write the membership
+		# client config will write the config for membership
 		my @val = split(/\s*,\s*/, $result->{$val1}->{nagiosmembers});
 		foreach(@val) {
 			# search full name im client hash :(
@@ -831,10 +788,169 @@ sub genHostgroups {
 				# if real name was found, add to $CLIENT hash
 				if ($client =~ /^cn=$_,/) {
 					if ($CLIENTS->{$client}->{nagioshostgroups}) {
-						 $CLIENTS->{$client}->{nagioshostgroups} =  $CLIENTS->{$client}->{nagioshostgroups}.','.$result->{$val1}->{cn};
+						$CLIENTS->{$client}->{nagioshostgroups} =  $CLIENTS->{$client}->{nagioshostgroups}.','.$result->{$val1}->{cn};
 					} else {
 						$CLIENTS->{$client}->{nagioshostgroups} = $result->{$val1}->{cn};
 					}
+				}
+			}
+		}
+	}
+}
+
+sub genHostConfig {
+	# do for each client
+	foreach my $client (keys %{$CLIENTS}) {
+		my $host_name;
+
+		# build file path
+		my $writeFile = $optOutputDir.'/';
+		my $path = $CLIENTS->{$client}->{dn};
+		$path =~ s/,$optBaseDN//;
+		my @path = split(",", $path);
+		@path = reverse(@path);
+		foreach my $items (@path) {
+		# file or folder?
+			if ($items =~ /cn/) {
+				my $val = (split(/\=/, $items))[1];
+				$writeFile .= $val.'.cfg';
+				$host_name = $val;
+			} else {
+				my $val = (split(/\=/, $items))[1];
+				$writeFile .= $val.'/';
+			}
+		}
+
+		# only gen config if nagioshostdisable is not set
+		if (!defined $CLIENTS->{$client}->{nagioshostdisable}) {
+			# open target file
+			open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
+
+			# generate host definition
+			print FH "define host {\n";
+			print FH "\tuse\tgeneric-host\n";
+			print FH "\thost_name\t$host_name\n";
+			foreach (keys %{$CLIENTS->{$client}}) {
+				# generate all host attributes, except host dependency stuff
+				if ($_ !~ /nagioshostdependency/ && $_ =~ /nagioshost/ || $_ eq 'nagiosaddress' || $_ eq 'nagiosparent' || $_ eq 'nagioscheckcommand' || $_ eq 'nagiosalias' && $_ ne 'nagioshostdisable') {
+					if ($_ eq 'nagioshostcustomvar') {
+						foreach my $customvar (keys %{$CLIENTS->{$client}->{$_}}) {
+							if (defined $INHERIT->{$client}->{$_}->{$customvar} && $INHERIT->{$client}->{$_}->{$customvar} ne $CLIENTS->{$client}->{dn}) {
+								print FH "\t# from: $INHERIT->{$client}->{$_}->{$customvar}\n";
+							}
+							print FH "\t$customvar\t$CLIENTS->{$client}->{$_}->{$customvar}\n";
+						}
+					} else {
+						if (defined $INHERIT->{$client}->{$_} && $INHERIT->{$client}->{$_} ne $CLIENTS->{$client}->{dn}) {
+							print FH "\t# from: $INHERIT->{$client}->{$_}\n";
+						}
+						print FH "\t$itemMap{$_}\t$CLIENTS->{$client}->{$_}\n";
+					}
+				}
+			}
+			print FH "}\n";
+			print FH "\n";
+
+			# generate service definition
+			foreach my $service(keys %{$CLIENTS->{$client}->{SERVICES}}) {
+				if (!$CLIENTS->{$client}->{SERVICES}->{$service}->{nagiosservicedisable} && $service ne "INFO") {
+					if (defined $CLIENTS->{$client}->{SERVICES}->{$service}->{dn} && $CLIENTS->{$client}->{SERVICES}->{$service}->{dn} !~ /$CLIENTS->{$client}->{dn}/) {
+						print FH "# from: $CLIENTS->{$client}->{SERVICES}->{$service}->{dn}\n";
+					}
+					print FH "define service {\n";
+					print FH "\tuse\tgeneric-service\n";
+					print FH "\tservice_description\t$service\n";
+					print FH "\thost_name\t$host_name\n";
+					foreach(keys %{$CLIENTS->{$client}->{SERVICES}->{$service}}) {
+						# generate all service attributes, except service dependency stuff
+						if ($_ !~ /nagiosservicedependency/ && $_ =~ /nagiosservice/ || $_ eq 'nagioscheckcommand') {
+							if ($_ eq 'nagiosservicecustomvar') {
+								foreach my $customvar (keys %{$CLIENTS->{$client}->{SERVICES}->{$service}->{$_}}) {
+									if (defined $INHERIT->{$client}->{SERVICES}->{$service}->{$_}->{$customvar} && $INHERIT->{$client}->{SERVICES}->{$service}->{$_}->{$customvar} ne $CLIENTS->{$client}->{SERVICES}->{$service}->{dn}) {
+										print FH "\t# from: $INHERIT->{$client}->{SERVICES}->{$service}->{$_}->{$customvar}\n";
+									}
+									print FH "\t$customvar\t$CLIENTS->{$client}->{SERVICES}->{$service}->{$_}->{$customvar}\n";
+								}
+							} else {
+								if (defined $INHERIT->{$client}->{SERVICES}->{$service}->{$_} && $INHERIT->{$client}->{SERVICES}->{$service}->{$_} ne $CLIENTS->{$client}->{SERVICES}->{$service}->{dn}) {
+									print FH "\t# from: $INHERIT->{$client}->{SERVICES}->{$service}->{$_}\n";
+								}
+								print FH "\t$itemMap{$_}\t$CLIENTS->{$client}->{SERVICES}->{$service}->{$_}\n";
+							}
+						}
+					}
+					print FH "}\n";
+					print FH "\n";
+				}
+			}
+
+			# generate host dependencies
+			foreach my $hostdep(keys %{$CLIENTS->{$client}->{DEPENDENCY}}) {
+				# only if host is not disabled
+				if (!$CLIENTS->{$client}->{nagioshostdisable}) {
+					print FH "define hostdependency {\n";
+					print FH "\thost_name\t$hostdep\n";
+					print FH "\tdependent_host_name\t$CLIENTS->{$client}->{cn}\n";
+					foreach(keys %{$CLIENTS->{$client}->{DEPENDENCY}->{$hostdep}}) {
+						print FH "\t$itemMap{$_}\t$CLIENTS->{$client}->{DEPENDENCY}->{$hostdep}->{$_}\n" if $itemMap{$_};
+					}
+					print FH "}\n";
+					print FH "\n";
+				}
+			}
+
+			# generate service dependencies
+			foreach my $service(keys %{$CLIENTS->{$client}->{SERVICES}}) {
+				# only if service is not disabled
+				if (!$CLIENTS->{$client}->{SERVICES}->{$service}->{nagiosservicedisable}) {
+					foreach my $hostdep(keys %{$CLIENTS->{$client}->{SERVICES}->{$service}->{DEPENDENCY}}) {
+						foreach my $servicedep(keys %{$CLIENTS->{$client}->{SERVICES}->{$service}->{DEPENDENCY}->{$hostdep}}) {
+							print FH "define servicedependency {\n";
+							# special stuff for inheritance :-(
+							if ($hostdep eq "\$HOSTNAME\$") {
+								print FH "\thost_name\t$CLIENTS->{$client}->{cn}\n";
+							} else {
+								print FH "\thost_name\t$hostdep\n";
+							}
+        
+							print FH "\tservice_description\t$servicedep\n";
+							print FH "\tdependent_host_name\t$CLIENTS->{$client}->{cn}\n";
+							print FH "\tdependent_service_description\t$service\n";
+							foreach(keys %{$CLIENTS->{$client}->{SERVICES}->{$service}->{DEPENDENCY}->{$hostdep}->{$servicedep}}) {
+								print FH "\t$itemMap{$_}\t$CLIENTS->{$client}->{SERVICES}->{$service}->{DEPENDENCY}->{$hostdep}->{$servicedep}->{$_}\n";
+							}
+							print FH "}\n";
+							print FH "\n";
+						}
+					}
+				} 
+			}
+
+			# close target file
+			close(FH);
+		}
+	}
+}
+
+sub HostgroupServiceMapping {
+	# search for each host :(
+	foreach my $client (keys %{$CLIENTS}) {
+		# any hostgroup for this host?
+		if ($CLIENTS->{$client}->{nagioshostgroups}) {
+			my @hostgroups = split(/\s*,\s*/, $CLIENTS->{$client}->{nagioshostgroups});
+
+			# search after hostgroup (objectclass)
+			foreach my $hostgroup (@hostgroups) {
+				my $result = LDAPsearch($ldap, $optBaseDN, 'sub', "(&(objectclass=nagiosHostgroup)(cn=$hostgroup))");
+
+				# search stuff in hostgroup dn
+				foreach my $val (keys %{$result}) {
+					# cut client's dn
+					$client =~ s/,$optBaseDN//;
+
+					# search services
+					my $result2 = LDAPsearch($ldap, $result->{$val}->{dn}, 'sub', 'objectclass=nagiosService');
+					$CLIENTS = addServices($result2, $client, $CLIENTS, $result->{$val}->{dn});
 				}
 			}
 		}
