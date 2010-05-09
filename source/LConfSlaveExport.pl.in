@@ -53,8 +53,9 @@ LConfSlaveExport.pl - export an nagios config from LConf to a slave cluster
 
 =head1 SYNOPSIS
 
-LConfSlaveExport.pl  -s <name of slave server>
-                     -n <path to nagios config>
+LConfSlaveExport.pl  -H <name of slave server>
+                     -s <path to generated config>
+		     -t <path to config on slave host>
               	     -v
                      -h
                      -V
@@ -65,13 +66,17 @@ Export an nagios config from LConf to a slave cluster
 
 =over
 
-=item -s|--slave <name of slave server>
+=item -H|--host <name of slave server>
 
 Export config to this server
 
-=item -n|--nagiosconfig <path to nagios config>
+=item -s|--source <path to generated config>
 
-Path to exported nagios config
+Path to generated config (target of LConfExport.pl)
+
+=item -t|--target <path to config on slave host>
+
+Target path on slave server
 
 =item -v|--verbose <path to logfile>
 
@@ -100,11 +105,12 @@ my $version = '0.8';
 our @state = ('OK', 'WARNING', 'ERROR');
 
 # get command-line parameters
-my ($optSlave, $optNagiosConfig, $optVerbose, $optHelp, $optVersion);
+my ($optHost, $optSourcePath, $optTargetPath, $optVerbose, $optHelp, $optVersion);
 
 GetOptions(
-	"s|slave=s"		=> \$optSlave,
-	"n|nagiosconfig=s"	=> \$optNagiosConfig,
+	"H|host=s"		=> \$optHost,
+	"s|source=s"		=> \$optSourcePath,
+	"t|target=s"		=> \$optTargetPath,
 	"v|verbose:s"           => \$optVerbose,
 	"h|help"                => \$optHelp,
 	"V|version"             => \$optVersion
@@ -124,7 +130,7 @@ use vars qw($optLDAPServer $optLDAPDN $optExportUser);
 if (defined $optVersion) { print $version."\n"; exit 0; }
 
 # should print help?
-if ($optHelp || !$optSlave || !$optNagiosConfig) { pod2usage(1); }
+if ($optHelp || !$optHost || !$optSourcePath || !$optTargetPath) { pod2usage(1); }
 
 
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
@@ -155,29 +161,33 @@ my $exportGLOBAL = LDAPsearch($ldap, $optBaseDN, "sub", "description=LCONF->EXPO
 @export = getPaths($exportGLOBAL, @export);
 
 # get slaves cluster dn
-my $exportSLAVE = LDAPsearch($ldap, $optBaseDN, "sub", "description=LCONF->EXPORT->CLUSTER*$optSlave*");
+my $exportSLAVE = LDAPsearch($ldap, $optBaseDN, "sub", "description=LCONF->EXPORT->CLUSTER*$optHost");
 @export = getPaths($exportSLAVE, @export);
 
 # disconnect from LDAP Server
 $ldap->unbind();
 
 # first, clean remote dir
-beVerbose("CLEAN", "ssh $optSlave 'rm -r $optNagiosConfig/*'");
-qx(ssh $optSlave 'rm -r $optNagiosConfig/*');
+beVerbose("CLEAN", "ssh $optHost 'rm -r $optTargetPath/*'");
+qx(ssh $optHost 'rm -r $optTargetPath/*');
+
+# copy defaults
+beVerbose("COPY", "scp -r $optSourcePath/default-templates.cfg $optHost:$optTargetPath");
+qx(scp $optSourcePath/default-templates.cfg $optHost:$optTargetPath);
 
 # copy config to client
 foreach(@export) {
-	beVerbose("COPY", "scp -r $_ $optSlave:$optNagiosConfig");
-	qx(scp -r $_ $optSlave:$optNagiosConfig);
+	beVerbose("COPY", "scp -r $_ $optHost:$optTargetPath");
+	qx(scp -r $_ $optHost:$optTargetPath);
 }
 
 # copy hostgroups to client
-beVerbose("COPY", "scp -r $optNagiosConfig/hostgroups $optSlave:$optNagiosConfig");
-qx(scp -r $optNagiosConfig/hostgroups $optSlave:$optNagiosConfig);
+beVerbose("COPY", "scp -r $optSourcePath/hostgroups $optHost:$optTargetPath");
+qx(scp -r $optSourcePath/hostgroups $optHost:$optTargetPath);
 
 # reload nagios on slave
-#beVerbose("RELOAD", "ssh $optSlave '/etc/init.d/icinga reload'");
-#my $result = qx(ssh $optSlave '/etc/init.d/icinga reload');
+#beVerbose("RELOAD", "ssh $optHost '/etc/init.d/icinga reload'");
+#my $result = qx(ssh $optHost '/etc/init.d/icinga reload');
 #print $result;
 
 
@@ -278,7 +288,7 @@ sub getPaths {
 
 	foreach my $val1 (keys %{$result}) {
 		# set up main path
-		my $path = $optNagiosConfig;
+		my $path = $optSourcePath;
 
 		# delete base dn
 		$val1 =~ s/,$optBaseDN//;
