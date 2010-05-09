@@ -21,6 +21,10 @@
       <revision>
         <date>0.1 2010-04-20 * initial draft</date>
       </revision>
+
+      <revision>
+        <date>0.2 2010-05-09 * added second part of functions</date>
+      </revision>
     </revhistory>
   </bookinfo>
 
@@ -84,8 +88,8 @@
           <para>Download <trademark class="registered">NETWAYS</trademark>
           LConf.</para>
 
-          <para>The installation package is available on <link
-          linkend="www.netways.org">http://www.netways.org</link>.</para>
+          <para>The installation package is available on
+          http://www.netways.org.</para>
         </listitem>
 
         <listitem>
@@ -152,8 +156,7 @@
 
       <mediaobject>
         <imageobject>
-          <imagedata align="left"
-                     fileref="Screenshots/Chapter%203%20-%20Section%203%20-%20Pic%201.png" />
+          <imagedata align="left" fileref="Screenshots/chap3_sec3_pic1.png" />
         </imageobject>
       </mediaobject>
     </sect1>
@@ -235,9 +238,9 @@
 
     <sect1>
       <title><trademark class="registered">Icinga</trademark> / <trademark
-      class="registered">Nagios</trademark> Basiskonfiguration</title>
+      class="registered">Nagios</trademark> basic configuration</title>
 
-      <sect2 id="collector-dependencies">
+      <sect2>
         <title>Timeperiods</title>
 
         <para>For adding a new timeperiod to LConf, just create a new LDAP
@@ -251,7 +254,7 @@
         <mediaobject>
           <imageobject>
             <imagedata align="left"
-                       fileref="Screenshots/Chapter%204%20-%20Section%202.1%20-%20Pic%201.png" />
+                       fileref="Screenshots/chap4_sec2-1_pic1.png" />
           </imageobject>
         </mediaobject>
 
@@ -261,7 +264,7 @@
         <mediaobject>
           <imageobject>
             <imagedata align="left"
-                       fileref="Screenshots/Chapter%204%20-%20Section%202.1%20-%20Pic%202.png" />
+                       fileref="Screenshots/chap4_sec2-1_pic2.png" />
           </imageobject>
         </mediaobject>
 
@@ -290,7 +293,7 @@
         <para><code>} </code></para>
       </sect2>
 
-      <sect2 id="collector-dependencies">
+      <sect2>
         <title>Commands</title>
 
         <para>For adding a new command to LConf, just create a new LDAP entry
@@ -304,7 +307,7 @@
         <mediaobject>
           <imageobject>
             <imagedata align="left"
-                       fileref="Screenshots/Chapter%204%20-%20Section%202.2%20-%20Pic%201.png" />
+                       fileref="Screenshots/chap4_sec2-2_pic1.png" />
           </imageobject>
         </mediaobject>
 
@@ -321,7 +324,7 @@
         <para><code>} </code></para>
       </sect2>
 
-      <sect2 id="collector-dependencies">
+      <sect2>
         <title>Contacts</title>
 
         <para>For adding a new contact to LConf, just create a new LDAP entry
@@ -335,7 +338,7 @@
         <mediaobject>
           <imageobject>
             <imagedata align="left"
-                       fileref="Screenshots/Chapter%204%20-%20Section%202.3%20-%20Pic%201.png" />
+                       fileref="Screenshots/chap4_sec2-3_pic1.png" />
           </imageobject>
         </mediaobject>
 
@@ -355,7 +358,7 @@
         <para><code>}</code></para>
       </sect2>
 
-      <sect2 id="collector-dependencies">
+      <sect2>
         <title>Contactgroups</title>
 
         <para>For adding a new contactgroup to LConf, just create a new LDAP
@@ -369,7 +372,7 @@
         <mediaobject>
           <imageobject>
             <imagedata align="left"
-                       fileref="Screenshots/Chapter%204%20-%20Section%202.4%20-%20Pic%201.png" />
+                       fileref="Screenshots/chap4_sec2-4_pic1.png" />
           </imageobject>
         </mediaobject>
 
@@ -388,7 +391,7 @@
       </sect2>
     </sect1>
 
-    <sect1 id="installing">
+    <sect1>
       <title>Hosts</title>
 
       <para>For adding a new host to LConf, just create a new LDAP entry and
@@ -400,8 +403,7 @@
 
       <mediaobject>
         <imageobject>
-          <imagedata align="left"
-                     fileref="Screenshots/Chapter%204%20-%20Section%203%20-%20Pic%201.png" />
+          <imagedata align="left" fileref="Screenshots/chap4_sec3_pic1.png" />
         </imageobject>
       </mediaobject>
 
@@ -421,7 +423,7 @@
       <para><code>}</code></para>
     </sect1>
 
-    <sect1 id="installing">
+    <sect1>
       <title>Services</title>
 
       <para>For adding a new service to LConf, just create a new LDAP entry
@@ -433,8 +435,7 @@
 
       <mediaobject>
         <imageobject>
-          <imagedata align="left"
-                     fileref="Screenshots/Chapter%204%20-%20Section%204%20-%20Pic%201.png" />
+          <imagedata align="left" fileref="Screenshots/chap4_sec4_pic1.png" />
         </imageobject>
       </mediaobject>
 
@@ -443,8 +444,7 @@
 
       <para><mediaobject>
           <imageobject>
-            <imagedata align="left"
-                       fileref="Screenshots/Chapter%204%20-%20Section%204%20-%20Pic%202.png" />
+            <imagedata align="left" fileref="Screenshots/chap4_sec4_pic2.png" />
           </imageobject>
         </mediaobject></para>
 
@@ -478,8 +478,8 @@
       <para><code>} </code></para>
     </sect1>
 
-    <sect1 id="installing">
-      <title>Custom Objektvariablen</title>
+    <sect1>
+      <title>Customvars</title>
 
       <para>Adding customvars to hosts or services is just as easy. For hosts,
       fill the nagiosHostCustomvar attribute, for services the
@@ -489,8 +489,7 @@
 
       <para><mediaobject>
           <imageobject>
-            <imagedata align="left"
-                       fileref="Screenshots/Chapter%204%20-%20Section%205%20-%20Pic%201.png" />
+            <imagedata align="left" fileref="Screenshots/chap4_sec5_pic1.png" />
           </imageobject>
         </mediaobject></para>
 
@@ -499,8 +498,7 @@
 
       <mediaobject>
         <imageobject>
-          <imagedata align="left"
-                     fileref="Screenshots/Chapter%204%20-%20Section%205%20-%20Pic%202.png" />
+          <imagedata align="left" fileref="Screenshots/chap4_sec5_pic2.png" />
         </imageobject>
       </mediaobject>
 
@@ -531,7 +529,7 @@
       nagiosHostgroups is just as possible as define by object class
       nagiosHost. Do it in the way you want.</para>
 
-      <sect2 id="collector-dependencies">
+      <sect2>
         <title>Object class nagiosHostgroup</title>
 
         <para>For adding a new Hostgroup to LConf, just create a new LDAP
@@ -545,12 +543,12 @@
         <mediaobject>
           <imageobject>
             <imagedata align="left"
-                       fileref="Screenshots/Chapter%204%20-%20Section%206.1%20-%20Pic%201.png" />
+                       fileref="Screenshots/chap4_sec6-1_pic1.png" />
           </imageobject>
         </mediaobject>
       </sect2>
 
-      <sect2 id="collector-dependencies">
+      <sect2>
         <title>Object class nagiosHost</title>
 
         <para>For adding a host to a hostgroup, just edit the existing LDAP
@@ -561,12 +559,12 @@
         <mediaobject>
           <imageobject>
             <imagedata align="left"
-                       fileref="Screenshots/Chapter%204%20-%20Section%206.2%20-%20Pic%201.png" />
+                       fileref="Screenshots/chap4_sec6-2_pic1.png" />
           </imageobject>
         </mediaobject>
       </sect2>
 
-      <sect2 id="collector-dependencies">
+      <sect2>
         <title>Assign a services to a hostgroup</title>
 
         <para>To assign a service (see Chapter 4, 4 Services) to a hostgroup,
@@ -577,12 +575,777 @@
         <mediaobject>
           <imageobject>
             <imagedata align="left"
-                       fileref="Screenshots/Chapter%204%20-%20Section%206.3%20-%20Pic%201.png" />
+                       fileref="Screenshots/chap4_sec6-3_pic1.png" />
           </imageobject>
         </mediaobject>
       </sect2>
     </sect1>
+
+    <sect1>
+      <title>Host Dependencies</title>
+
+      <para>For adding a new host dependency to LConf, just edit an existing
+      host entry and fill the attributes nagiosHostDependency and
+      nagiosHostDependencyExecutionFailureCriteria. The attribute
+      nagiosHostDependencyNotificationFailureCriteria is optional.</para>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata align="left" fileref="Screenshots/chap4_sec7_pic1.png" />
+        </imageobject>
+      </mediaobject>
+
+      <para>After running LConfExport.pl hosts config file will look like
+      this:</para>
+
+      <para><code>define host {</code></para>
+
+      <para><code> use generic-host </code></para>
+
+      <para><code> host_name localhost</code></para>
+
+      <para><code> alias localhost </code></para>
+
+      <para><code> address 127.0.0.1</code></para>
+
+      <para><code>} </code></para>
+
+      <para><code></code></para>
+
+      <para><code>define hostdependency {</code></para>
+
+      <para><code> host_name testhost </code></para>
+
+      <para><code> dependent_host_name localhost </code></para>
+
+      <para><code> execution_failure_criteria d,u </code></para>
+
+      <para><code>} </code></para>
+    </sect1>
+
+    <sect1>
+      <title>Service Dependencies</title>
+
+      <para>For adding a new service dependency to LConf, just edit an
+      existing service entry and fill the attributes nagiosServiceDependency
+      and nagiosServiceDependencyExecutionFailureCriteria. The attribute
+      nagiosServiceDependencyNotificationFailureCriteria is optional.</para>
+
+      <para>The attribute nagiosServiceDependency is a bit special. You have
+      to specify it in the way HOSTNAME -&gt; SERVICE</para>
+
+      <para>The sign -&gt; will act as separator between host and service. In
+      the example below it means: SSH depends on service PING of
+      localhost.</para>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata align="left" fileref="Screenshots/chap4_sec8_pic1.png" />
+        </imageobject>
+      </mediaobject>
+
+      <para>After running LConfExport.pl hosts config file will look like
+      this:</para>
+
+      <para><code>define host { </code></para>
+
+      <para><code> use generic-host</code></para>
+
+      <para><code> host_name localhost</code></para>
+
+      <para><code> alias localhost</code></para>
+
+      <para><code> address 127.0.0.1</code></para>
+
+      <para><code>} </code></para>
+
+      <para><code></code></para>
+
+      <para><code>define service {</code></para>
+
+      <para><code> use generic-service</code></para>
+
+      <para><code> service_description PING</code></para>
+
+      <para><code> host_name localhost</code></para>
+
+      <para><code> check_command check_ping!100.0,20%!500.0,60%</code></para>
+
+      <para><code>}</code></para>
+
+      <para><code></code></para>
+
+      <para><code>define service {</code></para>
+
+      <para><code> use generic-service</code></para>
+
+      <para><code> service_description SSH</code></para>
+
+      <para><code> host_name localhost</code></para>
+
+      <para><code> check_command check_ssh</code></para>
+
+      <para><code>}</code></para>
+
+      <para><code></code></para>
+
+      <para><code>define servicedependency { </code></para>
+
+      <para><code> host_name localhost </code></para>
+
+      <para><code> service_description PING </code></para>
+
+      <para><code> dependent_host_name localhost </code></para>
+
+      <para><code> dependent_service_description SSH </code></para>
+
+      <para><code> execution_failure_criteria w,c,u</code></para>
+
+      <para><code>}</code></para>
+    </sect1>
+
+    <sect1>
+      <title>Inheritance</title>
+
+      <para>With LConf it is possible to inherit host- and service attributes
+      or complete service objects down the LDAP tree. Each object class
+      nagiosStructuralObject can be used for inheritance. An object class
+      nagiosStructuralObject looks like this:</para>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata align="left" fileref="Screenshots/chap4_sec9_pic1.png" />
+        </imageobject>
+      </mediaobject>
+
+      <para>As you can imagine, *Host* attributes are used for host
+      inheritance and *Service* attributes for service inheritance. For more
+      detailed information about host- and service inheritance, read
+      below...</para>
+
+      <sect2>
+        <title>Host attributes</title>
+
+        <para>Starting point are the two hosts testhost1 and testhost2.</para>
+
+        <mediaobject>
+          <imageobject>
+            <imagedata align="left"
+                       fileref="Screenshots/chap4_sec9-1_pic1.png" />
+          </imageobject>
+        </mediaobject>
+
+        <para>For this scenario, the generated config file will look like
+        this:</para>
+
+        <para><code>define host {</code></para>
+
+        <para><code> use generic-host</code></para>
+
+        <para><code> host_name testhost1</code></para>
+
+        <para><code> alias testhost1</code></para>
+
+        <para><code> address 127.0.0.1</code></para>
+
+        <para><code>}</code></para>
+
+        <para><code></code></para>
+
+        <para><code>define host { </code></para>
+
+        <para><code> use generic-host</code></para>
+
+        <para><code> host_name testhost2</code></para>
+
+        <para><code> alias testhost2</code></para>
+
+        <para><code> address 127.0.0.1</code></para>
+
+        <para><code>} </code></para>
+
+        <para>To assign a host attribute to both hosts you have to edit the
+        nagiosStructuralObject which is the lowest common denominator. In our
+        simple example it's ou=NagiosConfig. For example, we want to assign
+        the contactgroup MyInfrastructureTeam to both hosts, it will look like
+        this in the LDAP editor:</para>
+
+        <mediaobject>
+          <imageobject>
+            <imagedata align="left"
+                       fileref="Screenshots/chap4_sec9-1_pic2.png" />
+          </imageobject>
+        </mediaobject>
+
+        <para>After running LConfExport.pl the config will look like
+        this:</para>
+
+        <para><code>define host {</code></para>
+
+        <para><code> use generic-host</code></para>
+
+        <para><code> host_name testhost1</code></para>
+
+        <para><code> alias testhost1</code></para>
+
+        <para><code> # from:
+        ou=NagiosConfig,ou=LConf,dc=netways,dc=org</code></para>
+
+        <para><code> contact_groups MyInfrastructureTeam</code></para>
+
+        <para><code> address 127.0.0.1 </code></para>
+
+        <para><code>} </code></para>
+
+        <para><code></code></para>
+
+        <para><code>define host {</code></para>
+
+        <para><code> use generic-host</code></para>
+
+        <para><code> host_name testhost2</code></para>
+
+        <para><code> alias testhost2</code></para>
+
+        <para><code> # from:
+        ou=NagiosConfig,ou=LConf,dc=netways,dc=org</code></para>
+
+        <para><code> contact_groups MyInfrastructureTeam</code></para>
+
+        <para><code> address 127.0.0.1</code></para>
+
+        <para><code>}</code></para>
+
+        <para>Of course, you can treat the attributes like a <trademark
+        class="registered">Icinga</trademark> / <trademark
+        class="registered">Nagios</trademark> config. Comma seperated lists
+        like MyInfrastructureTeam,SecondLevel,Management are also
+        possible.</para>
+
+        <para>As you have probably noticed, LConf adds a comment line above
+        all inherited attributes. This comment tells you where you can find
+        the inheritance. This will help if your config grows.</para>
+      </sect2>
+
+      <sect2>
+        <title>Service attributes</title>
+
+        <para>Starting point are the two hosts testhost1 and testhost2. For
+        each host a service PING is defined.</para>
+
+        <mediaobject>
+          <imageobject>
+            <imagedata align="left"
+                       fileref="Screenshots/chap4_sec9-2_pic1.png" />
+          </imageobject>
+        </mediaobject>
+
+        <para>For this scenario, the generated config file will look like
+        this:</para>
+
+        <para><code>define host {</code></para>
+
+        <para><code> use generic-host</code></para>
+
+        <para><code> host_name testhost1</code></para>
+
+        <para><code> alias testhost1</code></para>
+
+        <para><code> address 127.0.0.1</code></para>
+
+        <para><code>}</code></para>
+
+        <para><code></code></para>
+
+        <para><code>define service {</code></para>
+
+        <para><code> use generic-service</code></para>
+
+        <para><code> service_description PING</code></para>
+
+        <para><code> host_name testhost1</code></para>
+
+        <para><code> check_command
+        check_ping!100.0,20%!500.0,60%</code></para>
+
+        <para><code>}</code></para>
+
+        <para><code></code></para>
+
+        <para><code>define host { </code></para>
+
+        <para><code> use generic-host</code></para>
+
+        <para><code> host_name testhost2</code></para>
+
+        <para><code> alias testhost2</code></para>
+
+        <para><code> address 127.0.0.1</code></para>
+
+        <para><code>}</code></para>
+
+        <para><code></code></para>
+
+        <para><code>define service {</code></para>
+
+        <para><code> use generic-service</code></para>
+
+        <para><code> service_description PING</code></para>
+
+        <para><code> host_name testhost2</code></para>
+
+        <para><code> check_command
+        check_ping!100.0,20%!500.0,60%</code></para>
+
+        <para><code>} </code></para>
+
+        <para>To assign a service attribute to both PING services you have to
+        edit the nagiosStructuralObject which is the lowest common
+        denominator. In our simple example it's ou=NagiosConfig. For example,
+        we want to assign the contactgroup MyInfrastructureTeam to both PING
+        services, it will look like this in the LDAP editor:</para>
+
+        <mediaobject>
+          <imageobject>
+            <imagedata align="left"
+                       fileref="Screenshots/chap4_sec9-2_pic2.png" />
+          </imageobject>
+        </mediaobject>
+
+        <para>After running LConfExport.pl the config will look like
+        this:</para>
+
+        <para><code>define host {</code></para>
+
+        <para><code> use generic-host</code></para>
+
+        <para><code> host_name testhost1</code></para>
+
+        <para><code> alias testhost1</code></para>
+
+        <para><code> address 127.0.0.1 </code></para>
+
+        <para><code>} </code></para>
+
+        <para><code></code></para>
+
+        <para><code>define service {</code></para>
+
+        <para><code> use generic-service</code></para>
+
+        <para><code> service_description PING</code></para>
+
+        <para><code> host_name testhost1</code></para>
+
+        <para><code> # from:
+        ou=NagiosConfig,ou=LConf,dc=netways,dc=org</code></para>
+
+        <para><code> contact_groups MyInfrastructureTeam</code></para>
+
+        <para><code> check_command check_ping!100.0,20%!500.0,60%
+        </code></para>
+
+        <para><code>}</code></para>
+
+        <para><code></code></para>
+
+        <para><code>define host {</code></para>
+
+        <para><code> use generic-host</code></para>
+
+        <para><code> host_name testhost2</code></para>
+
+        <para><code> alias testhost2</code></para>
+
+        <para><code> address 127.0.0.1</code></para>
+
+        <para><code>}</code></para>
+
+        <para></para>
+
+        <para>define service {</para>
+
+        <para>use generic-service</para>
+
+        <para>service_description PING</para>
+
+        <para>host_name testhost2</para>
+
+        <para># from: ou=NagiosConfig,ou=LConf,dc=netways,dc=org</para>
+
+        <para>contact_groups MyInfrastructureTeam</para>
+
+        <para>check_command check_ping!100.0,20%!500.0,60%</para>
+
+        <para>}</para>
+
+        <para>Of course, you can treat the attributes like a <trademark
+        class="registered">Icinga</trademark> / <trademark
+        class="registered">Nagios</trademark> config. Comma seperated lists
+        like MyInfrastructureTeam,SecondLevel,Management are also
+        possible.</para>
+
+        <para>As you have probably noticed, LConf adds a comment line above
+        all inherited attributes. This comment tells you where you can find
+        the inheritance. This will help if your config grows.</para>
+      </sect2>
+
+      <sect2>
+        <title>Services</title>
+
+        <para>Starting point are the two hosts testhost1 and testhost2.</para>
+
+        <mediaobject>
+          <imageobject>
+            <imagedata align="left"
+                       fileref="Screenshots/chap4_sec9-3_pic1.png" />
+          </imageobject>
+        </mediaobject>
+
+        <para>For this scenario, the generated config file will look like
+        this:</para>
+
+        <para><code>define host {</code></para>
+
+        <para><code> use generic-host</code></para>
+
+        <para><code> host_name testhost1</code></para>
+
+        <para><code> alias testhost1</code></para>
+
+        <para><code> address 127.0.0.1</code></para>
+
+        <para><code>}</code></para>
+
+        <para><code></code></para>
+
+        <para><code>define host { </code></para>
+
+        <para><code> use generic-host</code></para>
+
+        <para><code> host_name testhost2</code></para>
+
+        <para><code> alias testhost2</code></para>
+
+        <para><code> address 127.0.0.1</code></para>
+
+        <para><code>} </code></para>
+
+        <para>To assign a service to both hosts you have to create an object
+        class nagiosService below the nagiosStructuralObject which is the
+        lowest common denominator. In our simple example it's ou=NagiosConfig.
+        For example, we want to assign a service PING to both hosts, it will
+        look like this in the LDAP editor:</para>
+
+        <mediaobject>
+          <imageobject>
+            <imagedata align="left"
+                       fileref="Screenshots/chap4_sec9-3_pic2.png" />
+          </imageobject>
+        </mediaobject>
+
+        <para>After running LConfExport.pl the config will look like
+        this:</para>
+
+        <para><code>define host {</code></para>
+
+        <para><code> use generic-host</code></para>
+
+        <para><code> host_name testhost1</code></para>
+
+        <para><code> alias testhost1</code></para>
+
+        <para><code> address 127.0.0.1 </code></para>
+
+        <para><code>} </code></para>
+
+        <para><code></code></para>
+
+        <para><code># from:
+        cn=PING,ou=NagiosConfig,ou=LConf,dc=netways,dc=org</code></para>
+
+        <para><code>define service {</code></para>
+
+        <para><code> use generic-service</code></para>
+
+        <para><code> service_description PING</code></para>
+
+        <para><code> host_name testhost1</code></para>
+
+        <para><code> check_command
+        check_ping!100.0,20%!500.0,60%</code></para>
+
+        <para><code>}</code></para>
+
+        <para><code></code></para>
+
+        <para><code>define host {</code></para>
+
+        <para><code> use generic-host</code></para>
+
+        <para><code> host_name testhost2</code></para>
+
+        <para><code> alias testhost2</code></para>
+
+        <para><code> address 127.0.0.1</code></para>
+
+        <para><code>}</code></para>
+
+        <para></para>
+
+        <para># from:
+        cn=PING,ou=NagiosConfig,ou=LConf,dc=netways,dc=org</para>
+
+        <para>define service {</para>
+
+        <para>use generic-service</para>
+
+        <para>service_description PING</para>
+
+        <para>host_name testhost2</para>
+
+        <para>check_command check_ping!100.0,20%!500.0,60%</para>
+
+        <para>}</para>
+
+        <para>As you have probably noticed, LConf adds a comment line above
+        all inherited services. This comment tells you where you can find the
+        inherited service. This will help if your config grows.</para>
+      </sect2>
+    </sect1>
+
+    <sect1>
+      <title>Templates / Profiles</title>
+
+      <para>Templates or Profiles. Name it the way you want... ;-) Here we
+      go!</para>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata align="left" fileref="Screenshots/chap4_sec11_pic1.png" />
+        </imageobject>
+      </mediaobject>
+
+      <para>For both hosts are no services specified at the moment. First of
+      all, we will create a template default-linux. For this purpose we create
+      an object class nagiosStructuralObject below ou=Templates and add a
+      service SSH (adding services, see Chapter 4, 4 Services) to
+      default-linux.</para>
+
+      <para>This should look like this:</para>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata align="left" fileref="Screenshots/chap4_sec11_pic2.png" />
+        </imageobject>
+      </mediaobject>
+
+      <para>Now, our template default-linux contains a SSH check. To link a
+      template to a list of hosts we need a LDAP alias. An example of a LDAP
+      alias could be found in ou=Examples. Copy the alias to ou=NagiosConfig
+      (the alias will be inherited to testhost1 and testhost2) and rename it
+      the way you want.</para>
+
+      <para>After that, the LDAP tree should look like this:</para>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata align="left" fileref="Screenshots/chap4_sec11_pic3.png" />
+        </imageobject>
+      </mediaobject>
+
+      <para>At this point we have to edit the target of the alias. In our
+      example the target should be
+      ou=default-linux,ou=Templates,ou=LConf,dc=netways,dc=org</para>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata align="left" fileref="Screenshots/chap4_sec11_pic4.png" />
+        </imageobject>
+      </mediaobject>
+
+      <para>During config export with LConfExport.pl, the script will find the
+      alias link-to-default-linux with it's target ou=default-linux and will
+      assign all services below ou=default-linux to testhost1 and
+      testhost2.</para>
+
+      <para>After running LConfExport.pl hosts config file will look like
+      this:</para>
+
+      <para><code>define host {</code></para>
+
+      <para><code> use generic-host</code></para>
+
+      <para><code> host_name testhost1</code></para>
+
+      <para><code> alias testhost1</code></para>
+
+      <para><code> address 127.0.0.1</code></para>
+
+      <para><code>}</code></para>
+
+      <para><code></code></para>
+
+      <para><code># from:
+      cn=SSH,ou=default-linux,ou=Templates,ou=LConf,dc=netways,dc=org
+      </code></para>
+
+      <para><code>define service {</code></para>
+
+      <para><code> use generic-service</code></para>
+
+      <para><code> service_description SSH</code></para>
+
+      <para><code> host_name testhost1</code></para>
+
+      <para><code> check_command check_ssh</code></para>
+
+      <para><code>}</code></para>
+
+      <para><code></code></para>
+
+      <para><code>define host { </code></para>
+
+      <para><code> use generic-host</code></para>
+
+      <para><code> host_name testhost2</code></para>
+
+      <para><code> alias testhost2</code></para>
+
+      <para><code> address 127.0.0.1 </code></para>
+
+      <para><code>}</code></para>
+
+      <para><code></code></para>
+
+      <para><code># from:
+      cn=SSH,ou=default-linux,ou=Templates,ou=LConf,dc=netways,dc=org</code></para>
+
+      <para><code>define service {</code></para>
+
+      <para><code> use generic-service</code></para>
+
+      <para><code> service_description SSH</code></para>
+
+      <para><code> host_name testhost2</code></para>
+
+      <para><code> check_command check_ssh </code></para>
+
+      <para><code>} </code></para>
+    </sect1>
+
+    <sect1>
+      <title>nagiosHostDisable / nagiosServiceDisable</title>
+
+      <para>To disable a host and/or a service simply fill the attributes
+      nagiosHostDisable or nagiosServiceDisable with any text. If LConf
+      detects during config export that a disable attribute is set (not empty
+      and not 0), the host and/or service will be excluded.</para>
+
+      <para>Of course you can find nagiosHostDisable and nagiosServiceDisable
+      in object class nagiosStructuralObject, too. So inheritance is also
+      possible.</para>
+    </sect1>
   </chapter>
 
-  <chapter></chapter>
+  <chapter>
+    <title>Multiple <trademark class="registered">Icinga</trademark> /
+    <trademark class="registered">Nagios</trademark> Servers</title>
+
+    <para>Managing multiple <trademark class="registered">Nagios</trademark> /
+    <trademark class="registered">Icinga</trademark> servers with LConf is not
+    difficult. Starting point is this scenario...</para>
+
+    <para>We have two Icinga servers, called MyIcingaServer-1 and
+    MyIcingaServer-2. Both are monitoring different linux servers.</para>
+
+    <para>The "folders" MyIcingaServer-1 and MyIcingaServer-2 are
+    nagiosStructuralObject object classes. They are to form a
+    structure...</para>
+
+    <mediaobject>
+      <imageobject>
+        <imagedata align="left" fileref="Screenshots/chap5_pic1.png" />
+      </imageobject>
+    </mediaobject>
+
+    <sect1>
+      <title>Export the whole <trademark class="registered">Icinga</trademark>
+      / <trademark class="registered">Nagios</trademark> configuration</title>
+
+      <para>First of all you have to export the config in a folder. We'll take
+      /usr/local/icinga/etc/MyCustomConfig in this example.</para>
+
+      <para><code>nagios@lconf-doku:/usr/local/LConf$ ./LConfExport.pl -o
+      /tmp/LConf</code></para>
+
+      <para>Now, the configuration of both servers is stored in
+      /tmp/LConf.</para>
+
+      <para>By the way... this config could be used to create a master / slave
+      environment :-)</para>
+    </sect1>
+
+    <sect1>
+      <title>Tell LConf about multiple servers</title>
+
+      <para>Due to editing of the suitable nagiosStructuralObject, LConf knows
+      which part of the config should be exported to each host.</para>
+
+      <para>As you can see below, you have to enter the information into a
+      description line. The description attribute can be specified multiple
+      times.</para>
+
+      <para>It's important to write the right syntax into attributes line.
+      LCONF-&gt;EXPORT-&gt;CLUSTER = &lt;name of my server&gt;.</para>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata align="left" fileref="Screenshots/chap5_sec1_pic1.png" />
+        </imageobject>
+      </mediaobject>
+
+      <para>If you have a structural object which should be exported to all
+      servers (e.g. one that includes commands, contacts, ...), simply
+      describe it with LCONF-&gt;EXPORT-&gt;GLOBAL.</para>
+    </sect1>
+
+    <sect1>
+      <title>Deploy config per server</title>
+
+      <para>To export each Icinga servers config, LConfSlaveExport is your
+      friend!</para>
+
+      <para><code>nagios@lconf-doku:/usr/local/LConf$ ./LConfSlaveExport.pl -H
+      MyIcingaServer-1 -s /tmp/LConf -t
+      /usr/local/icinga/etc/MyConfig</code></para>
+
+      <para>The script will now search after descriptions like
+      LCONF-&gt;EXPORT-&gt;GLOBAL and LCONF-&gt;EXPORT-&gt;CLUSTER =
+      MyIcingaServer-1 and will push the config to MyIcingaServer-1 via SSH
+      and SCP (ssh pub key exchange needed).</para>
+
+      <para>LConfSlaveExport.pl can also reload <trademark
+      class="registered">Icinga</trademark> / <trademark
+      class="registered">Nagios</trademark> after config deployment. This
+      feature is disabled per default, because not every admin is happy about
+      it. To enable the feature you have to edit LConfSlaveExport.pl.</para>
+
+      <para>There are the following lines:</para>
+
+      <para><code># reload nagios on slave</code></para>
+
+      <para><code>#beVerbose("RELOAD", "ssh $optSlave '/etc/init.d/icinga
+      reload'");</code></para>
+
+      <para><code>#my $result = qx(ssh $optSlave '/etc/init.d/icinga
+      reload');</code></para>
+
+      <para><code>#print $result;</code></para>
+
+      <para>Uncomment them and LConfSlaveExport.pl will reload <trademark
+      class="registered">Icinga</trademark> / <trademark
+      class="registered">Nagios</trademark></para>
+    </sect1>
+  </chapter>
 </book>
