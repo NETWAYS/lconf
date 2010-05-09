@@ -407,7 +407,10 @@ sub addHostAttributes {
 					DebugOutput("Attribute $val2 [$result->{$val1}->{$val2}] found in $val1; valency: hostattribute => store!");
 					if ($result->{$val1}->{$val2} =~ /^\s*\+/) {
 						$result->{$val1}->{$val2} =~ s/\+/,/;
-						$CLIENTS->{$host.",".$optBaseDN}->{$val2} = $CLIENTS->{$host.",".$optBaseDN}->{$val2}.$result->{$val1}->{$val2};
+						$CLIENTS->{$host.",".$optBaseDN}->{$val2} = 
+							(defined $CLIENTS->{$host.",".$optBaseDN}->{$val2}) ? 
+								$CLIENTS->{$host.",".$optBaseDN}->{$val2}.$result->{$val1}->{$val2} :
+								$result->{$val1}->{$val2};
 					} else {
 						if ($val2 =~ /nagioshostcustomvar/) {
 							foreach(keys %{$result->{$val1}->{$val2}}) {
@@ -740,8 +743,8 @@ sub genHostgroups {
 	# get hostgroups (from client attributes)
 	foreach my $client (keys %{$CLIENTS}) {
 		if (defined $CLIENTS->{$client}->{nagioshostgroups}) {
-			if ($CLIENTS->{$client}->{nagioshostgroups} =~ /,/) {
-				my @val = split(/\s*,\s*/, $CLIENTS->{$client}->{nagioshostgroups});
+			if ($CLIENTS->{$client}->{nagioshostgroups} =~ /[+,]/) {
+				my @val = split(/\s*[+,]\s*/, $CLIENTS->{$client}->{nagioshostgroups});
 				foreach(@val) { push(@HOSTGROUPS, $_); }
 			} else {
 				push(@HOSTGROUPS, $CLIENTS->{$client}->{nagioshostgroups});
@@ -751,6 +754,7 @@ sub genHostgroups {
 
 	# write hostgroup files
 	foreach my $hostgroup (@HOSTGROUPS) {
+		next if ($hostgroup eq '');
 		# set file path
 		my $writeFile = $optOutputDir."/hostgroups/$hostgroup.cfg";
 
@@ -781,7 +785,9 @@ sub genHostgroups {
 
 		# add hosts of this hostgroup to $CLIENT hash;
 		# client config will write the config for membership
-		my @val = split(/\s*,\s*/, $result->{$val1}->{nagiosmembers});
+		my @val = (defined $result->{$val1}->{nagiosmembers}) ? 
+			split(/\s*,\s*/, $result->{$val1}->{nagiosmembers}) :
+			();
 		foreach(@val) {
 			# search full name im client hash :(
 			foreach my $client (keys %{$CLIENTS}) {
@@ -833,6 +839,9 @@ sub genHostConfig {
 			foreach (keys %{$CLIENTS->{$client}}) {
 				# generate all host attributes, except host dependency stuff
 				if ($_ !~ /nagioshostdependency/ && $_ =~ /nagioshost/ || $_ eq 'nagiosaddress' || $_ eq 'nagiosparent' || $_ eq 'nagioscheckcommand' || $_ eq 'nagiosalias' && $_ ne 'nagioshostdisable') {
+					if ($_ eq 'nagioshostgroups') {
+						$CLIENTS->{$client}->{$_} =~ s/^\s*\+/,/;
+					}
 					if ($_ eq 'nagioshostcustomvar') {
 						foreach my $customvar (keys %{$CLIENTS->{$client}->{$_}}) {
 							if (defined $INHERIT->{$client}->{$_}->{$customvar} && $INHERIT->{$client}->{$_}->{$customvar} ne $CLIENTS->{$client}->{dn}) {
