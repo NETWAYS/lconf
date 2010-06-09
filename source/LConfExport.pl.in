@@ -56,6 +56,7 @@ LConfExport.pl - export a nagios config from LConf
 LConfExport.pl  -o <output dir>
 		[-v]
 		[-d]
+		[-f]
 		[-h]
 		[-V]
 
@@ -76,6 +77,10 @@ Verbose mode. If no logfile is specified, verbose output will be printend to STD
 =item -d|--debug [<path to logfile>]
 
 Debug mode. If no logfile is specified, debug output will be printed to STDOUT
+
+=item -f|--filter [hostname]
+
+Export only this host (e.g. for debugging)
 
 =item -h|--help
 
@@ -100,11 +105,12 @@ my $version = '0.8';
 our @state = ('OK', 'WARNING', 'ERROR');
 
 # get command-line parameters
-my ($optOutputDir, $optVerbose, $optDebug, $optHelp, $optVersion);
+my ($optOutputDir, $optVerbose, $optFilter, $optDebug, $optHelp, $optVersion);
 GetOptions(
 	"o|output=s"	=> \$optOutputDir,
 	"v|verbose:s"	=> \$optVerbose,
 	"d|debug:s"	=> \$optDebug,
+	"f|filter=s"	=> \$optFilter,
 	"h|help"	=> \$optHelp,
 	"V|version"	=> \$optVersion,
 );
@@ -151,12 +157,17 @@ qx(rm -r $optOutputDir/* 2>/dev/null);
 # define vars
 my $optBaseDN = 'ou=NagiosConfig,'.$optLDAPDN;
 my $INHERIT;
+my $CLIENTS;
 
 # connect to LDAP server
 my $ldap = LDAPconnect();
 
 # get all clients to monitor
-my $CLIENTS = LDAPsearch($ldap, $optBaseDN, "sub", "objectclass=nagiosHost");
+if (defined $optFilter) {
+	$CLIENTS = LDAPsearch($ldap, $optBaseDN, "sub", "cn=$optFilter");
+} else {
+	$CLIENTS = LDAPsearch($ldap, $optBaseDN, "sub", "objectclass=nagiosHost");
+}
 
 # run custom script (pre)
 if (-f 'custom/pre.pl') {
@@ -405,12 +416,23 @@ sub addHostAttributes {
 				# only host attributes
 				if ($val2 =~ /nagioshost/ || $val2 eq 'nagiosaddress' || $val2 eq 'nagiosparent' || $val2 eq 'nagioscheckcommand' || $val2 eq 'nagiosalias') {
 					DebugOutput("Attribute $val2 [$result->{$val1}->{$val2}] found in $val1; valency: hostattribute => store!");
+
+					# additive inheritance?
 					if ($result->{$val1}->{$val2} =~ /^\s*\+/) {
-						$result->{$val1}->{$val2} =~ s/\+/,/;
-						$CLIENTS->{$host.",".$optBaseDN}->{$val2} = 
-							(defined $CLIENTS->{$host.",".$optBaseDN}->{$val2}) ? 
-								$CLIENTS->{$host.",".$optBaseDN}->{$val2}.$result->{$val1}->{$val2} :
-								$result->{$val1}->{$val2};
+						# specified at host object class?
+						if (defined $CLIENTS->{$host.",".$optBaseDN}->{$val2} && $CLIENTS->{$host.",".$optBaseDN}->{$val2} =~ /^\+/) {
+							$result->{$val1}->{$val2} =~ s/\+//;
+							$CLIENTS->{$host.",".$optBaseDN}->{$val2} = $result->{$val1}->{$val2};
+						} else {
+							$result->{$val1}->{$val2} =~ s/\+/,/;
+
+							# empty var?
+							if (defined $CLIENTS->{$host.",".$optBaseDN}->{$val2}) {
+								$CLIENTS->{$host.",".$optBaseDN}->{$val2} = $CLIENTS->{$host.",".$optBaseDN}->{$val2}.$result->{$val1}->{$val2};
+							} else {
+								$CLIENTS->{$host.",".$optBaseDN}->{$val2} = $result->{$val1}->{$val2} =~ s/\+/,/;
+							}
+						}
 					} else {
 						if ($val2 =~ /nagioshostcustomvar/) {
 							foreach(keys %{$result->{$val1}->{$val2}}) {
@@ -510,9 +532,23 @@ sub addServiceAttributes {
 			# only service attributes
 			if ($val2 =~ /nagiosservice/ || $val2 eq 'nagioscheckcommand' || $val2 eq 'dn') {
 				DebugOutput("Attribute $val2 [$result->{$val1}->{$val2}] found in $val1; valency: serviceattribute => store!");
+
+				# additive inheritance?
 				if ($result->{$val1}->{$val2} =~ /^\s*\+/) {
-					$result->{$val1}->{$val2} =~ s/\+/,/;
-					$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2} = $CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2}.$result->{$val1}->{$val2};
+					# specified at service object class?
+					if (defined $CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2} && $CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2} =~ /^\+/) {
+						$result->{$val1}->{$val2} =~ s/\+//;
+						$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2} = $result->{$val1}->{$val2};
+					} else {
+						$result->{$val1}->{$val2} =~ s/\+/,/;
+
+						# empty var?
+						if (defined $CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2}) {
+							$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2} = $CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2}.$result->{$val1}->{$val2};
+						} else {
+							$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2} = $result->{$val1}->{$val2} =~ s/\+/,/;
+						}
+					}
 				} else {
 					if ($val2 =~ /nagiosservicecustomvar/) {
 						foreach(keys %{$result->{$val1}->{$val2}}) {
@@ -743,8 +779,8 @@ sub genHostgroups {
 	# get hostgroups (from client attributes)
 	foreach my $client (keys %{$CLIENTS}) {
 		if (defined $CLIENTS->{$client}->{nagioshostgroups}) {
-			if ($CLIENTS->{$client}->{nagioshostgroups} =~ /[+,]/) {
-				my @val = split(/\s*[+,]\s*/, $CLIENTS->{$client}->{nagioshostgroups});
+			if ($CLIENTS->{$client}->{nagioshostgroups} =~ /,/) {
+				my @val = split(/\s*,\s*/, $CLIENTS->{$client}->{nagioshostgroups});
 				foreach(@val) { push(@HOSTGROUPS, $_); }
 			} else {
 				push(@HOSTGROUPS, $CLIENTS->{$client}->{nagioshostgroups});
@@ -754,7 +790,6 @@ sub genHostgroups {
 
 	# write hostgroup files
 	foreach my $hostgroup (@HOSTGROUPS) {
-		next if ($hostgroup eq '');
 		# set file path
 		my $writeFile = $optOutputDir."/hostgroups/$hostgroup.cfg";
 
@@ -785,9 +820,7 @@ sub genHostgroups {
 
 		# add hosts of this hostgroup to $CLIENT hash;
 		# client config will write the config for membership
-		my @val = (defined $result->{$val1}->{nagiosmembers}) ? 
-			split(/\s*,\s*/, $result->{$val1}->{nagiosmembers}) :
-			();
+		my @val = split(/\s*,\s*/, $result->{$val1}->{nagiosmembers});
 		foreach(@val) {
 			# search full name im client hash :(
 			foreach my $client (keys %{$CLIENTS}) {
@@ -839,9 +872,6 @@ sub genHostConfig {
 			foreach (keys %{$CLIENTS->{$client}}) {
 				# generate all host attributes, except host dependency stuff
 				if ($_ !~ /nagioshostdependency/ && $_ =~ /nagioshost/ || $_ eq 'nagiosaddress' || $_ eq 'nagiosparent' || $_ eq 'nagioscheckcommand' || $_ eq 'nagiosalias' && $_ ne 'nagioshostdisable') {
-					if ($_ eq 'nagioshostgroups') {
-						$CLIENTS->{$client}->{$_} =~ s/^\s*\+/,/;
-					}
 					if ($_ eq 'nagioshostcustomvar') {
 						foreach my $customvar (keys %{$CLIENTS->{$client}->{$_}}) {
 							if (defined $INHERIT->{$client}->{$_}->{$customvar} && $INHERIT->{$client}->{$_}->{$customvar} ne $CLIENTS->{$client}->{dn}) {
