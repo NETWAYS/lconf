@@ -430,7 +430,8 @@ sub addHostAttributes {
 							if (defined $CLIENTS->{$host.",".$optBaseDN}->{$val2}) {
 								$CLIENTS->{$host.",".$optBaseDN}->{$val2} = $CLIENTS->{$host.",".$optBaseDN}->{$val2}.$result->{$val1}->{$val2};
 							} else {
-								$CLIENTS->{$host.",".$optBaseDN}->{$val2} = $result->{$val1}->{$val2} =~ s/\+/,/;
+								$result->{$val1}->{$val2} =~ s/,//;
+								$CLIENTS->{$host.",".$optBaseDN}->{$val2} = $result->{$val1}->{$val2};
 							}
 						}
 					} else {
@@ -546,7 +547,8 @@ sub addServiceAttributes {
 						if (defined $CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2}) {
 							$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2} = $CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2}.$result->{$val1}->{$val2};
 						} else {
-							$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2} = $result->{$val1}->{$val2} =~ s/\+/,/;
+							$result->{$val1}->{$val2} =~ s/,//;
+							$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2} = $result->{$val1}->{$val2};
 						}
 					}
 				} else {
