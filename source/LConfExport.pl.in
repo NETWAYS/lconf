@@ -401,8 +401,8 @@ sub LDAPsearch {
 					@$attrVal[$counter] =~ m/([\d\w]*) (.*)/;
 					$return->{$_}->{$attrName}->{$1} = $2;
 				} elsif ($attrName eq "nagiostimeperiodvalue") {
-					@$attrVal[$counter] =~ m/(.*) +([-\w:]+)/;
-					$return->{$_}->{$attrName}->{$1} = $2;
+					@$attrVal[$counter] =~ m/(.*) +([-\w:]+(\,?)+[-\w:]+)/;
+					$return->{$_}->{$attrName}->{$counter}->{$1} = $2;
 				} else {
 					$return->{$_}->{$attrName} = @$attrVal[$counter];
 				}
@@ -646,8 +646,10 @@ sub genTimeperiods {
 				if ($_ eq 'cn') {
 					print FH "\ttimeperiod_name\t$result->{$timeperiod}->{$_}\n";
 				} elsif ($_ eq 'nagiostimeperiodvalue') {
-					foreach my $timeperiod_value (keys %{$result->{$timeperiod}->{$_}}) {
-						print FH "\t$timeperiod_value\t$result->{$timeperiod}->{$_}->{$timeperiod_value}\n";
+					foreach my $val (keys %{$result->{$timeperiod}->{$_}}) {
+						foreach my $timeperiod_value (keys %{$result->{$timeperiod}->{$_}->{$val}}) {
+							print FH "\t$timeperiod_value\t$result->{$timeperiod}->{$_}->{$val}->{$timeperiod_value}\n";
+						}
 					}
 				} else {
 					print FH "\t$itemMap{$_}\t$result->{$timeperiod}->{$_}\n";
