@@ -145,13 +145,14 @@ LeaveScript(2, "Variable '\$optExportUser' not set in config.pm'")	if !$optExpor
 LeaveScript(2, "You're not user '$optExportUser'!") if $ENV{USER} ne $optExportUser;
 
 # export already running?
-LeaveScript(2, "LConfExport locked! Everyone is already using it!")	if -f $optExportLock;
-
-# lock exporter
-open (FH, ">$optExportLock"); close(FH);
+LeaveScript(2, "LConfExport locked! Anyone is already using it!")	if -f $optExportLock;
 
 # check output dir
 LeaveScript('2', "'$optOutputDir' is not a directory") if !-d $optOutputDir;
+LeaveScript('2', "'$optOutputDir' is not writeable")   if !-w $optOutputDir;
+
+# lock exporter
+open (FH, ">$optExportLock"); close(FH);
 
 # clean old output dir
 qx(rm -r $optOutputDir/* 2>/dev/null);
