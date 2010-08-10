@@ -118,7 +118,7 @@ GetOptions(
 # import config
 use lib '@prefix@';
 use etc::config;
-use vars qw($optLDAPServer $optLDAPDN $optExportUser %itemMap);
+use vars qw($optLDAPServer $optLDAPDN $optExportUser $optExportLock %itemMap);
 
 
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
@@ -143,6 +143,12 @@ LeaveScript(2, "Variable '\$optExportUser' not set in config.pm'")	if !$optExpor
 
 # export with right user?
 LeaveScript(2, "You're not user '$optExportUser'!") if $ENV{USER} ne $optExportUser;
+
+# export already running?
+LeaveScript(2, "LConfExport locked! Everyone is already using it!")	if -f $optExportLock;
+
+# lock exporter
+open (FH, ">$optExportLock"); close(FH);
 
 # check output dir
 LeaveScript('2', "'$optOutputDir' is not a directory") if !-d $optOutputDir;
@@ -290,6 +296,9 @@ if (-f 'custom/post.pl') {
 
 # disconnect from LDAP Server
 $ldap->unbind();
+
+# unlock exporter
+unlink($optExportLock);
 
 
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #

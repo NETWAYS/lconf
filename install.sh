@@ -56,6 +56,7 @@ fi
 ScriptOutput INSTALL "Dir structure"
 install -d -o $USER -g $GROUP -m 750 $PREFIX
 install -d -o $USER -g $GROUP -m 750 $PREFIX/etc
+install -d -o $USER -g $GROUP -m 750 $PREFIX/var
 
 ScriptOutput CREATE "LConf Exporter"
 cat $DIR_SOURCE/LConfExport.pl.in | sed s/@prefix@/$PREFIX_QUOTED/ > $DIR_SOURCE/LConfExport.pl

@@ -7,12 +7,15 @@ $optLDAPDN      = 'ou=LConf,@domain@';
 # export script's user
 $optExportUser  = '@user@';
 
+# export script's lock file
+$optExportLock	= '@prefix@/var/LConfExport.lock';
+
 # options for slave sync (if used)
 $optSlaveSyncHosts     = 'host1, host2, host3';
 $optSlaveSyncDirLocal  = '/usr/local/icinga/var/perfdata-local';
 $optSlaveSyncDirRemote = '/usr/local/icinga/var/perfdata-remote';
 $optSlaveSyncDirSpool  = '/usr/local/icinga/var/spool/checkresults';
-$optSlaveSyncPidFile   = '@prefix@/etc/LConfSlaveSync.pid';
+$optSlaveSyncPidFile   = '@prefix@/var/LConfSlaveSync.pid';
 $optSlaveSyncExtCmd    = '/usr/local/icinga/var/rw/icinga.cmd';
 $optSlaveSyncGet       = '60';
 $optSlaveSyncPush      = '30';
