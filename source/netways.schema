@@ -125,6 +125,12 @@ attributetype ( 1.3.6.1.4.1.26840.144.2.2.10 NAME 'nagiosContactHostNotification
 	SUBSTR caseIgnoreSubstringsMatch
 	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
 
+attributetype ( 1.3.6.1.4.1.26840.144.2.2.11 NAME 'nagiosContactCanSubmitCommands'
+	DESC 'Nagios Contact Can Submit Commands (can_submit_commands [0/1])'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+
 
 #
 # .2.3   | nagios attributes (host)
@@ -280,6 +286,24 @@ attributetype ( 1.3.6.1.4.1.26840.144.2.3.522 NAME 'nagiosHostDependencyNotifica
 	SUBSTR caseIgnoreSubstringsMatch
 	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
 
+attributetype ( 1.3.6.1.4.1.26840.144.2.3.523 NAME 'nagiosHostNotificationsEnabled'
+	DESC 'Nagios Notifications Enabled (notifications_enabled 0/1)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.3.524 NAME 'nagiosHostFreshnessThreshold'
+        DESC 'Nagios Freshness Threshold (freshness_threshold #)'
+        EQUALITY caseIgnoreMatch
+        SUBSTR caseIgnoreSubstringsMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.3.525 NAME 'nagiosHostCheckFreshness'
+	DESC 'Host Freshness Checking (check_freshness [0/1]'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+
 
 #
 # .2.4   | nagios attributes (service)
@@ -423,6 +447,24 @@ attributetype ( 1.3.6.1.4.1.26840.144.2.4.521 NAME 'nagiosServiceDependencyNotif
 	SUBSTR caseIgnoreSubstringsMatch
 	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
 
+attributetype ( 1.3.6.1.4.1.26840.144.2.4.522 NAME 'nagiosServiceNotificationsEnabled'
+        DESC 'Nagios Notifications Enabled (notifications_enabled 0/1)'
+        EQUALITY caseIgnoreMatch
+        SUBSTR caseIgnoreSubstringsMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.4.523 NAME 'nagiosServiceFreshnessThreshold'
+        DESC 'Nagios Freshness Threshold (freshness_threshold #)'
+        EQUALITY caseIgnoreMatch
+        SUBSTR caseIgnoreSubstringsMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.4.524 NAME 'nagiosServiceCheckFreshness'
+        DESC 'Service Freshness Checking (check_freshness [0/1]'
+        EQUALITY caseIgnoreMatch
+        SUBSTR caseIgnoreSubstringsMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+
 
 #
 # .3   | objectclass templates
@@ -432,24 +474,26 @@ objectclass ( 1.3.6.1.4.1.26840.144.3.1 NAME 'nagiosTemplateHost'
 	DESC 'Template for a Nagios host'
 	SUP top
 	MAY ( nagiosHostCustomvar $ nagiosHostContacts $ nagiosHostContactgroups $
-		nagiosHostNotificationOptions $ nagiosHostNotificationInterval $ nagiosHostNotificationPeriod $ 
+		nagiosHostNotificationOptions $ nagiosHostNotificationInterval $ nagiosHostNotificationPeriod $ nagiosHostNotificationsEnabled $
 		nagiosHostCheckPeriod $ nagiosHostCheckInterval $ nagiosHostCheckRetryInterval $ nagiosHostCheckMaxCheckAttempts $
 		nagiosHostProcessPerfData $ nagiosHostActiveChecksEnabled $ nagiosHostPassiveChecksEnabled $
 		nagiosHostFlapDetectionEnabled $ nagiosHostFlapDetectionOptions $ nagiosHostEventhandler $
 		nagiosHostNotesURL $ nagiosHostActionURL $ nagiosHostDisable $
 		nagiosParent $ nagiosCheckcommand $ nagiosHostgroups $
-		nagiosHostDependency $ nagiosHostDependencyExecutionFailureCriteria $ nagiosHostDependencyNotificationFailureCriteria ) )
+		nagiosHostDependency $ nagiosHostDependencyExecutionFailureCriteria $ nagiosHostDependencyNotificationFailureCriteria $
+		nagiosHostCheckFreshness $ nagiosHostFreshnessThreshold ) )
 
 objectclass ( 1.3.6.1.4.1.26840.144.3.2 NAME 'nagiosTemplateService'
 	DESC 'Tempalte for a Nagios service'
 	SUP top
 	MAY ( nagiosServiceCustomvar $ nagiosServiceContacts $ nagiosServiceContactgroups $
-		nagiosServiceNotificationOptions $ nagiosServiceNotificationInterval $ nagiosServiceNotificationPeriod $
+		nagiosServiceNotificationOptions $ nagiosServiceNotificationInterval $ nagiosServiceNotificationPeriod $ nagiosServiceNotificationsEnabled $
 		nagiosServiceCheckPeriod $ nagiosServiceCheckInterval $ nagiosServiceCheckRetryInterval $ nagiosServiceCheckMaxCheckAttempts $
 		nagiosServiceProcessPerfData $ nagiosServiceActiveChecksEnabled $ nagiosServicePassiveChecksEnabled $
 		nagiosServiceFlapDetectionEnabled $ nagiosServiceFlapDetectionOptions $ nagiosServiceEventhandler $
 		nagiosServiceNotesURL $ nagiosServiceActionURL $ nagiosServiceDisable $
-		nagiosServiceDependency $ nagiosServiceDependencyExecutionFailureCriteria $ nagiosServiceDependencyNotificationFailureCriteria ) )
+		nagiosServiceDependency $ nagiosServiceDependencyExecutionFailureCriteria $ nagiosServiceDependencyNotificationFailureCriteria $
+		nagiosServiceCheckFreshness $ nagiosServiceFreshnessThreshold ) )
 
 
 #
@@ -462,20 +506,22 @@ objectclass ( 1.3.6.1.4.1.26840.144.4.1 NAME 'nagiosStructuralObject'
 	MUST ( ou )
 	MAY ( description $
 		nagiosHostCustomvar $ nagiosHostContacts $ nagiosHostContactgroups $
-		nagiosHostNotificationOptions $ nagiosHostNotificationInterval $ nagiosHostNotificationPeriod $
+		nagiosHostNotificationOptions $ nagiosHostNotificationInterval $ nagiosHostNotificationPeriod $ nagiosHostNotificationsEnabled $
 		nagiosHostCheckPeriod $ nagiosHostCheckInterval $ nagiosHostCheckRetryInterval $ nagiosHostCheckMaxCheckAttempts $
 		nagiosHostProcessPerfData $ nagiosHostActiveChecksEnabled $ nagiosHostPassiveChecksEnabled $
 		nagiosHostFlapDetectionEnabled $ nagiosHostFlapDetectionOptions $ nagiosHostEventhandler $
 		nagiosHostNotesURL $ nagiosHostActionURL $ nagiosHostDisable $
 		nagiosParent $ nagiosCheckcommand $ nagiosHostgroups $
 		nagiosHostDependency $ nagiosHostDependencyExecutionFailureCriteria $ nagiosHostDependencyNotificationFailureCriteria $
+		nagiosHostCheckFreshness $ nagiosHostFreshnessThreshold $
 		nagiosServiceCustomvar $ nagiosServiceContacts $ nagiosServiceContactgroups $
-		nagiosServiceNotificationOptions $ nagiosServiceNotificationInterval $ nagiosServiceNotificationPeriod $
+		nagiosServiceNotificationOptions $ nagiosServiceNotificationInterval $ nagiosServiceNotificationPeriod $ nagiosServiceNotificationsEnabled $
 		nagiosServiceCheckPeriod $ nagiosServiceCheckInterval $ nagiosServiceCheckRetryInterval $ nagiosServiceCheckMaxCheckAttempts $
 		nagiosServiceProcessPerfData $ nagiosServiceActiveChecksEnabled $ nagiosServicePassiveChecksEnabled $
 		nagiosServiceFlapDetectionEnabled $ nagiosServiceFlapDetectionOptions $ nagiosServiceEventhandler $
 		nagiosServiceNotesURL $ nagiosServiceActionURL $ nagiosServiceDisable $
-		nagiosServiceDependency $ nagiosServiceDependencyExecutionFailureCriteria $ nagiosServiceDependencyNotificationFailureCriteria ) )
+		nagiosServiceDependency $ nagiosServiceDependencyExecutionFailureCriteria $ nagiosServiceDependencyNotificationFailureCriteria $
+		nagiosServiceCheckFreshness $ nagiosServiceFreshnessThreshold) )
 
 
 #
@@ -502,7 +548,8 @@ objectclass ( 1.3.6.1.4.1.26840.144.5.3 NAME 'nagiosContact'
 		nagiosContactServiceNotificationPeriod   $ nagiosContactHostNotificationPeriod $
 		nagiosContactServiceNotificationOptions  $ nagiosContactHostNotificationOptions $
 		nagiosContactServiceNotificationCommands $ nagiosContactHostNotificationCommands $
-		nagiosContactServiceNotificationsEnabled $ nagiosContactHostNotificationsEnabled ) )
+		nagiosContactServiceNotificationsEnabled $ nagiosContactHostNotificationsEnabled $
+		nagiosContactCanSubmitCommands ) )
 
 objectclass ( 1.3.6.1.4.1.26840.144.5.4 NAME 'nagiosContactgroup'
 	DESC 'Nagios Host Group'

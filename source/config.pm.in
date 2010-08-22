@@ -40,6 +40,7 @@ $optSlaveSyncPush      = '30';
 	nagioscontacthostnotificationcommands		=> 'host_notification_commands',
 	nagioscontactservicenotificationsenabled	=> 'service_notifications_enabled',
 	nagioscontacthostnotificationsenabled		=> 'host_notifications_enabled',
+	nagioscontactcansubmitcommands			=> 'can_submit_commands',
 
 	# .2.3   | nagios attributes (host)
 	nagiosaddress					=> 'address',
@@ -66,6 +67,9 @@ $optSlaveSyncPush      = '30';
 	nagioshostdependency				=> 'PLACEHOLDER',
 	nagioshostdependencyexecutionfailurecriteria	=> 'execution_failure_criteria',
 	nagioshostdependencynotificationfailurecriteria	=> 'notification_failure_criteria',
+	nagioshostnotificationsenabled			=> 'notifications_enabled',
+	nagioshostfreshnessthreshold			=> 'freshness_threshold',
+	nagioshostcheckfreshness			=> 'check_freshness',
 	nagioshostdisable				=> '',
 
 	# .2.4   | nagios attributes (service)
@@ -91,6 +95,9 @@ $optSlaveSyncPush      = '30';
 	nagiosservicedependency				=> 'PLACEHOLDER',
 	nagiosservicedependencyexecutionfailurecriteria	=> 'execution_failure_criteria',
 	nagiosservicedependencynotificationfailurecriteria => 'notification_failure_criteria',
+        nagiosservicenotificationsenabled		=> 'notifications_enabled',
+	nagiosservicefreshnessthreshold			=> 'freshness_threshold',
+	nagiosservicecheckfreshness			=> 'check_freshness',
         nagiosservicedisable				=> '',
 
 	# special stuff ;-)
