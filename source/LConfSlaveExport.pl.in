@@ -185,6 +185,10 @@ foreach(@export) {
 beVerbose("COPY", "scp -r $optSourcePath/hostgroups $optHost:$optTargetPath");
 qx(scp -r $optSourcePath/hostgroups $optHost:$optTargetPath);
 
+# copy servicegroups to client
+beVerbose("COPY", "scp -r $optSourcePath/servicegroups $optHost:$optTargetPath");
+qx(scp -r $optSourcePath/servicegroups $optHost:$optTargetPath);
+
 # reload nagios on slave
 #beVerbose("RELOAD", "ssh $optHost '/etc/init.d/icinga reload'");
 #my $result = qx(ssh $optHost '/etc/init.d/icinga reload');

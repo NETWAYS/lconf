@@ -263,7 +263,7 @@ attributetype ( 1.3.6.1.4.1.26840.144.2.3.518 NAME 'nagiosHostDisable'
 	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
 
 attributetype ( 1.3.6.1.4.1.26840.144.2.3.519 NAME 'nagiosHostgroups'
-	DESC 'Nagios Hostgroup (hostgroup example-hostgroup)'
+	DESC 'Nagios Hostgroup (hostgroups example-hostgroup)'
 	EQUALITY caseIgnoreMatch
 	SUBSTR caseIgnoreSubstringsMatch
 	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{512} SINGLE-VALUE )
@@ -465,6 +465,12 @@ attributetype ( 1.3.6.1.4.1.26840.144.2.4.524 NAME 'nagiosServiceCheckFreshness'
         SUBSTR caseIgnoreSubstringsMatch
         SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
 
+attributetype ( 1.3.6.1.4.1.26840.144.2.4.525 NAME 'nagiosServicegroups'
+	DESC 'Nagios Servicegroup (servicegroups example-servicegroup)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{512} SINGLE-VALUE )
+
 
 #
 # .3   | objectclass templates
@@ -492,6 +498,7 @@ objectclass ( 1.3.6.1.4.1.26840.144.3.2 NAME 'nagiosTemplateService'
 		nagiosServiceProcessPerfData $ nagiosServiceActiveChecksEnabled $ nagiosServicePassiveChecksEnabled $
 		nagiosServiceFlapDetectionEnabled $ nagiosServiceFlapDetectionOptions $ nagiosServiceEventhandler $
 		nagiosServiceNotesURL $ nagiosServiceActionURL $ nagiosServiceDisable $
+		nagiosServicegroups $
 		nagiosServiceDependency $ nagiosServiceDependencyExecutionFailureCriteria $ nagiosServiceDependencyNotificationFailureCriteria $
 		nagiosServiceCheckFreshness $ nagiosServiceFreshnessThreshold ) )
 
@@ -520,6 +527,7 @@ objectclass ( 1.3.6.1.4.1.26840.144.4.1 NAME 'nagiosStructuralObject'
 		nagiosServiceProcessPerfData $ nagiosServiceActiveChecksEnabled $ nagiosServicePassiveChecksEnabled $
 		nagiosServiceFlapDetectionEnabled $ nagiosServiceFlapDetectionOptions $ nagiosServiceEventhandler $
 		nagiosServiceNotesURL $ nagiosServiceActionURL $ nagiosServiceDisable $
+		nagiosServicegroups $
 		nagiosServiceDependency $ nagiosServiceDependencyExecutionFailureCriteria $ nagiosServiceDependencyNotificationFailureCriteria $
 		nagiosServiceCheckFreshness $ nagiosServiceFreshnessThreshold) )
 
@@ -574,3 +582,9 @@ objectclass ( 1.3.6.1.4.1.26840.144.5.7 NAME 'nagiosService'
 	SUP nagiosTemplateService
 	MUST ( cn $ nagiosCheckcommand )
 	MAY ( description $ nagiosServiceCustomvar ) )
+
+objectclass ( 1.3.6.1.4.1.26840.144.5.8 NAME 'nagiosServicegroup'
+	DESC 'Nagios Servicegroup'
+	SUP top
+	MUST (cn $ nagiosAlias )
+	MAY ( description $ nagiosMembers ) )

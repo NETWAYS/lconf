@@ -278,6 +278,7 @@ if (-f 'custom/mid.pl') {
 # build dir structure and copy generic templates
 createDirs($optBaseDN, $optOutputDir);
 mkdir("$optOutputDir/hostgroups/");
+mkdir("$optOutputDir/servicegroups/");
 copyGeneric('@prefix@/etc/default-templates.cfg', $optOutputDir);
 
 # write config
@@ -287,6 +288,7 @@ genContacts();
 genContactgroups();
 genHostgroups();
 HostgroupServiceMapping();
+genServicegroups();
 genHostConfig();
 
 # run custom script (post)
@@ -832,20 +834,100 @@ sub genHostgroups {
 		print FH "\talias\t$result->{$val1}->{nagiosalias}\n";
 		print FH "}\n";
 
+		# close target file
+		close(FH);
+
 		# add hosts of this hostgroup to $CLIENT hash;
 		# client config will write the config for membership
-		my @val = split(/\s*,\s*/, $result->{$val1}->{nagiosmembers});
-		foreach(@val) {
-			# search full name im client hash :(
-			foreach my $client (keys %{$CLIENTS}) {
-				# if real name was found, add to $CLIENT hash
-				if ($client =~ /^cn=$_,/) {
-					if ($CLIENTS->{$client}->{nagioshostgroups}) {
-						$CLIENTS->{$client}->{nagioshostgroups} =  $CLIENTS->{$client}->{nagioshostgroups}.','.$result->{$val1}->{cn};
-					} else {
-						$CLIENTS->{$client}->{nagioshostgroups} = $result->{$val1}->{cn};
+		if (defined $result->{$val1}->{nagiosmembers}) {
+			my @val = split(/\s*,\s*/, $result->{$val1}->{nagiosmembers});
+			foreach(@val) {
+				# search full name im client hash :(
+				foreach my $client (keys %{$CLIENTS}) {
+					# if real name was found, add to $CLIENT hash
+					if ($client =~ /^cn=$_,/) {
+						if ($CLIENTS->{$client}->{nagioshostgroups}) {
+							$CLIENTS->{$client}->{nagioshostgroups} =  $CLIENTS->{$client}->{nagioshostgroups}.','.$result->{$val1}->{cn};
+						} else {
+							$CLIENTS->{$client}->{nagioshostgroups} = $result->{$val1}->{cn};
+						}
 					}
 				}
+			}
+		}
+	}
+}
+
+sub genServicegroups {
+	my @SERVICEGROUPS;
+
+	# get servicegroups (from client attributes)
+	foreach my $client (keys %{$CLIENTS}) {
+		for my $service (keys %{$CLIENTS->{$client}->{SERVICES}}) {
+			if (defined $CLIENTS->{$client}->{SERVICES}->{$service}->{nagiosservicegroups}) {
+				if ($CLIENTS->{$client}->{SERVICES}->{$service}->{nagiosservicegroups} =~ /,/) {
+					my @val = split(/\s*,\s*/, $CLIENTS->{$client}->{SERVICES}->{$service}->{nagiosservicegroups});
+					foreach(@val) { push(@SERVICEGROUPS, $_); }
+				} else {
+					push(@SERVICEGROUPS, $CLIENTS->{$client}->{SERVICES}->{$service}->{nagiosservicegroups});
+				}
+			}
+		}
+	}
+
+	# write servicegroup files
+	foreach my $servicegroup (@SERVICEGROUPS) {
+		# set file path
+		my $writeFile = $optOutputDir."/servicegroups/$servicegroup.cfg";
+
+		# open target file
+		open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
+
+		print FH "define servicegroup {\n";
+		print FH "\tservicegroup_name\t$servicegroup\n";
+		print FH "\talias\t$servicegroup\n";
+		print FH "}\n";
+
+		# close target file
+		close(FH);
+	}
+
+	# get servicegroups (from objectclass 'nagiosServicegroup') and write files
+	my $result = LDAPsearch($ldap, $optBaseDN, "sub", "objectclass=nagiosServicegroup");
+	foreach my $val1 (keys %{$result}) {
+		# set file path
+		my $writeFile = $optOutputDir."/servicegroups/$result->{$val1}->{cn}.cfg";
+
+		# open target file
+		open(FH, ">$writeFile") || die "Can't write data: $writeFile $!\n";
+
+		print FH "define servicegroup {\n";
+		print FH "\tservicegroup_name\t$result->{$val1}->{cn}\n";
+		print FH "\talias\t$result->{$val1}->{cn}\n";
+		print FH "}\n";
+
+		# close target file
+		close(FH);
+
+		# add services of this servicegroup to $CLIENT hash
+		# client config will write the config for membership
+		if (defined $result->{$val1}->{nagiosmembers}) {
+			my @val = split(/\s*,\s*/, $result->{$val1}->{nagiosmembers});
+			my $counter = 0;
+			while($counter <= $#val) {
+				# search full name im client hash :(
+				foreach my $client (keys %{$CLIENTS}) {
+					# if real name was found, add to $CLIENT hash
+					if ($client =~ /^cn=$val[$counter],/) {
+						if ($CLIENTS->{$client}->{SERVICES}->{$val[$counter+1]}->{nagiosservicegroups}) {
+							$CLIENTS->{$client}->{SERVICES}->{$val[$counter+1]}->{nagiosservicegroups} = $CLIENTS->{$client}->{SERVICES}->{$val[$counter+1]}->{nagiosservicegroups}.','.$result->{$val1}->{cn};
+						} else {
+							$CLIENTS->{$client}->{SERVICES}->{$val[$counter+1]}->{nagiosservicegroups} = $result->{$val1}->{cn};
+						}
+					}
+				}
+
+				$counter = $counter+2;
 			}
 		}
 	}

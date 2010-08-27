@@ -92,6 +92,7 @@ $optSlaveSyncPush      = '30';
         nagiosserviceeventhandler			=> 'event_handler',
         nagiosservicenotesurl				=> 'notes_url',
         nagiosserviceactionurl				=> 'action_url',
+	nagiosservicegroups				=> 'servicegroups',
 	nagiosservicedependency				=> 'PLACEHOLDER',
 	nagiosservicedependencyexecutionfailurecriteria	=> 'execution_failure_criteria',
 	nagiosservicedependencynotificationfailurecriteria => 'notification_failure_criteria',
