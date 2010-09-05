@@ -96,7 +96,9 @@ print plugin version
 use strict;
 use Getopt::Long qw(:config no_ignore_case bundling);
 use Pod::Usage;
+use Data::Dumper;
 use Net::LDAP;
+use Net::LDAP::LDIF;
 
 # version string
 my $version = '0.8';
@@ -118,7 +120,7 @@ GetOptions(
 # import config
 use lib '@prefix@';
 use etc::config;
-use vars qw($optLDAPServer $optLDAPDN $optExportUser $optExportLock %itemMap);
+use vars qw($optLDAPServer $optLDAPDN $optExportUser $optExportLock $optRevisionEnabled $optRevisionPath $optRevisionTemp %itemMap);
 
 
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
@@ -297,6 +299,11 @@ if (-f 'custom/post.pl') {
         $CLIENTS = CustomPost($CLIENTS);
 }
 
+# make revision proof?
+if ($optRevisionEnabled == 1) {
+	makeRevisionProof($optRevisionPath, $optRevisionTemp);
+}
+
 # disconnect from LDAP Server
 $ldap->unbind();
 
@@ -348,6 +355,8 @@ sub DebugOutput {
 sub LeaveScript {
 	my $exitCode = $_[0];
 	my $comment  = $_[1];
+
+	unlink($optExportLock);
 
 	print $state[$exitCode]." - $comment\n";
 	exit $exitCode;
@@ -1091,3 +1100,75 @@ sub HostgroupServiceMapping {
 		}
 	}
 }
+
+sub makeRevisionProof {
+	my $optRevisionPath = shift;
+	my $optRevisionTemp = shift;
+	my $result;
+	my $SVNcmd = 'svn';
+
+	# check svn command
+	beVerbose("REVISION", "search after cmd");
+	$result = qx(which $SVNcmd);
+	LeaveScript(2, "command '$SVNcmd' not found") if !$result;
+
+	# create dir, if necessary
+	mkdir("$optRevisionTemp") if !-d $optRevisionTemp;
+	beVerbose("REVISION", "create tmp work dir") if !-d $optRevisionTemp;
+
+	# split the real dir from url
+	my @val = split(/\//, $optRevisionPath);
+	my $realDir = pop(@val);
+
+	# get revision stuff
+		# checkout or update?
+		if (-d "$optRevisionTemp/$realDir/.svn") {
+			# change working dir
+			chdir("$optRevisionTemp/$realDir");
+
+			# checkout
+			beVerbose("REVISION", "repository update");
+			$result = qx($SVNcmd update $optRevisionPath);
+			LeaveScript(2, "Something is gone wrong...") if $? != 0;
+		} else {
+			# change working dir
+			chdir("$optRevisionTemp");
+
+			# checkout
+			beVerbose("REVISION", "revision checkout");
+			$result = qx($SVNcmd checkout $optRevisionPath);
+			LeaveScript(2, "Something is gone wrong...") if $? != 0;
+
+			# change working dir
+			chdir("$optRevisionTemp/$realDir");
+		}
+
+	# collect data
+		# vardump
+		beVerbose("REVISION", "add VARDUMP to repository");
+		open(FH, ">$optRevisionTemp/$realDir/dump.vardmp");
+		print FH Dumper $CLIENTS;
+		close(FH);
+
+		# ldif dump
+		beVerbose("REVISION", "add LDIF to repository");
+		my $dump = $ldap->search(
+			base => "$optLDAPDN",
+			scope => "sub",
+			filter => "objectclass=*");
+		my $ldif = Net::LDAP::LDIF->new ("$optRevisionTemp/$realDir/dump.ldif", "w") or die $!;
+		$ldif->write_entry($dump->all_entries(  ));
+
+		# file dump
+		beVerbose("REVISION", "add FILEDUMP to repository");
+		qx(cp -a $optOutputDir $optRevisionTemp/$realDir/);
+
+	# add and commit data
+	$result = qx(svn --force add *);
+	$result = qx(svn commit -m 'hello wold auto commit');
+}
+
+
+
+
+

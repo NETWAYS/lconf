@@ -10,6 +10,11 @@ $optExportUser  = '@user@';
 # export script's lock file
 $optExportLock	= '@prefix@/var/LConfExport.lock';
 
+# revision module
+$optRevisionEnabled = '0';
+$optRevisionPath = 'https://MySVNServer/playground/lconf';
+$optRevisionTemp = '@prefix@/var/revision';
+
 # options for slave sync (if used)
 $optSlaveSyncHosts     = 'host1, host2, host3';
 $optSlaveSyncDirLocal  = '/usr/local/icinga/var/perfdata-local';
