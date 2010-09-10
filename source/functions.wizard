@@ -29,19 +29,19 @@ function WizardAsk {
 
 	WizardInteraction
 	echo "Install files with user..."
-	echo -n "[nagios]: "
+	echo -n "[icinga]: "
 	read USER
 	if [ "$USER" = "" ]; then
-		USER=nagios
+		USER=icinga
 	fi
 	echo USER = $USER
 
 	WizardInteraction
 	echo "Install files with group..."
-	echo -n "[nagios]: "
+	echo -n "[icinga]: "
 	read GROUP
 	if [ "$GROUP" = "" ]; then
-		GROUP=nagios
+		GROUP=icinga
 	fi
 	echo GROUP = $GROUP
 
@@ -63,6 +63,15 @@ function WizardAsk {
 		ROOTDN="dc=example,dc=org"
 	fi
 	echo LDAP rootdn = $ROOTDN
+
+	WizardInteraction
+	echo "Objectclass and attribute prefix will be..."
+	echo -n "[lconf]: "
+	read LDAPPREFIX
+	if [ "$LDAPPREFIX" = "" ]; then
+		LDAPPREFIX="lconf"
+	fi
+	echo LDAP PREFIX = $LDAPPREFIX
 }
 
 function WizardManualy {

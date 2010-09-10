@@ -49,7 +49,7 @@
 
 =head1 NAME
 
-LConfSlaveExport.pl - export an nagios config from LConf to a slave cluster
+LConfSlaveExport.pl - export an Nagios / Icinga config from LConf to a slave cluster
 
 =head1 SYNOPSIS
 
@@ -60,7 +60,7 @@ LConfSlaveExport.pl  -H <name of slave server>
                      -h
                      -V
 
-Export an nagios config from LConf to a slave cluster
+Export an Nagios / Icinga config from LConf to a slave cluster
 
 =head1 OPTIONS
 
@@ -189,7 +189,7 @@ qx(scp -r $optSourcePath/hostgroups $optHost:$optTargetPath);
 beVerbose("COPY", "scp -r $optSourcePath/servicegroups $optHost:$optTargetPath");
 qx(scp -r $optSourcePath/servicegroups $optHost:$optTargetPath);
 
-# reload nagios on slave
+# reload Nagios / Icinga on slave
 #beVerbose("RELOAD", "ssh $optHost '/etc/init.d/icinga reload'");
 #my $result = qx(ssh $optHost '/etc/init.d/icinga reload');
 #print $result;
@@ -272,7 +272,7 @@ sub LDAPsearch {
                         my $counter = scalar @$attrVal;
                         while($counter != 0) {
                                 $counter--;
-                                if ($attrName eq "nagioshostcustomvar" || $attrName eq "nagiosservicecustomvar" || $attrName eq "nagiostimeperiodvalue") {
+                                if ($attrName eq "@ldapprefix@hostcustomvar" || $attrName eq "@ldapprefix@servicecustomvar" || $attrName eq "@ldapprefix@timeperiodvalue") {
                                         my ($val1, $val2) = (split(/ *\| */, @$attrVal[$counter]))[0,1];
                                         $return->{$_}->{$attrName}->{$val1} = $val2;
                                 } else {

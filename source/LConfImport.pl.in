@@ -49,7 +49,7 @@
 
 =head1 NAME
 
-LConfImport.pl - import an existing nagios config into LConf
+LConfImport.pl - import an existing Nagios / Icinga config into LConf
 
 =head1 SYNOPSIS
 
@@ -58,7 +58,7 @@ LConfImport.pl  -o <path to objects.cache>
                 -h
                 -V
 
-Import an existing nagios config
+Import an existing Nagios / Icinga config
 
 =head1 OPTIONS
 
@@ -70,7 +70,7 @@ Path to existing Nagios Objects Cache; if specified script will import whole obj
 
 =item -c|--cleanup <ldap dn>
 
-LDAP DN in which cleanup should start; eg. ou=Main,ou=NagiosConfig,ou=LConf,dc=nagios,dc=test
+LDAP DN in which cleanup should start; eg. ou=Main,ou=NagiosConfig,ou=LConf,dc=icinga,dc=test
 
 =item -v|--verbose <path to logfile>
 
@@ -212,7 +212,7 @@ if ($optObjectsCache) {
 		$COMMANDS	= getItems(@ID_COMMANDS);		beVerbose("OBJECTS CACHE", "COMMANDS imported");
 		$SERVICES	= getServiceItems(@ID_SERVICES);	beVerbose("OBJECTS CACHE", "SERVICES imported");
 
-		# write nagios config to ldap
+		# write @ldapprefix@ config to ldap
 			# timeperiods
 				# set target folder
 				$targetDN = 'ou=timeperiods,'.$optLDAPWorkDN;
@@ -224,14 +224,14 @@ if ($optObjectsCache) {
 					# create new object
 					my $entry = Net::LDAP::Entry->new;
 					$entry->dn("cn=$timeperiod,$targetDN");
-					$entry->add(objectClass => 'nagiosTimeperiod');
+					$entry->add(objectClass => '@ldapprefix@Timeperiod');
 					beVerbose("LDAP ADD", "cn=$timeperiod,$targetDN");
 
 					foreach(keys %{$TIMEPERIODS->{$timeperiod}}) {
 						if (grep { /$_/ } values %{$newItemMap->{$_}}) {
 							$entry->add(values %{$newItemMap->{$_}} => "$TIMEPERIODS->{$timeperiod}->{$_}");
 						} else {
-							$entry->add("nagiosTimeperiodValue" => "$_ $TIMEPERIODS->{$timeperiod}->{$_}");
+							$entry->add("@ldapprefix@TimeperiodValue" => "$_ $TIMEPERIODS->{$timeperiod}->{$_}");
 						}
 					}
 
@@ -251,7 +251,7 @@ if ($optObjectsCache) {
 					# create new object
 					my $entry = Net::LDAP::Entry->new;
 					$entry->dn("cn=$command,$targetDN");
-					$entry->add(objectClass => 'nagiosCommand');
+					$entry->add(objectClass => '@ldapprefix@Command');
 					beVerbose("LDAP ADD", "cn=$command,$targetDN");
 
 					foreach(keys %{$COMMANDS->{$command}}) {
@@ -274,7 +274,7 @@ if ($optObjectsCache) {
 					# create new object
 					my $entry = Net::LDAP::Entry->new;
 					$entry->dn("cn=$contact,$targetDN");
-					$entry->add(objectClass => 'nagiosContact');
+					$entry->add(objectClass => '@ldapprefix@Contact');
 					beVerbose("LDAP ADD", "cn=$contact,$targetDN");
 
 					foreach(keys %{$CONTACTS->{$contact}}) {
@@ -297,7 +297,7 @@ if ($optObjectsCache) {
 					# create new object
 					my $entry = Net::LDAP::Entry->new;
 					$entry->dn("cn=$contactgroup,$targetDN");
-					$entry->add(objectClass => 'nagiosContactgroup');
+					$entry->add(objectClass => '@ldapprefix@Contactgroup');
 					$entry->add(cn => "$contactgroup");
 					beVerbose("LDAP ADD", "cn=$contactgroup,$targetDN");
 
@@ -321,7 +321,7 @@ if ($optObjectsCache) {
 					# create new object
 					my $entry = Net::LDAP::Entry->new;
 					$entry->dn("cn=$hostgroup,$targetDN");
-					$entry->add(objectClass => 'nagiosHostgroup');
+					$entry->add(objectClass => '@ldapprefix@Hostgroup');
 					$entry->add(cn => "$hostgroup");
 					beVerbose("LDAP ADD", "cn=$hostgroup,$targetDN");
 
@@ -342,7 +342,7 @@ if ($optObjectsCache) {
 					# create new object
 					my $entry = Net::LDAP::Entry->new;
 					$entry->dn("cn=$host,$optLDAPImportDN");
-					$entry->add(objectClass => 'nagiosHost');
+					$entry->add(objectClass => '@ldapprefix@Host');
 					beVerbose("LDAP ADD", "cn=$host,$optLDAPImportDN");
 
 					foreach(keys %{$HOSTS->{$host}}) {
@@ -366,7 +366,7 @@ if ($optObjectsCache) {
 						# create new object
 						my $entry = Net::LDAP::Entry->new;
 						$entry->dn("cn=$service,$targetDN");
-						$entry->add(objectClass => 'nagiosService');
+						$entry->add(objectClass => '@ldapprefix@Service');
 						$entry->add(cn => "$service");
 						beVerbose("LDAP ADD", "cn=$service,$targetDN");
 
@@ -390,7 +390,7 @@ if ($optObjectsCache) {
 	LeaveScript(2, "Can't find '$optCleanup' in on LDAP host '$optLDAPServer'") if !$result;
 
 	# get all hosts
-	my $CLIENTS = LDAPsearch($ldap, $optCleanup, "sub", "objectclass=nagiosHost");
+	my $CLIENTS = LDAPsearch($ldap, $optCleanup, "sub", "objectclass=@ldapprefix@Host");
 	foreach my $client (keys %{$CLIENTS}) {
 		$client =~ /cn=[-_\d\w\s]*,(.*)/;
 		$COMPARE_GROUPS->{$1} = $1;
@@ -399,10 +399,10 @@ if ($optObjectsCache) {
 	# compare whole stuff
 	foreach my $compare_group (keys %{$COMPARE_GROUPS}) {
 		# service attributes
-		compareAttributes($compare_group, 'nagiosService');
+		compareAttributes($compare_group, '@ldapprefix@Service');
 
 		# host attributes
-		compareAttributes($compare_group, 'nagiosHost');
+		compareAttributes($compare_group, '@ldapprefix@Host');
 	}
 } else {
 	pod2usage(1);
@@ -575,7 +575,7 @@ sub checkDN {
 
 		my $entry = Net::LDAP::Entry->new;
 		$entry->dn($dn);
-		$entry->add ( objectClass => 'nagiosStructuralObject' );
+		$entry->add ( objectClass => '@ldapprefix@StructuralObject' );
 		$entry->add ( $1 => "$2" );
 		my $result = $entry->update ( $ldap );
 		beVerbose("LDAP ADD", $dn);

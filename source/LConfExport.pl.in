@@ -49,7 +49,7 @@
 
 =head1 NAME
 
-LConfExport.pl - export a nagios config from LConf
+LConfExport.pl - export a Nagios / Icinga config from LConf
 
 =head1 SYNOPSIS
 
@@ -60,7 +60,7 @@ LConfExport.pl  -o <output dir>
 		[-h]
 		[-V]
 
-Export a nagios config from LConf
+Export a Nagios / Icinga config from LConf
 
 =head1 OPTIONS
 
@@ -175,7 +175,7 @@ my $ldap = LDAPconnect();
 if (defined $optFilter) {
 	$CLIENTS = LDAPsearch($ldap, $optBaseDN, "sub", "cn=$optFilter");
 } else {
-	$CLIENTS = LDAPsearch($ldap, $optBaseDN, "sub", "objectclass=nagiosHost");
+	$CLIENTS = LDAPsearch($ldap, $optBaseDN, "sub", "objectclass=@ldapprefix@Host");
 }
 
 # run custom script (pre)
@@ -256,18 +256,18 @@ foreach my $client (keys %{$CLIENTS}) {
 	# search main for services
 		# reset search base
 		$searchDN = $optBaseDN;
-		$result = LDAPsearch($ldap, $searchDN, "single", "objectclass=nagiosService");
+		$result = LDAPsearch($ldap, $searchDN, "single", "objectclass=@ldapprefix@Service");
 		$CLIENTS = addServices($result, $client, $CLIENTS, $optBaseDN);
 
 		# and search rest of the tree (from top to item)
 		foreach(@search) {
 			$searchDN = $_.",".$searchDN;
-			$result = LDAPsearch($ldap, $searchDN, "single", "objectclass=nagiosService");
+			$result = LDAPsearch($ldap, $searchDN, "single", "objectclass=@ldapprefix@Service");
 			$CLIENTS = addServices($result, $client, $CLIENTS, $optBaseDN);
 		}
 
 		# (from item to bottom)
-		$result = LDAPsearch($ldap, $searchDN, "sub", "objectclass=nagiosService");
+		$result = LDAPsearch($ldap, $searchDN, "sub", "objectclass=@ldapprefix@Service");
 		$CLIENTS = addServices($result, $client, $CLIENTS, $optBaseDN);
 }
 
@@ -408,10 +408,10 @@ sub LDAPsearch {
 			my $counter = scalar @$attrVal;
 			while($counter != 0) {
 				$counter--;
-				if ($attrName eq "nagioshostcustomvar" || $attrName eq "nagiosservicecustomvar") {
+				if ($attrName eq "@ldapprefix@hostcustomvar" || $attrName eq "@ldapprefix@servicecustomvar") {
 					@$attrVal[$counter] =~ m/([\d\w]*) (.*)/;
 					$return->{$_}->{$attrName}->{$1} = $2;
-				} elsif ($attrName eq "nagiostimeperiodvalue") {
+				} elsif ($attrName eq "@ldapprefix@timeperiodvalue") {
 					@$attrVal[$counter] =~ m/(.*) +([-\w:]+(\,?)+[-\w:]+)/;
 					$return->{$_}->{$attrName}->{$counter}->{$1} = $2;
 				} else {
@@ -435,7 +435,7 @@ sub addHostAttributes {
 			# only defined attributes
 			if ($itemMap{$val2}) {
 				# only host attributes
-				if ($val2 =~ /nagioshost/ || $val2 eq 'nagiosaddress' || $val2 eq 'nagiosparent' || $val2 eq 'nagioscheckcommand' || $val2 eq 'nagiosalias') {
+				if ($val2 =~ /@ldapprefix@host/ || $val2 eq '@ldapprefix@address' || $val2 eq '@ldapprefix@parent' || $val2 eq '@ldapprefix@checkcommand' || $val2 eq '@ldapprefix@alias') {
 					DebugOutput("Attribute $val2 [$result->{$val1}->{$val2}] found in $val1; valency: hostattribute => store!");
 
 					# additive inheritance?
@@ -456,10 +456,10 @@ sub addHostAttributes {
 							}
 						}
 					} else {
-						if ($val2 =~ /nagioshostcustomvar/) {
+						if ($val2 =~ /@ldapprefix@hostcustomvar/) {
 							foreach(keys %{$result->{$val1}->{$val2}}) {
-								$CLIENTS->{$host.",".$optBaseDN}->{nagioshostcustomvar}->{$_} = $result->{$val1}->{$val2}->{$_};
-								$INHERIT->{$host.",".$optBaseDN}->{nagioshostcustomvar}->{$_} = $result->{$val1}->{dn};
+								$CLIENTS->{$host.",".$optBaseDN}->{@ldapprefix@hostcustomvar}->{$_} = $result->{$val1}->{$val2}->{$_};
+								$INHERIT->{$host.",".$optBaseDN}->{@ldapprefix@hostcustomvar}->{$_} = $result->{$val1}->{dn};
 							}
 						} else {
 							$CLIENTS->{$host.",".$optBaseDN}->{$val2} = $result->{$val1}->{$val2};
@@ -473,9 +473,9 @@ sub addHostAttributes {
 		}
 
 		# host dependencies
-		if ($result->{$val1}->{nagioshostdependency}) {
-			$CLIENTS->{$host.",".$optBaseDN}->{DEPENDENCY}->{$result->{$val1}->{nagioshostdependency}}->{nagioshostdependencyexecutionfailurecriteria} = $result->{$val1}->{nagioshostdependencyexecutionfailurecriteria} if $result->{$val1}->{nagioshostdependencyexecutionfailurecriteria};
-			$CLIENTS->{$host.",".$optBaseDN}->{DEPENDENCY}->{$result->{$val1}->{nagioshostdependency}}->{nagioshostdependencynotificationfailurecriteria} = $result->{$val1}->{nagioshostdependencynotificationfailurecriteria} if $result->{$val1}->{nagioshostdependencynotificationfailurecriteria};
+		if ($result->{$val1}->{@ldapprefix@hostdependency}) {
+			$CLIENTS->{$host.",".$optBaseDN}->{DEPENDENCY}->{$result->{$val1}->{@ldapprefix@hostdependency}}->{@ldapprefix@hostdependencyexecutionfailurecriteria} = $result->{$val1}->{@ldapprefix@hostdependencyexecutionfailurecriteria} if $result->{$val1}->{@ldapprefix@hostdependencyexecutionfailurecriteria};
+			$CLIENTS->{$host.",".$optBaseDN}->{DEPENDENCY}->{$result->{$val1}->{@ldapprefix@hostdependency}}->{@ldapprefix@hostdependencynotificationfailurecriteria} = $result->{$val1}->{@ldapprefix@hostdependencynotificationfailurecriteria} if $result->{$val1}->{@ldapprefix@hostdependencynotificationfailurecriteria};
 		}
 	}
 
@@ -490,7 +490,7 @@ sub addAlias {
 
 	foreach my $alias (keys %{$result}) {
 		my $searchDN = $result->{$alias}->{aliasedobjectname};
-		my $val = LDAPsearch($ldap, $searchDN, "sub", "objectclass=nagiosService");
+		my $val = LDAPsearch($ldap, $searchDN, "sub", "objectclass=@ldapprefix@Service");
 		$CLIENTS = addServices($val, $host, $CLIENTS, $searchDN);
 	}
 
@@ -552,7 +552,7 @@ sub addServiceAttributes {
         foreach my $val1 (keys %{$result}) {
 		foreach my $val2 (keys %{$result->{$val1}}) {
 			# only service attributes
-			if ($val2 =~ /nagiosservice/ || $val2 eq 'nagioscheckcommand' || $val2 eq 'dn') {
+			if ($val2 =~ /@ldapprefix@service/ || $val2 eq '@ldapprefix@checkcommand' || $val2 eq 'dn') {
 				DebugOutput("Attribute $val2 [$result->{$val1}->{$val2}] found in $val1; valency: serviceattribute => store!");
 
 				# additive inheritance?
@@ -573,10 +573,10 @@ sub addServiceAttributes {
 						}
 					}
 				} else {
-					if ($val2 =~ /nagiosservicecustomvar/) {
+					if ($val2 =~ /@ldapprefix@servicecustomvar/) {
 						foreach(keys %{$result->{$val1}->{$val2}}) {
-							$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{nagiosservicecustomvar}->{$_} = $result->{$val1}->{$val2}->{$_};
-							$INHERIT->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{nagiosservicecustomvar}->{$_} = $result->{$val1}->{dn};
+							$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{@ldapprefix@servicecustomvar}->{$_} = $result->{$val1}->{$val2}->{$_};
+							$INHERIT->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{@ldapprefix@servicecustomvar}->{$_} = $result->{$val1}->{dn};
 						}
 					} else {
 						$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2} = $result->{$val1}->{$val2};
@@ -589,10 +589,10 @@ sub addServiceAttributes {
 		}
 
 		# service dependencies
-		if ($result->{$val1}->{nagiosservicedependency}) {
-			my ($depHost, $depService) = (split(/ *-> */, $result->{$val1}->{nagiosservicedependency}))[0,1];
-			$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{DEPENDENCY}->{$depHost}->{$depService}->{nagiosservicedependencyexecutionfailurecriteria} = $result->{$val1}->{nagiosservicedependencyexecutionfailurecriteria} if $result->{$val1}->{nagiosservicedependencyexecutionfailurecriteria};
-			$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{DEPENDENCY}->{$depHost}->{$depService}->{nagiosservicedependencynotificationfailurecriteria} = $result->{$val1}->{nagiosservicedependencynotificationfailurecriteria} if $result->{$val1}->{nagiosservicedependencynotificationfailurecriteria};
+		if ($result->{$val1}->{@ldapprefix@servicedependency}) {
+			my ($depHost, $depService) = (split(/ *-> */, $result->{$val1}->{@ldapprefix@servicedependency}))[0,1];
+			$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{DEPENDENCY}->{$depHost}->{$depService}->{@ldapprefix@servicedependencyexecutionfailurecriteria} = $result->{$val1}->{@ldapprefix@servicedependencyexecutionfailurecriteria} if $result->{$val1}->{@ldapprefix@servicedependencyexecutionfailurecriteria};
+			$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{DEPENDENCY}->{$depHost}->{$depService}->{@ldapprefix@servicedependencynotificationfailurecriteria} = $result->{$val1}->{@ldapprefix@servicedependencynotificationfailurecriteria} if $result->{$val1}->{@ldapprefix@servicedependencynotificationfailurecriteria};
 		}
 	}
 
@@ -629,7 +629,7 @@ sub copyGeneric {
 
 sub genTimeperiods {
 	# get all timeperiods
-	my $result = LDAPsearch($ldap, $optBaseDN, "sub", "objectclass=nagiosTimeperiod");
+	my $result = LDAPsearch($ldap, $optBaseDN, "sub", "objectclass=@ldapprefix@Timeperiod");
 	foreach my $timeperiod (keys %{$result}) {
 		# build file path
 		my $writeFile = $optOutputDir.'/';
@@ -653,10 +653,10 @@ sub genTimeperiods {
 
 		print FH "define timeperiod {\n";
 		foreach (keys %{$result->{$timeperiod}}) {
-			if ($itemMap{$_} || $_ eq 'nagiostimeperiodvalue') {
+			if ($itemMap{$_} || $_ eq '@ldapprefix@timeperiodvalue') {
 				if ($_ eq 'cn') {
 					print FH "\ttimeperiod_name\t$result->{$timeperiod}->{$_}\n";
-				} elsif ($_ eq 'nagiostimeperiodvalue') {
+				} elsif ($_ eq '@ldapprefix@timeperiodvalue') {
 					foreach my $val (keys %{$result->{$timeperiod}->{$_}}) {
 						foreach my $timeperiod_value (keys %{$result->{$timeperiod}->{$_}->{$val}}) {
 							print FH "\t$timeperiod_value\t$result->{$timeperiod}->{$_}->{$val}->{$timeperiod_value}\n";
@@ -676,7 +676,7 @@ sub genTimeperiods {
 
 sub genCommands {
 	# get all commands
-	my $result = LDAPsearch($ldap, $optBaseDN, "sub", "objectclass=nagiosCommand");
+	my $result = LDAPsearch($ldap, $optBaseDN, "sub", "objectclass=@ldapprefix@Command");
 	foreach my $command (keys %{$result}) {
 		# build file path
 		my $writeFile = $optOutputDir.'/';
@@ -717,7 +717,7 @@ sub genCommands {
 
 sub genContacts {
 	# get all contacts
-	my $result = LDAPsearch($ldap, $optBaseDN, "sub", "objectclass=nagiosContact");
+	my $result = LDAPsearch($ldap, $optBaseDN, "sub", "objectclass=@ldapprefix@Contact");
 	foreach my $contact (keys %{$result}) {
 		# build file path
 		my $writeFile = $optOutputDir.'/';
@@ -759,7 +759,7 @@ sub genContacts {
 
 sub genContactgroups {
 	# get all contactgroups
-	my $result = LDAPsearch($ldap, $optBaseDN, "sub", "objectclass=nagiosContactgroup");
+	my $result = LDAPsearch($ldap, $optBaseDN, "sub", "objectclass=@ldapprefix@Contactgroup");
 	foreach my $contactgroup (keys %{$result}) {
 		# build file path
 		my $writeFile = $optOutputDir.'/';
@@ -803,12 +803,12 @@ sub genHostgroups {
 
 	# get hostgroups (from client attributes)
 	foreach my $client (keys %{$CLIENTS}) {
-		if (defined $CLIENTS->{$client}->{nagioshostgroups}) {
-			if ($CLIENTS->{$client}->{nagioshostgroups} =~ /,/) {
-				my @val = split(/\s*,\s*/, $CLIENTS->{$client}->{nagioshostgroups});
+		if (defined $CLIENTS->{$client}->{@ldapprefix@hostgroups}) {
+			if ($CLIENTS->{$client}->{@ldapprefix@hostgroups} =~ /,/) {
+				my @val = split(/\s*,\s*/, $CLIENTS->{$client}->{@ldapprefix@hostgroups});
 				foreach(@val) { push(@HOSTGROUPS, $_); }
 			} else {
-				push(@HOSTGROUPS, $CLIENTS->{$client}->{nagioshostgroups});
+				push(@HOSTGROUPS, $CLIENTS->{$client}->{@ldapprefix@hostgroups});
 			}
 		}
 	}
@@ -829,8 +829,8 @@ sub genHostgroups {
 		close(FH);
 	}
 
-	# get hostgroups (from objectclass 'nagiosHostgroup') and write files
-	my $result = LDAPsearch($ldap, $optBaseDN, "sub", "objectclass=nagiosHostgroup");
+	# get hostgroups (from objectclass '@ldapprefix@Hostgroup') and write files
+	my $result = LDAPsearch($ldap, $optBaseDN, "sub", "objectclass=@ldapprefix@Hostgroup");
 	foreach my $val1 (keys %{$result}) {
 		# set file path
 		my $writeFile = $optOutputDir."/hostgroups/$result->{$val1}->{cn}.cfg";
@@ -840,7 +840,7 @@ sub genHostgroups {
 
 		print FH "define hostgroup {\n";
 		print FH "\thostgroup_name\t$result->{$val1}->{cn}\n";
-		print FH "\talias\t$result->{$val1}->{nagiosalias}\n";
+		print FH "\talias\t$result->{$val1}->{@ldapprefix@alias}\n";
 		print FH "}\n";
 
 		# close target file
@@ -848,17 +848,17 @@ sub genHostgroups {
 
 		# add hosts of this hostgroup to $CLIENT hash;
 		# client config will write the config for membership
-		if (defined $result->{$val1}->{nagiosmembers}) {
-			my @val = split(/\s*,\s*/, $result->{$val1}->{nagiosmembers});
+		if (defined $result->{$val1}->{@ldapprefix@members}) {
+			my @val = split(/\s*,\s*/, $result->{$val1}->{@ldapprefix@members});
 			foreach(@val) {
 				# search full name im client hash :(
 				foreach my $client (keys %{$CLIENTS}) {
 					# if real name was found, add to $CLIENT hash
 					if ($client =~ /^cn=$_,/) {
-						if ($CLIENTS->{$client}->{nagioshostgroups}) {
-							$CLIENTS->{$client}->{nagioshostgroups} =  $CLIENTS->{$client}->{nagioshostgroups}.','.$result->{$val1}->{cn};
+						if ($CLIENTS->{$client}->{@ldapprefix@hostgroups}) {
+							$CLIENTS->{$client}->{@ldapprefix@hostgroups} =  $CLIENTS->{$client}->{@ldapprefix@hostgroups}.','.$result->{$val1}->{cn};
 						} else {
-							$CLIENTS->{$client}->{nagioshostgroups} = $result->{$val1}->{cn};
+							$CLIENTS->{$client}->{@ldapprefix@hostgroups} = $result->{$val1}->{cn};
 						}
 					}
 				}
@@ -873,12 +873,12 @@ sub genServicegroups {
 	# get servicegroups (from client attributes)
 	foreach my $client (keys %{$CLIENTS}) {
 		for my $service (keys %{$CLIENTS->{$client}->{SERVICES}}) {
-			if (defined $CLIENTS->{$client}->{SERVICES}->{$service}->{nagiosservicegroups}) {
-				if ($CLIENTS->{$client}->{SERVICES}->{$service}->{nagiosservicegroups} =~ /,/) {
-					my @val = split(/\s*,\s*/, $CLIENTS->{$client}->{SERVICES}->{$service}->{nagiosservicegroups});
+			if (defined $CLIENTS->{$client}->{SERVICES}->{$service}->{@ldapprefix@servicegroups}) {
+				if ($CLIENTS->{$client}->{SERVICES}->{$service}->{@ldapprefix@servicegroups} =~ /,/) {
+					my @val = split(/\s*,\s*/, $CLIENTS->{$client}->{SERVICES}->{$service}->{@ldapprefix@servicegroups});
 					foreach(@val) { push(@SERVICEGROUPS, $_); }
 				} else {
-					push(@SERVICEGROUPS, $CLIENTS->{$client}->{SERVICES}->{$service}->{nagiosservicegroups});
+					push(@SERVICEGROUPS, $CLIENTS->{$client}->{SERVICES}->{$service}->{@ldapprefix@servicegroups});
 				}
 			}
 		}
@@ -901,8 +901,8 @@ sub genServicegroups {
 		close(FH);
 	}
 
-	# get servicegroups (from objectclass 'nagiosServicegroup') and write files
-	my $result = LDAPsearch($ldap, $optBaseDN, "sub", "objectclass=nagiosServicegroup");
+	# get servicegroups (from objectclass '@ldapprefix@Servicegroup') and write files
+	my $result = LDAPsearch($ldap, $optBaseDN, "sub", "objectclass=@ldapprefix@Servicegroup");
 	foreach my $val1 (keys %{$result}) {
 		# set file path
 		my $writeFile = $optOutputDir."/servicegroups/$result->{$val1}->{cn}.cfg";
@@ -920,18 +920,18 @@ sub genServicegroups {
 
 		# add services of this servicegroup to $CLIENT hash
 		# client config will write the config for membership
-		if (defined $result->{$val1}->{nagiosmembers}) {
-			my @val = split(/\s*,\s*/, $result->{$val1}->{nagiosmembers});
+		if (defined $result->{$val1}->{@ldapprefix@members}) {
+			my @val = split(/\s*,\s*/, $result->{$val1}->{@ldapprefix@members});
 			my $counter = 0;
 			while($counter <= $#val) {
 				# search full name im client hash :(
 				foreach my $client (keys %{$CLIENTS}) {
 					# if real name was found, add to $CLIENT hash
 					if ($client =~ /^cn=$val[$counter],/) {
-						if ($CLIENTS->{$client}->{SERVICES}->{$val[$counter+1]}->{nagiosservicegroups}) {
-							$CLIENTS->{$client}->{SERVICES}->{$val[$counter+1]}->{nagiosservicegroups} = $CLIENTS->{$client}->{SERVICES}->{$val[$counter+1]}->{nagiosservicegroups}.','.$result->{$val1}->{cn};
+						if ($CLIENTS->{$client}->{SERVICES}->{$val[$counter+1]}->{@ldapprefix@servicegroups}) {
+							$CLIENTS->{$client}->{SERVICES}->{$val[$counter+1]}->{@ldapprefix@servicegroups} = $CLIENTS->{$client}->{SERVICES}->{$val[$counter+1]}->{@ldapprefix@servicegroups}.','.$result->{$val1}->{cn};
 						} else {
-							$CLIENTS->{$client}->{SERVICES}->{$val[$counter+1]}->{nagiosservicegroups} = $result->{$val1}->{cn};
+							$CLIENTS->{$client}->{SERVICES}->{$val[$counter+1]}->{@ldapprefix@servicegroups} = $result->{$val1}->{cn};
 						}
 					}
 				}
@@ -965,8 +965,8 @@ sub genHostConfig {
 			}
 		}
 
-		# only gen config if nagioshostdisable is not set
-		if (!defined $CLIENTS->{$client}->{nagioshostdisable}) {
+		# only gen config if @ldapprefix@hostdisable is not set
+		if (!defined $CLIENTS->{$client}->{@ldapprefix@hostdisable}) {
 			# open target file
 			open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
 
@@ -976,8 +976,8 @@ sub genHostConfig {
 			print FH "\thost_name\t$host_name\n";
 			foreach (keys %{$CLIENTS->{$client}}) {
 				# generate all host attributes, except host dependency stuff
-				if ($_ !~ /nagioshostdependency/ && $_ =~ /nagioshost/ || $_ eq 'nagiosaddress' || $_ eq 'nagiosparent' || $_ eq 'nagioscheckcommand' || $_ eq 'nagiosalias' && $_ ne 'nagioshostdisable') {
-					if ($_ eq 'nagioshostcustomvar') {
+				if ($_ !~ /@ldapprefix@hostdependency/ && $_ =~ /@ldapprefix@host/ || $_ eq '@ldapprefix@address' || $_ eq '@ldapprefix@parent' || $_ eq '@ldapprefix@checkcommand' || $_ eq '@ldapprefix@alias' && $_ ne '@ldapprefix@hostdisable') {
+					if ($_ eq '@ldapprefix@hostcustomvar') {
 						foreach my $customvar (keys %{$CLIENTS->{$client}->{$_}}) {
 							if (defined $INHERIT->{$client}->{$_}->{$customvar} && $INHERIT->{$client}->{$_}->{$customvar} ne $CLIENTS->{$client}->{dn}) {
 								print FH "\t# from: $INHERIT->{$client}->{$_}->{$customvar}\n";
@@ -997,7 +997,7 @@ sub genHostConfig {
 
 			# generate service definition
 			foreach my $service(keys %{$CLIENTS->{$client}->{SERVICES}}) {
-				if (!$CLIENTS->{$client}->{SERVICES}->{$service}->{nagiosservicedisable} && $service ne "INFO") {
+				if (!$CLIENTS->{$client}->{SERVICES}->{$service}->{@ldapprefix@servicedisable} && $service ne "INFO") {
 					if (defined $CLIENTS->{$client}->{SERVICES}->{$service}->{dn} && $CLIENTS->{$client}->{SERVICES}->{$service}->{dn} !~ /$CLIENTS->{$client}->{dn}/) {
 						print FH "# from: $CLIENTS->{$client}->{SERVICES}->{$service}->{dn}\n";
 					}
@@ -1007,8 +1007,8 @@ sub genHostConfig {
 					print FH "\thost_name\t$host_name\n";
 					foreach(keys %{$CLIENTS->{$client}->{SERVICES}->{$service}}) {
 						# generate all service attributes, except service dependency stuff
-						if ($_ !~ /nagiosservicedependency/ && $_ =~ /nagiosservice/ || $_ eq 'nagioscheckcommand') {
-							if ($_ eq 'nagiosservicecustomvar') {
+						if ($_ !~ /@ldapprefix@servicedependency/ && $_ =~ /@ldapprefix@service/ || $_ eq '@ldapprefix@checkcommand') {
+							if ($_ eq '@ldapprefix@servicecustomvar') {
 								foreach my $customvar (keys %{$CLIENTS->{$client}->{SERVICES}->{$service}->{$_}}) {
 									if (defined $INHERIT->{$client}->{SERVICES}->{$service}->{$_}->{$customvar} && $INHERIT->{$client}->{SERVICES}->{$service}->{$_}->{$customvar} ne $CLIENTS->{$client}->{SERVICES}->{$service}->{dn}) {
 										print FH "\t# from: $INHERIT->{$client}->{SERVICES}->{$service}->{$_}->{$customvar}\n";
@@ -1031,7 +1031,7 @@ sub genHostConfig {
 			# generate host dependencies
 			foreach my $hostdep(keys %{$CLIENTS->{$client}->{DEPENDENCY}}) {
 				# only if host is not disabled
-				if (!$CLIENTS->{$client}->{nagioshostdisable}) {
+				if (!$CLIENTS->{$client}->{@ldapprefix@hostdisable}) {
 					print FH "define hostdependency {\n";
 					print FH "\thost_name\t$hostdep\n";
 					print FH "\tdependent_host_name\t$CLIENTS->{$client}->{cn}\n";
@@ -1046,7 +1046,7 @@ sub genHostConfig {
 			# generate service dependencies
 			foreach my $service(keys %{$CLIENTS->{$client}->{SERVICES}}) {
 				# only if service is not disabled
-				if (!$CLIENTS->{$client}->{SERVICES}->{$service}->{nagiosservicedisable}) {
+				if (!$CLIENTS->{$client}->{SERVICES}->{$service}->{@ldapprefix@servicedisable}) {
 					foreach my $hostdep(keys %{$CLIENTS->{$client}->{SERVICES}->{$service}->{DEPENDENCY}}) {
 						foreach my $servicedep(keys %{$CLIENTS->{$client}->{SERVICES}->{$service}->{DEPENDENCY}->{$hostdep}}) {
 							print FH "define servicedependency {\n";
@@ -1080,12 +1080,12 @@ sub HostgroupServiceMapping {
 	# search for each host :(
 	foreach my $client (keys %{$CLIENTS}) {
 		# any hostgroup for this host?
-		if ($CLIENTS->{$client}->{nagioshostgroups}) {
-			my @hostgroups = split(/\s*,\s*/, $CLIENTS->{$client}->{nagioshostgroups});
+		if ($CLIENTS->{$client}->{@ldapprefix@hostgroups}) {
+			my @hostgroups = split(/\s*,\s*/, $CLIENTS->{$client}->{@ldapprefix@hostgroups});
 
 			# search after hostgroup (objectclass)
 			foreach my $hostgroup (@hostgroups) {
-				my $result = LDAPsearch($ldap, $optBaseDN, 'sub', "(&(objectclass=nagiosHostgroup)(cn=$hostgroup))");
+				my $result = LDAPsearch($ldap, $optBaseDN, 'sub', "(&(objectclass=@ldapprefix@Hostgroup)(cn=$hostgroup))");
 
 				# search stuff in hostgroup dn
 				foreach my $val (keys %{$result}) {
@@ -1093,7 +1093,7 @@ sub HostgroupServiceMapping {
 					$client =~ s/,$optBaseDN//;
 
 					# search services
-					my $result2 = LDAPsearch($ldap, $result->{$val}->{dn}, 'sub', 'objectclass=nagiosService');
+					my $result2 = LDAPsearch($ldap, $result->{$val}->{dn}, 'sub', 'objectclass=@ldapprefix@Service');
 					$CLIENTS = addServices($result2, $client, $CLIENTS, $result->{$val}->{dn});
 				}
 			}
