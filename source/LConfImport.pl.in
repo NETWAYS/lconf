@@ -94,7 +94,7 @@ use Net::LDAP;
 use POSIX;
 
 # version string
-my $version = '0.8';
+my $version = '1.0';
 
 # define states
 our @state = ('OK', 'WARNING', 'ERROR');
