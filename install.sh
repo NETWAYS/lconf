@@ -84,7 +84,8 @@ install -o $USER -g $GROUP -m 750 $DIR_SOURCE/LConfSlaveSync.pl $PREFIX/
 ScriptOutput CREATE "LConf config file"
 cat $DIR_SOURCE/config.pm.in | sed -e "s/@domain@/$ROOTDN/g" > $DIR_SOURCE/config.pm.tmp1
 cat $DIR_SOURCE/config.pm.tmp1 | sed -e "s/@user@/$USER/g" > $DIR_SOURCE/config.pm.tmp2
-cat $DIR_SOURCE/config.pm.tmp2 | sed -e "s/@prefix@/$PREFIX_QUOTED/g" > $DIR_SOURCE/config.pm
+cat $DIR_SOURCE/config.pm.tmp2 | sed -e "s/@prefix@/$PREFIX_QUOTED/g" > $DIR_SOURCE/config.pm.tmp3
+cat $DIR_SOURCE/config.pm.tmp3 | sed -e "s/@ldapprefix@/$LDAPPREFIX/g" > $DIR_SOURCE/config.pm
 ScriptOutput INSTALL "LConf config file"
 install -o $USER -g $GROUP -m 700 $DIR_SOURCE/config.pm $PREFIX/etc/
 
