@@ -96,6 +96,7 @@ ScriptOutput INSTALL "Default templates"
 install -o $USER -g $GROUP -m 640 $DIR_SOURCE/default-templates.cfg $PREFIX/etc/
 
 ScriptOutput CREATE "LDAP base ldif"
-cat $DIR_SOURCE/base.ldif.in | sed -e "s/@domain@/$ROOTDN/g" > $DIR_SOURCE/base.ldif
+cat $DIR_SOURCE/base.ldif.in | sed -e "s/@domain@/$ROOTDN/g" > $DIR_SOURCE/base.ldif.tmp1
+cat $DIR_SOURCE/base.ldif.tmp1 | sed -e "s/@ldapprefix@/$LDAPPREFIX/g" > $DIR_SOURCE/base.ldif
 
 WizardManualy
