@@ -593,8 +593,8 @@ objectclass ( 1.3.6.1.4.1.26840.144.5.6 NAME '@ldapprefix@Hostgroup'
 objectclass ( 1.3.6.1.4.1.26840.144.5.7 NAME '@ldapprefix@Service'
 	DESC 'Nagios / Icinga Service'
 	SUP @ldapprefix@TemplateService
-	MUST ( cn $ @ldapprefix@Checkcommand )
-	MAY ( description $ @ldapprefix@ServiceCustomvar ) )
+	MUST ( cn )
+	MAY ( description $ @ldapprefix@ServiceCustomvar $ @ldapprefix@Checkcommand ) )
 
 objectclass ( 1.3.6.1.4.1.26840.144.5.8 NAME '@ldapprefix@Servicegroup'
 	DESC 'Nagios / Icinga Servicegroup'
