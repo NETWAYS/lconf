@@ -304,6 +304,12 @@ attributetype ( 1.3.6.1.4.1.26840.144.2.3.525 NAME '@ldapprefix@HostCheckFreshne
 	SUBSTR caseIgnoreSubstringsMatch
 	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
 
+attributetype ( 1.3.6.1.4.1.26840.144.2.3.526 NAME '@ldapprefix@HostCheckcommand'
+        DESC 'Nagios / Icinga Check Command (check_command check_disk $ARG1$ $ARG2$)'
+        EQUALITY caseIgnoreMatch
+        SUBSTR caseIgnoreSubstringsMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
+
 
 #
 # .2.4   | @ldapprefix@ attributes (service)
@@ -471,6 +477,12 @@ attributetype ( 1.3.6.1.4.1.26840.144.2.4.525 NAME '@ldapprefix@Servicegroups'
 	SUBSTR caseIgnoreSubstringsMatch
 	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{512} SINGLE-VALUE )
 
+attributetype ( 1.3.6.1.4.1.26840.144.2.4.526 NAME '@ldapprefix@ServiceCheckcommand'
+        DESC 'Nagios / Icinga Check Command (check_command check_disk $ARG1$ $ARG2$)'
+        EQUALITY caseIgnoreMatch
+        SUBSTR caseIgnoreSubstringsMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
+
 
 #
 # .3   | objectclass templates
@@ -485,7 +497,7 @@ objectclass ( 1.3.6.1.4.1.26840.144.3.1 NAME '@ldapprefix@TemplateHost'
 		@ldapprefix@HostProcessPerfData $ @ldapprefix@HostActiveChecksEnabled $ @ldapprefix@HostPassiveChecksEnabled $
 		@ldapprefix@HostFlapDetectionEnabled $ @ldapprefix@HostFlapDetectionOptions $ @ldapprefix@HostEventhandler $
 		@ldapprefix@HostNotesURL $ @ldapprefix@HostActionURL $ @ldapprefix@HostDisable $
-		@ldapprefix@Parent $ @ldapprefix@Checkcommand $ @ldapprefix@Hostgroups $
+		@ldapprefix@Parent $ @ldapprefix@HostCheckcommand $ @ldapprefix@Hostgroups $
 		@ldapprefix@HostDependency $ @ldapprefix@HostDependencyExecutionFailureCriteria $ @ldapprefix@HostDependencyNotificationFailureCriteria $
 		@ldapprefix@HostCheckFreshness $ @ldapprefix@HostFreshnessThreshold ) )
 
@@ -498,7 +510,7 @@ objectclass ( 1.3.6.1.4.1.26840.144.3.2 NAME '@ldapprefix@TemplateService'
 		@ldapprefix@ServiceProcessPerfData $ @ldapprefix@ServiceActiveChecksEnabled $ @ldapprefix@ServicePassiveChecksEnabled $
 		@ldapprefix@ServiceFlapDetectionEnabled $ @ldapprefix@ServiceFlapDetectionOptions $ @ldapprefix@ServiceEventhandler $
 		@ldapprefix@ServiceNotesURL $ @ldapprefix@ServiceActionURL $ @ldapprefix@ServiceDisable $
-		@ldapprefix@Servicegroups $
+		@ldapprefix@ServiceCheckcommand $ @ldapprefix@Servicegroups $
 		@ldapprefix@ServiceDependency $ @ldapprefix@ServiceDependencyExecutionFailureCriteria $ @ldapprefix@ServiceDependencyNotificationFailureCriteria $
 		@ldapprefix@ServiceCheckFreshness $ @ldapprefix@ServiceFreshnessThreshold ) )
 
@@ -518,7 +530,7 @@ objectclass ( 1.3.6.1.4.1.26840.144.4.1 NAME '@ldapprefix@StructuralObject'
 		@ldapprefix@HostProcessPerfData $ @ldapprefix@HostActiveChecksEnabled $ @ldapprefix@HostPassiveChecksEnabled $
 		@ldapprefix@HostFlapDetectionEnabled $ @ldapprefix@HostFlapDetectionOptions $ @ldapprefix@HostEventhandler $
 		@ldapprefix@HostNotesURL $ @ldapprefix@HostActionURL $ @ldapprefix@HostDisable $
-		@ldapprefix@Parent $ @ldapprefix@Checkcommand $ @ldapprefix@Hostgroups $
+		@ldapprefix@Parent $ @ldapprefix@HostCheckcommand $ @ldapprefix@Hostgroups $
 		@ldapprefix@HostDependency $ @ldapprefix@HostDependencyExecutionFailureCriteria $ @ldapprefix@HostDependencyNotificationFailureCriteria $
 		@ldapprefix@HostCheckFreshness $ @ldapprefix@HostFreshnessThreshold $
 		@ldapprefix@ServiceCustomvar $ @ldapprefix@ServiceContacts $ @ldapprefix@ServiceContactgroups $
@@ -527,9 +539,10 @@ objectclass ( 1.3.6.1.4.1.26840.144.4.1 NAME '@ldapprefix@StructuralObject'
 		@ldapprefix@ServiceProcessPerfData $ @ldapprefix@ServiceActiveChecksEnabled $ @ldapprefix@ServicePassiveChecksEnabled $
 		@ldapprefix@ServiceFlapDetectionEnabled $ @ldapprefix@ServiceFlapDetectionOptions $ @ldapprefix@ServiceEventhandler $
 		@ldapprefix@ServiceNotesURL $ @ldapprefix@ServiceActionURL $ @ldapprefix@ServiceDisable $
-		@ldapprefix@Servicegroups $
+		@ldapprefix@ServiceCheckcommand $ @ldapprefix@Servicegroups $
 		@ldapprefix@ServiceDependency $ @ldapprefix@ServiceDependencyExecutionFailureCriteria $ @ldapprefix@ServiceDependencyNotificationFailureCriteria $
-		@ldapprefix@ServiceCheckFreshness $ @ldapprefix@ServiceFreshnessThreshold) )
+		@ldapprefix@ServiceCheckFreshness $ @ldapprefix@ServiceFreshnessThreshold $
+		@ldapprefix@Checkcommand ) )
 
 
 #

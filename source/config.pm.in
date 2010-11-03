@@ -75,6 +75,7 @@ $optSlaveSyncPush      = '30';
 	@ldapprefix@hostnotificationsenabled			=> 'notifications_enabled',
 	@ldapprefix@hostfreshnessthreshold			=> 'freshness_threshold',
 	@ldapprefix@hostcheckfreshness			=> 'check_freshness',
+	@ldapprefix@hostcheckcommand				=> 'check_command',
 	@ldapprefix@hostdisable				=> '',
 
 	# .2.4   | @ldapprefix@ attributes (service)
@@ -104,6 +105,7 @@ $optSlaveSyncPush      = '30';
         @ldapprefix@servicenotificationsenabled		=> 'notifications_enabled',
 	@ldapprefix@servicefreshnessthreshold			=> 'freshness_threshold',
 	@ldapprefix@servicecheckfreshness			=> 'check_freshness',
+	@ldapprefix@servicecheckcommand			=> 'check_command',
         @ldapprefix@servicedisable				=> '',
 
 	# special stuff ;-)

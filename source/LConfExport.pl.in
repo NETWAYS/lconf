@@ -435,7 +435,7 @@ sub addHostAttributes {
 			# only defined attributes
 			if ($itemMap{$val2}) {
 				# only host attributes
-				if ($val2 =~ /@ldapprefix@host/ || $val2 eq '@ldapprefix@address' || $val2 eq '@ldapprefix@parent' || $val2 eq '@ldapprefix@checkcommand' || $val2 eq '@ldapprefix@alias') {
+				if ($val2 =~ /@ldapprefix@host/ || $val2 eq '@ldapprefix@address' || $val2 eq '@ldapprefix@parent' || $val2 eq '@ldapprefix@alias') {
 					DebugOutput("Attribute $val2 [$result->{$val1}->{$val2}] found in $val1; valency: hostattribute => store!");
 
 					# additive inheritance?
@@ -976,7 +976,7 @@ sub genHostConfig {
 			print FH "\thost_name\t$host_name\n";
 			foreach (keys %{$CLIENTS->{$client}}) {
 				# generate all host attributes, except host dependency stuff
-				if ($_ !~ /@ldapprefix@hostdependency/ && $_ =~ /@ldapprefix@host/ || $_ eq '@ldapprefix@address' || $_ eq '@ldapprefix@parent' || $_ eq '@ldapprefix@checkcommand' || $_ eq '@ldapprefix@alias' && $_ ne '@ldapprefix@hostdisable') {
+				if ($_ !~ /@ldapprefix@hostdependency/ && $_ =~ /@ldapprefix@host/ || $_ eq '@ldapprefix@address' || $_ eq '@ldapprefix@parent' || $_ eq '@ldapprefix@alias' && $_ ne '@ldapprefix@hostdisable') {
 					if ($_ eq '@ldapprefix@hostcustomvar') {
 						foreach my $customvar (keys %{$CLIENTS->{$client}->{$_}}) {
 							if (defined $INHERIT->{$client}->{$_}->{$customvar} && $INHERIT->{$client}->{$_}->{$customvar} ne $CLIENTS->{$client}->{dn}) {
