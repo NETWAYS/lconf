@@ -10,6 +10,13 @@ $optExportUser  = '@user@';
 # export script's lock file
 $optExportLock	= '@prefix@/var/LConfExport.lock';
 
+# slave export temp path
+$optTempPath    = '@prefix@/var/';
+
+# slave export parents remove 
+# (this will remove the parents parameter in slave configs if set to 1)
+$optRemovePraentsOnSatellite = 0;
+
 # revision module
 $optRevisionEnabled = '0';
 $optRevisionPath = 'https://MySVNServer/playground/lconf';
