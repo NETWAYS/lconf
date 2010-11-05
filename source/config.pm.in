@@ -17,6 +17,10 @@ $optTempPath    = '@prefix@/var/';
 # (this will remove the parents parameter in slave configs if set to 1)
 $optRemovePraentsOnSatellite = 0;
 
+# slave export enable process_perdata
+# (this will enable the process_perdata parameter in slave configs if set to 1)
+$optEnableProcessPerfdataOnSatellite = 0;
+
 # revision module
 $optRevisionEnabled = '0';
 $optRevisionPath = 'https://MySVNServer/playground/lconf';

@@ -119,7 +119,7 @@ GetOptions(
 # import config
 use lib '@prefix@';
 use etc::config;
-use vars qw($optLDAPServer $optLDAPDN $optExportUser $optRemovePraentsOnSatellite $optTempPath);
+use vars qw($optLDAPServer $optLDAPDN $optExportUser $optRemovePraentsOnSatellite $optTempPath $optEnableProcessPerfdataOnSatellite);
 
 
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
@@ -190,6 +190,12 @@ if ($optRemovePraentsOnSatellite) {
 		# remove parents in local config
 		beVerbose("LOCAL REMOVE PARENTS", "find ${optTempPath}${optHost}_${optTargetPath}/ -name '*.cfg'|xargs -I {} sed -i 's/^\\s*parents.*/# &/gi' \"{}\" \n");
 		qx(find ${optTempPath}${optHost}_${optTargetPath}/ -name '*.cfg'|xargs -I {} sed -i 's/^\\s*parents.*/# &/gi' \"{}\");
+}
+
+if ($optEnableProcessPerfdataOnSatellite) { 
+		# switch on perfdata processing option in local config
+		beVerbose("LOCAL ENABLE PERFDATAPROCESSING", "find ${optTempPath}${optHost}_${optTargetPath}/ -name '*.cfg'|xargs -I {} sed -i 's/(^\\s*process_perf_data.*)0/\11/gi' \"{}\" \n");
+		qx(find ${optTempPath}${optHost}_${optTargetPath}/ -name '*.cfg'|xargs -I {} sed -i 's/\\(^\\s*process_perf_data.*\\)0/\11/gi' \"{}\");
 }
 
 # copy config to client
