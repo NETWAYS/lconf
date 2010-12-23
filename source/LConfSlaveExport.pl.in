@@ -119,7 +119,7 @@ GetOptions(
 # import config
 use lib '@prefix@';
 use etc::config;
-use vars qw($optLDAPServer $optLDAPDN $optExportUser $optRemovePraentsOnSatellite $optTempPath $optEnableProcessPerfdataOnSatellite);
+use vars qw($optLDAPServer $optLDAPDN $optExportUser $optRemovePraentsOnSatellite $optTempPath $optEnableProcessPerfdataOnSatellite $optAlterSatelliteChecksOnMaster);
 
 
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
@@ -156,13 +156,14 @@ my @export;
 # connect to LDAP server
 my $ldap = LDAPconnect();
 
-# get global stuff to export
-my $exportGLOBAL = LDAPsearch($ldap, $optBaseDN, "sub", "description=LCONF->EXPORT->GLOBAL");
-@export = getPaths($exportGLOBAL, @export);
-
 # get slaves cluster dn
 my $exportSLAVE = LDAPsearch($ldap, $optBaseDN, "sub", "description=LCONF->EXPORT->CLUSTER*$optHost");
 @export = getPaths($exportSLAVE, @export);
+my @slaves = @export;
+
+# get global stuff to export
+my $exportGLOBAL = LDAPsearch($ldap, $optBaseDN, "sub", "description=LCONF->EXPORT->GLOBAL");
+@export = getPaths($exportGLOBAL, @export);
 
 # disconnect from LDAP Server
 $ldap->unbind();
@@ -196,6 +197,19 @@ if ($optEnableProcessPerfdataOnSatellite) {
 		# switch on perfdata processing option in local config
 		beVerbose("LOCAL ENABLE PERFDATAPROCESSING", "find ${optTempPath}${optHost}_${optTargetPath}/ -name '*.cfg'|xargs -I {} sed -i 's/(^\\s*process_perf_data.*)0/\11/gi' \"{}\" \n");
 		qx(find ${optTempPath}${optHost}_${optTargetPath}/ -name '*.cfg'|xargs -I {} sed -i 's/\\(^\\s*process_perf_data.*\\)0/\11/gi' \"{}\");
+}
+
+foreach(@slaves) {
+	if ($optAlterSatelliteChecksOnMaster > 0) { 
+		# disable active checks on the master
+		beVerbose("DISABLE ACTIVE CHECKS OF SATELLITE COMPONENTS ON MASTER", "find $_ -name '*.cfg'|xargs -I {} sed -i 's/(^\\s*active_checks_enabled.*)1/\10/gi' \"{}\" \n");
+		qx(find $_ -name '*.cfg'|xargs -I {} sed -i 's/\\(^\\s*active_checks_enabled.*\\)1/\\10/gi' \"{}\");
+		if ($optAlterSatelliteChecksOnMaster > 1) { 
+			# alter checks on the master for freshness checking
+			beVerbose("ALTER CHECKS OF SATELLITE COMPONENTS ON MASTER FOR FRESHNESS CHECKING", "find $_ -name '*.cfg'|xargs -I {} sed -i 's/(^\\s*check_command\\s*).*/# &\\n\\1check_dummy!3!checks from satellite are stale/gi' \"{}\" \n");
+			qx(find $_ -name '*.cfg'|xargs -I {} sed -i 's/\\(^\\s*check_command\\s*\\).*/# &\\n\\1check_dummy!3!checks from satellite are stale/gi' \"{}\");
+		}
+	}
 }
 
 # copy config to client

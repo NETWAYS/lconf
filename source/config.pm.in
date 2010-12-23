@@ -21,6 +21,11 @@ $optRemovePraentsOnSatellite = 0;
 # (this will enable the process_perdata parameter in slave configs if set to 1)
 $optEnableProcessPerfdataOnSatellite = 0;
 
+# slave export alter checks on master
+# (disable active checks on the master if set to 1 or more)
+# (alter checks on the master for freshness checking to if set to 2 or more)
+$optAlterSatelliteChecksOnMaster = 0;
+
 # revision module
 $optRevisionEnabled = '0';
 $optRevisionPath = 'https://MySVNServer/playground/lconf';
