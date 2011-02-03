@@ -335,7 +335,7 @@ sub getFiles {
 	my $remoteDir = shift;
 
 	beVerbose("GET FILES", "from host '$host'");
-	my $cmd = "rsync --remove-sent-files -az -e ssh "; $cmd .= "$host:$remoteDir/*.* $localDir";
+	my $cmd = "rsync --remove-sent-files -azd -e ssh $host:$remoteDir/ $localDir";
 	my $val = system($cmd);
 
 	if ($val != 0) { print "ERROR: data sync with $host failed!\n"}
