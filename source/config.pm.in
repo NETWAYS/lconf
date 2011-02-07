@@ -1,129 +1,100 @@
 #!/usr/bin/perl -w
 
-# way to ldap server
-$optLDAPServer  = '127.0.0.1';
-$optLDAPDN      = 'ou=LConf,@domain@';
 
-# export script's user
-$optExportUser  = '@user@';
+$cfg->{ldap}->{server}          = '127.0.0.1';
+$cfg->{ldap}->{dn}              = 'ou=LConf,<-LDAP_ROOT_DN->';
+$cfg->{ldap}->{prefix}          = '<-LDAP_PREFIX->';
 
-# export script's lock file
-$optExportLock	= '@prefix@/var/LConfExport.lock';
 
-# slave export temp path
-$optTempPath    = '@prefix@/var/';
+$cfg->{export}->{user}          = '<-USER->';
+$cfg->{export}->{lock}          = '<-LOCK_PATH->';
+$cfg->{export}->{startingpoint} = '<-STARTINGPOINT->';
+$cfg->{epxort}->{hashdump}      = '<-HASHDUMP->';
+$cfg->{epxort}->{tmpdir}        = '<-TMPDIR->';
 
-# slave export parents remove 
-# (this will remove the parents parameter in slave configs if set to 1)
-$optRemovePraentsOnSatellite = 0;
 
-# slave export enable process_perdata
-# (this will enable the process_perdata parameter in slave configs if set to 1)
-$optEnableProcessPerfdataOnSatellite = 0;
-
-# slave export alter checks on master
-# (disable active checks on the master if set to 1 or more)
-# (alter checks on the master for freshness checking to if set to 2 or more)
-$optAlterSatelliteChecksOnMaster = 0;
-
-# revision module
-$optRevisionEnabled = '0';
-$optRevisionPath = 'https://MySVNServer/playground/lconf';
-$optRevisionTemp = '@prefix@/var/revision';
-
-# options for slave sync (if used)
-$optSlaveSyncHosts     = 'host1, host2, host3';
-$optSlaveSyncDirLocal  = '/usr/local/icinga/var/perfdata-local';
-$optSlaveSyncDirRemote = '/usr/local/icinga/var/perfdata-remote';
-$optSlaveSyncDirSpool  = '/usr/local/icinga/var/spool/checkresults';
-$optSlaveSyncPidFile   = '@prefix@/var/LConfSlaveSync.pid';
-$optSlaveSyncExtCmd    = '/usr/local/icinga/var/rw/icinga.cmd';
-$optSlaveSyncGet       = '60';
-$optSlaveSyncPush      = '30';
-
-# configured ldap items
 # WARNING! DO NOT CHANGE THIS!!
 %itemMap = (
-	# .2.1   | @ldapprefix@ attributes (generally)
-	@ldapprefix@alias					=> 'alias',
-	@ldapprefix@timeperiodvalue				=> '',
-	@ldapprefix@commandline				=> 'command_line',
-	@ldapprefix@members					=> 'members',
+	# .2.1   | <-LDAP_PREFIX-> attributes (generally)
+	<-LDAP_PREFIX->alias                                        => 'alias',
+	<-LDAP_PREFIX->timeperiodvalue                              => '',
+	<-LDAP_PREFIX->commandline                                  => 'command_line',
+	<-LDAP_PREFIX->members                                      => 'members',
 
-	# .2.2   | @ldapprefix@ attributes (contact)
-	@ldapprefix@email					=> 'email',
-	@ldapprefix@pager					=> 'pager',
-	@ldapprefix@contactservicenotificationperiod		=> 'service_notification_period',
-	@ldapprefix@contacthostnotificationperiod		=> 'host_notification_period',
-	@ldapprefix@contactservicenotificationoptions		=> 'service_notification_options',
-	@ldapprefix@contacthostnotificationoptions		=> 'host_notification_options',
-	@ldapprefix@contactservicenotificationcommands	=> 'service_notification_commands',
-	@ldapprefix@contacthostnotificationcommands		=> 'host_notification_commands',
-	@ldapprefix@contactservicenotificationsenabled	=> 'service_notifications_enabled',
-	@ldapprefix@contacthostnotificationsenabled		=> 'host_notifications_enabled',
-	@ldapprefix@contactcansubmitcommands			=> 'can_submit_commands',
-
-	# .2.3   | @ldapprefix@ attributes (host)
-	@ldapprefix@address					=> 'address',
-	@ldapprefix@parent					=> 'parents',
-	@ldapprefix@hostcustomvar				=> 'PLACEHOLDER',
-	@ldapprefix@hostcontacts				=> 'contacts',
-	@ldapprefix@hostcontactgroups				=> 'contact_groups',
-	@ldapprefix@hostnotificationoptions			=> 'notification_options',
-	@ldapprefix@hostnotificationinterval			=> 'notification_interval',
-	@ldapprefix@hostnotificationperiod			=> 'notification_period',
-	@ldapprefix@hostcheckperiod				=> 'check_period',
-	@ldapprefix@hostcheckinterval				=> 'check_interval',
-	@ldapprefix@hostcheckretryinterval			=> 'retry_interval',
-	@ldapprefix@hostcheckmaxcheckattempts			=> 'max_check_attempts',
-	@ldapprefix@hostprocessperfdata			=> 'process_perf_data',
-	@ldapprefix@hostactivechecksenabled			=> 'active_checks_enabled',
-	@ldapprefix@hostpassivechecksenabled			=> 'passive_checks_enabled',
-	@ldapprefix@hostflapdetectionenabled			=> 'flap_detection_enabled',
-	@ldapprefix@hostflapdetectionoptions			=> 'flap_detection_options',
-	@ldapprefix@hosteventhandler				=> 'event_handler',
-	@ldapprefix@hostnotesurl				=> 'notes_url',
-	@ldapprefix@hostactionurl				=> 'action_url',
-	@ldapprefix@hostgroups				=> 'hostgroups',
-	@ldapprefix@hostdependency				=> 'PLACEHOLDER',
-	@ldapprefix@hostdependencyexecutionfailurecriteria	=> 'execution_failure_criteria',
-	@ldapprefix@hostdependencynotificationfailurecriteria	=> 'notification_failure_criteria',
-	@ldapprefix@hostnotificationsenabled			=> 'notifications_enabled',
-	@ldapprefix@hostfreshnessthreshold			=> 'freshness_threshold',
-	@ldapprefix@hostcheckfreshness			=> 'check_freshness',
-	@ldapprefix@hostcheckcommand				=> 'check_command',
-	@ldapprefix@hostdisable				=> '',
-
-	# .2.4   | @ldapprefix@ attributes (service)
-	@ldapprefix@checkcommand				=> 'check_command',
-	@ldapprefix@servicecustomvar				=> 'PLACEHOLDER',
-        @ldapprefix@servicecontacts				=> 'contacts',
-        @ldapprefix@servicecontactgroups			=> 'contact_groups',
-        @ldapprefix@servicenotificationoptions		=> 'notification_options',
-        @ldapprefix@servicenotificationinterval		=> 'notification_interval',
-        @ldapprefix@servicenotificationperiod			=> 'notification_period',
-        @ldapprefix@servicecheckperiod			=> 'check_period',
-        @ldapprefix@servicecheckinterval			=> 'check_interval',
-        @ldapprefix@servicecheckretryinterval			=> 'retry_interval',
-        @ldapprefix@servicecheckmaxcheckattempts		=> 'max_check_attempts',
-        @ldapprefix@serviceprocessperfdata			=> 'process_perf_data',
-        @ldapprefix@serviceactivechecksenabled		=> 'active_checks_enabled',
-        @ldapprefix@servicepassivechecksenabled		=> 'passive_checks_enabled',
-        @ldapprefix@serviceflapdetectionenabled		=> 'flap_detection_enabled',
-        @ldapprefix@serviceflapdetectionoptions		=> 'flap_detection_options',
-        @ldapprefix@serviceeventhandler			=> 'event_handler',
-        @ldapprefix@servicenotesurl				=> 'notes_url',
-        @ldapprefix@serviceactionurl				=> 'action_url',
-	@ldapprefix@servicegroups				=> 'servicegroups',
-	@ldapprefix@servicedependency				=> 'PLACEHOLDER',
-	@ldapprefix@servicedependencyexecutionfailurecriteria	=> 'execution_failure_criteria',
-	@ldapprefix@servicedependencynotificationfailurecriteria => 'notification_failure_criteria',
-        @ldapprefix@servicenotificationsenabled		=> 'notifications_enabled',
-	@ldapprefix@servicefreshnessthreshold			=> 'freshness_threshold',
-	@ldapprefix@servicecheckfreshness			=> 'check_freshness',
-	@ldapprefix@servicecheckcommand			=> 'check_command',
-        @ldapprefix@servicedisable				=> '',
+	# .2.2   | <-LDAP_PREFIX-> attributes (contact)
+	<-LDAP_PREFIX->email                                        => 'email',
+	<-LDAP_PREFIX->pager                                        => 'pager',
+	<-LDAP_PREFIX->contactservicenotificationperiod             => 'service_notification_period',
+	<-LDAP_PREFIX->contacthostnotificationperiod                => 'host_notification_period',
+	<-LDAP_PREFIX->contactservicenotificationoptions            => 'service_notification_options',
+	<-LDAP_PREFIX->contacthostnotificationoptions               => 'host_notification_options',
+	<-LDAP_PREFIX->contactservicenotificationcommands           => 'service_notification_commands',
+	<-LDAP_PREFIX->contacthostnotificationcommands              => 'host_notification_commands',
+	<-LDAP_PREFIX->contactservicenotificationsenabled           => 'service_notifications_enabled',
+	<-LDAP_PREFIX->contacthostnotificationsenabled              => 'host_notifications_enabled',
+	<-LDAP_PREFIX->contactcansubmitcommands                     => 'can_submit_commands',
+	
+	# .2.3   | <-LDAP_PREFIX-> attributes (host)
+	<-LDAP_PREFIX->address                                      => 'address',
+	<-LDAP_PREFIX->parent                                       => 'parents',
+	<-LDAP_PREFIX->hostcustomvar                                => 'PLACEHOLDER',
+	<-LDAP_PREFIX->hostcontacts                                 => 'contacts',
+	<-LDAP_PREFIX->hostcontactgroups                            => 'contact_groups',
+	<-LDAP_PREFIX->hostnotificationoptions                      => 'notification_options',
+	<-LDAP_PREFIX->hostnotificationinterval                     => 'notification_interval',
+	<-LDAP_PREFIX->hostnotificationperiod                       => 'notification_period',
+	<-LDAP_PREFIX->hostcheckperiod                              => 'check_period',
+	<-LDAP_PREFIX->hostcheckinterval                            => 'check_interval',
+	<-LDAP_PREFIX->hostcheckretryinterval                       => 'retry_interval',
+	<-LDAP_PREFIX->hostcheckmaxcheckattempts                    => 'max_check_attempts',
+	<-LDAP_PREFIX->hostprocessperfdata                          => 'process_perf_data',
+	<-LDAP_PREFIX->hostactivechecksenabled                      => 'active_checks_enabled',
+	<-LDAP_PREFIX->hostpassivechecksenabled                     => 'passive_checks_enabled',
+	<-LDAP_PREFIX->hostflapdetectionenabled                     => 'flap_detection_enabled',
+	<-LDAP_PREFIX->hostflapdetectionoptions                     => 'flap_detection_options',
+	<-LDAP_PREFIX->hosteventhandler                             => 'event_handler',
+	<-LDAP_PREFIX->hostnotesurl                                 => 'notes_url',
+	<-LDAP_PREFIX->hostactionurl                                => 'action_url',
+	<-LDAP_PREFIX->hostgroups                                   => 'hostgroups',
+	<-LDAP_PREFIX->hostdependency                               => 'PLACEHOLDER',
+	<-LDAP_PREFIX->hostdependencyexecutionfailurecriteria       => 'execution_failure_criteria',
+	<-LDAP_PREFIX->hostdependencynotificationfailurecriteria    => 'notification_failure_criteria',
+	<-LDAP_PREFIX->hostnotificationsenabled                     => 'notifications_enabled',
+	<-LDAP_PREFIX->hostfreshnessthreshold                       => 'freshness_threshold',
+	<-LDAP_PREFIX->hostcheckfreshness                           => 'check_freshness',
+	<-LDAP_PREFIX->hostcheckcommand                             => 'check_command',
+	<-LDAP_PREFIX->hostdisable                                  => '',
+	
+	# .2.4   | <-LDAP_PREFIX-> attributes (service)
+	<-LDAP_PREFIX->checkcommand                                 => 'check_command',
+	<-LDAP_PREFIX->servicecustomvar                             => 'PLACEHOLDER',
+	<-LDAP_PREFIX->servicecontacts                              => 'contacts',
+	<-LDAP_PREFIX->servicecontactgroups                         => 'contact_groups',
+	<-LDAP_PREFIX->servicenotificationoptions                   => 'notification_options',
+	<-LDAP_PREFIX->servicenotificationinterval                  => 'notification_interval',
+	<-LDAP_PREFIX->servicenotificationperiod                    => 'notification_period',
+	<-LDAP_PREFIX->servicecheckperiod                           => 'check_period',
+	<-LDAP_PREFIX->servicecheckinterval                         => 'check_interval',
+	<-LDAP_PREFIX->servicecheckretryinterval                    => 'retry_interval',
+	<-LDAP_PREFIX->servicecheckmaxcheckattempts                 => 'max_check_attempts',
+	<-LDAP_PREFIX->serviceprocessperfdata                       => 'process_perf_data',
+	<-LDAP_PREFIX->serviceactivechecksenabled                   => 'active_checks_enabled',
+	<-LDAP_PREFIX->servicepassivechecksenabled                  => 'passive_checks_enabled',
+	<-LDAP_PREFIX->serviceflapdetectionenabled                  => 'flap_detection_enabled',
+	<-LDAP_PREFIX->serviceflapdetectionoptions                  => 'flap_detection_options',
+	<-LDAP_PREFIX->serviceeventhandler                          => 'event_handler',
+	<-LDAP_PREFIX->servicenotesurl                              => 'notes_url',
+	<-LDAP_PREFIX->serviceactionurl                             => 'action_url',
+	<-LDAP_PREFIX->servicegroups                                => 'servicegroups',
+	<-LDAP_PREFIX->servicedependency                            => 'PLACEHOLDER',
+	<-LDAP_PREFIX->servicedependencyexecutionfailurecriteria    => 'execution_failure_criteria',
+	<-LDAP_PREFIX->servicedependencynotificationfailurecriteria => 'notification_failure_criteria',
+	<-LDAP_PREFIX->servicenotificationsenabled                  => 'notifications_enabled',
+	<-LDAP_PREFIX->servicefreshnessthreshold                    => 'freshness_threshold',
+	<-LDAP_PREFIX->servicecheckfreshness                        => 'check_freshness',
+	<-LDAP_PREFIX->servicecheckcommand                          => 'check_command',
+	<-LDAP_PREFIX->servicedisable                               => '',
 
 	# special stuff ;-)
-	cn						=> 'PLACEHOLDER'
+	cn                                                => 'PLACEHOLDER'
 );

@@ -46,20 +46,19 @@
 #
 # Nagios and the Nagios logo are registered trademarks of Ethan Galstad.
 
-
 =head1 NAME
 
 LConfExport.pl - export a Nagios / Icinga config from LConf
 
 =head1 SYNOPSIS
 
-LConfExport.pl  -o <output dir>
-		[-v]
-		[-d]
-		[-f]
-		[-h]
-		[-V]
-
+LConfExport.pl	-o <output dir>
+				[-v]
+				[-d]
+				[-f]
+				[-h]
+				[-V]
+				
 Export a Nagios / Icinga config from LConf
 
 =head1 OPTIONS
@@ -68,17 +67,17 @@ Export a Nagios / Icinga config from LConf
 
 =item -o|--output <output dir>
 
-output dir for config
+Output dir for config
 
 =item -v|--verbose [<path to logfile>]
 
-Verbose mode. If no logfile is specified, verbose output will be printend to STDOUT
+Verbose mode. If no logfile specified, verbose output will be printed to STDOUT
 
 =item -d|--debug [<path to logfile>]
 
-Debug mode. If no logfile is specified, debug output will be printed to STDOUT
+Debug mode. If no logfile specified, debug output will be printed to STDOUT
 
-=item -f|--filter [hostname]
+=item -f|--filter <hostname>
 
 Export only this host (e.g. for debugging)
 
@@ -92,35 +91,36 @@ print plugin version
 
 =cut
 
+# set libs
+use lib '<-PREFIX->';
 
+# includes
 use strict;
 use Getopt::Long qw(:config no_ignore_case bundling);
 use Pod::Usage;
-use Data::Dumper;
 use Net::LDAP;
-use Net::LDAP::LDIF;
+use Data::Dumper;
+use etc::config;
+use lib::ldap;
+use lib::generate;
+use lib::misc;
 
 # version string
-my $version = '1.0';
+my $version = '1.2';
 
 # define states
 our @state = ('OK', 'WARNING', 'ERROR');
 
 # get command-line parameters
-my ($optOutputDir, $optVerbose, $optFilter, $optDebug, $optHelp, $optVersion);
+our $opt;
 GetOptions(
-	"o|output=s"	=> \$optOutputDir,
-	"v|verbose:s"	=> \$optVerbose,
-	"d|debug:s"	=> \$optDebug,
-	"f|filter=s"	=> \$optFilter,
-	"h|help"	=> \$optHelp,
-	"V|version"	=> \$optVersion,
+	"o|output=s"	=> \$opt->{outputDir},
+	"v|verbose:s"	=> \$opt->{verbose},
+	"d|debug:s"		=> \$opt->{debug},
+	"f|filter=s"	=> \$opt->{filter},
+	"h|help"		=> \$opt->{help},
+	"V|version"		=> \$opt->{version}
 );
-
-# import config
-use lib '@prefix@';
-use etc::config;
-use vars qw($optLDAPServer $optLDAPDN $optExportUser $optExportLock $optRevisionEnabled $optRevisionPath $optRevisionTemp %itemMap);
 
 
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
@@ -128,54 +128,57 @@ use vars qw($optLDAPServer $optLDAPDN $optExportUser $optExportLock $optRevision
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
 
 # should print version?
-if (defined $optVersion) { print $version."\n"; exit 0; }
+if (defined $opt->{version}) { print $version."\n"; exit 0; }
 
 # should print help?
-if ($optHelp || !$optOutputDir) { pod2usage(1); }
+if ($opt->{help} || !$opt->{outputDir}) { pod2usage(1); }
 
 
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
 # let's go!
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
 
+# define vars
+use vars qw($cfg %itemMap);
+our $CLIENTS;
+our $INHERIT;
+
+our $exit; $exit->{code} = 0; $exit->{message} = 'No errors';
+$cfg->{ldap}->{baseDN} = 'ou='.$cfg->{export}->{startingpoint}.','.$cfg->{ldap}->{dn};
+
 # fist of all... check if we're ready to run
-LeaveScript(2, "Variable '\$optLDAPServer' not set in config.pm'")	if !$optLDAPServer;
-LeaveScript(2, "Variable '\$optLDAPDN' not set in config.pm'")		if !$optLDAPDN;
-LeaveScript(2, "Variable '\$optExportUser' not set in config.pm'")	if !$optExportUser;
+LeaveScript(2, "Variable '\$cfg->{ldap}->{server}' not set in config.pm'")	 	if !$cfg->{ldap}->{server};
+LeaveScript(2, "Variable '\$cfg->{ldap}->{dn}' not set in config.pm'")			if !$cfg->{ldap}->{dn};
+LeaveScript(2, "Variable '\$cfg->{export}->{user}' not set in config.pm'")		if !$cfg->{export}->{user};
 
 # export with right user?
-LeaveScript(2, "You're not user '$optExportUser'!") if $ENV{USER} ne $optExportUser;
+LeaveScript(2, "You're not user '$cfg->{export}->{user}'!") if $ENV{USER} ne $cfg->{export}->{user};
 
 # export already running?
-LeaveScript(2, "LConfExport locked! Anyone is already using it!")	if -f $optExportLock;
+LeaveScript(2, "LConfExport locked! Anyone is already using it!") if -f $cfg->{export}->{lock};
 
 # check output dir
-LeaveScript('2', "'$optOutputDir' is not a directory") if !-d $optOutputDir;
-LeaveScript('2', "'$optOutputDir' is not writeable")   if !-w $optOutputDir;
+LeaveScript('2', "'$opt->{outputDir}' is not a directory") if !-d $opt->{outputDir};
+LeaveScript('2', "'$opt->{outputDir}' is not writeable")   if !-w $opt->{outputDir};
 
 # lock exporter
-open (FH, ">$optExportLock"); close(FH);
+open (FH, ">$cfg->{export}->{lock}"); close(FH);
 
 # clean old output dir
-qx(rm -r $optOutputDir/* 2>/dev/null);
+qx(rm -r $opt->{outputDir}/* 2>/dev/null);
 
 #
 # NOW, WE'RE READY TO RUN :)
 #
 
-# define vars
-my $optBaseDN = 'ou=NagiosConfig,'.$optLDAPDN;
-my $INHERIT;
-my $CLIENTS;
-
 # connect to LDAP server
-my $ldap = LDAPconnect();
+our $ldap = LDAPconnect();
 
 # get all clients to monitor
-if (defined $optFilter) {
-	$CLIENTS = LDAPsearch($ldap, $optBaseDN, "sub", "cn=$optFilter");
+if (defined $opt->{filter}) {
+	$CLIENTS = LDAPsearch($ldap, $cfg->{ldap}->{baseDN}, "sub", "cn=$opt->{filter}");
 } else {
-	$CLIENTS = LDAPsearch($ldap, $optBaseDN, "sub", "objectclass=@ldapprefix@Host");
+	$CLIENTS = LDAPsearch($ldap, $cfg->{ldap}->{baseDN}, "sub", "objectclass=$cfg->{ldap}->{prefix}Host");
 }
 
 # run custom script (pre)
@@ -187,27 +190,26 @@ if (-f 'custom/pre.pl') {
 # inherited host and service configuration
 foreach my $client (keys %{$CLIENTS}) {
 	# remove basedn from dn
-	$client =~ s/,$optBaseDN//;
-
+	$client =~ s/,$cfg->{ldap}->{baseDN}//;
+	
 	# split and reverse the DN
 	my @search = split(",", $client);
 	@search = reverse(@search);
-
+	
 	# debug output
 	DebugOutput("CREATE HOSTOBJECT $client");
 	DebugOutput("BUILD HOSTATTRIBUTES for $client");
-
+	
 	# search aliases for host
 		# search at base
-		my $searchDN = $optBaseDN;
+		my $searchDN = $cfg->{ldap}->{baseDN};
 		my $result = LDAPsearch($ldap, $searchDN, "single", "objectclass=alias");
 		foreach(keys %{$result}) {
 			DebugOutput("Link ou=$result->{$_}->{ou} found on $searchDN");
 			my $result = LDAPsearch($ldap, $result->{$_}->{aliasedobjectname}, "base", "objectclass=*");
 			$CLIENTS = addHostAttributes($result, $client, $CLIENTS);
 		}
-
-
+		
 		# and search rest of the three
 		foreach(@search) {
 			$searchDN = $_.",".$searchDN;
@@ -218,10 +220,10 @@ foreach my $client (keys %{$CLIENTS}) {
 				$CLIENTS = addHostAttributes($result, $client, $CLIENTS);
 			}
 		}
-
+		
 	# search main for host
 		# search at base
-		$searchDN = $optBaseDN;
+		$searchDN = $cfg->{ldap}->{baseDN};
 		$result = LDAPsearch($ldap, $searchDN, "base", "objectclass=*");
 		$CLIENTS = addHostAttributes($result, $client, $CLIENTS);
 
@@ -232,43 +234,44 @@ foreach my $client (keys %{$CLIENTS}) {
 			$CLIENTS = addHostAttributes($result, $client, $CLIENTS);
 		}
 
-	DebugOutput("BUILD SERVICEATTRIBUTES for $client");
-
-	# search aliases for services
-		# reset search base
-		$searchDN = $optBaseDN;
-		$result = LDAPsearch($ldap, $searchDN, "single", "objectclass=alias");
-		foreach(keys %{$result}) {
-			DebugOutput("Link ou=$result->{$_}->{ou} found on $searchDN");
-			$CLIENTS = addAlias($result, $client, $CLIENTS);
-		}
-
-		# and search rest of the tree (from top to item)
-		foreach(@search) {
-			$searchDN = $_.",".$searchDN;
+		DebugOutput("BUILD SERVICEATTRIBUTES for $client");
+		
+		# search aliases for services
+			# reset search base
+			$searchDN = $cfg->{ldap}->{baseDN};
 			$result = LDAPsearch($ldap, $searchDN, "single", "objectclass=alias");
 			foreach(keys %{$result}) {
 				DebugOutput("Link ou=$result->{$_}->{ou} found on $searchDN");
 				$CLIENTS = addAlias($result, $client, $CLIENTS);
 			}
-		}
 
-	# search main for services
-		# reset search base
-		$searchDN = $optBaseDN;
-		$result = LDAPsearch($ldap, $searchDN, "single", "objectclass=@ldapprefix@Service");
-		$CLIENTS = addServices($result, $client, $CLIENTS, $optBaseDN);
+			# and search rest of the tree (from top to item)
+			foreach(@search) {
+				$searchDN = $_.",".$searchDN;
+				$result = LDAPsearch($ldap, $searchDN, "single", "objectclass=alias");
+				foreach(keys %{$result}) {
+					DebugOutput("Link ou=$result->{$_}->{ou} found on $searchDN");
+					$CLIENTS = addAlias($result, $client, $CLIENTS);
+				}
+			}
 
-		# and search rest of the tree (from top to item)
-		foreach(@search) {
-			$searchDN = $_.",".$searchDN;
-			$result = LDAPsearch($ldap, $searchDN, "single", "objectclass=@ldapprefix@Service");
-			$CLIENTS = addServices($result, $client, $CLIENTS, $optBaseDN);
-		}
+		# search main for services
+			# reset search base
+			$searchDN = $cfg->{ldap}->{baseDN};
+			$result = LDAPsearch($ldap, $searchDN, "single", "objectclass=$cfg->{ldap}->{prefix}Service");
+			$CLIENTS = addServices($result, $client, $CLIENTS, $cfg->{ldap}->{baseDN});
 
-		# (from item to bottom)
-		$result = LDAPsearch($ldap, $searchDN, "sub", "objectclass=@ldapprefix@Service");
-		$CLIENTS = addServices($result, $client, $CLIENTS, $optBaseDN);
+			# and search rest of the tree (from top to item)
+			foreach(@search) {
+				$searchDN = $_.",".$searchDN;
+				$result = LDAPsearch($ldap, $searchDN, "single", "objectclass=$cfg->{ldap}->{prefix}Service");
+				$CLIENTS = addServices($result, $client, $CLIENTS, $cfg->{ldap}->{baseDN});
+			}
+
+			# (from item to bottom)
+			$result = LDAPsearch($ldap, $searchDN, "sub", "objectclass=$cfg->{ldap}->{prefix}Service");
+			$CLIENTS = addServices($result, $client, $CLIENTS, $cfg->{ldap}->{baseDN});
+		
 }
 
 # run custom script (mid)
@@ -277,11 +280,10 @@ if (-f 'custom/mid.pl') {
 	$CLIENTS = CustomMid($CLIENTS);
 }
 
-# build dir structure and copy generic templates
-createDirs($optBaseDN, $optOutputDir);
-mkdir("$optOutputDir/hostgroups/");
-mkdir("$optOutputDir/servicegroups/");
-copyGeneric('@prefix@/etc/default-templates.cfg', $optOutputDir);
+# build dir structure
+createDirs($cfg->{ldap}->{baseDN}, $opt->{outputDir});
+mkdir("$opt->{outputDir}/hostgroups/");
+mkdir("$opt->{outputDir}/servicegroups/");
 
 # write config
 genTimeperiods();
@@ -295,880 +297,16 @@ genHostConfig();
 
 # run custom script (post)
 if (-f 'custom/post.pl') {
-        require 'custom/post.pl';
-        $CLIENTS = CustomPost($CLIENTS);
+	require 'custom/post.pl';
+	$CLIENTS = CustomPost($CLIENTS);
 }
 
-# make revision proof?
-if ($optRevisionEnabled == 1) {
-	makeRevisionProof($optRevisionPath, $optRevisionTemp);
-}
+# dump data to filesystem
+my $data = Dumper($CLIENTS); open FILE, ">$cfg->{epxort}->{hashdump}" or die $!; print FILE $data; close FILE;
 
-# disconnect from LDAP Server
+
+# disconnect from LDAP
 $ldap->unbind();
 
-# unlock exporter
-unlink($optExportLock);
-
-
-# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
-# functions...
-# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
-
-sub beVerbose {
-	my $type = shift;
-	my $text = shift;
-
-	if (defined $optVerbose) {
-		# generate message
-		my $message = localtime(time)." | Verbose: $type: $text\n";
-
-		# should write log to file or STDOUT?
-		if ($optVerbose ne "") {
-			open(LOGF,">>$optVerbose") || die $!;
-			print LOGF $message;
-			close(LOGF);
-		} else {
-			print $message;
-		}
-	}
-}
-
-sub DebugOutput {
-	my $text = shift;
-
-	if (defined $optDebug) {
-		# generate message
-		my $message = localtime(time)." | Debug: $text\n";
-
-		# should write log to file or STDOUT?
-		if ($optDebug ne "") {
-			open(LOGF,">>$optDebug") || die $!;
-			print LOGF $message;
-			close(LOGF);
-		} else {
-			print $message;
-		}
-	}
-}
-
-sub LeaveScript {
-	my $exitCode = $_[0];
-	my $comment  = $_[1];
-
-	unlink($optExportLock);
-
-	print $state[$exitCode]." - $comment\n";
-	exit $exitCode;
-}
-
-sub LDAPconnect {
-	my $ldap = Net::LDAP->new ($optLDAPServer) or die "Can't connect to LDAP Server '$optLDAPServer'";
-	return $ldap;
-}
-
-sub LDAPsearch {
-	my $ldap   = shift;
-	my $base   = shift;
-	my $scope  = shift;
-	my $filter = shift;
-	my $return;
-
-	# get entries
-	my $result = $ldap->search ( base       => $base,
-				     scope      => $scope,
-				     deref      => 'never',
-				     filter     => "$filter");
-
-	beVerbose("LDAP SEARCH", "SEARCH '$filter' ON '$base'");
-
-	# convert result to a hash
-	my $href = $result->as_struct;
-
-	# get an array of the DN names
-	my @arrayOfDNs  = keys %$href;
-
-	# process each DN using it as a key
-	foreach (@arrayOfDNs) {
-		$return->{$_}->{dn} = $_;
-		my $valref = $$href{$_};
-
-		# get an array of the attribute names
-		# passed for this one DN.
-		my @arrayOfAttrs = sort keys %$valref;
-
-		foreach my $attrName(@arrayOfAttrs) {
-			# can't handle binary data => skip!
-			next if ( $attrName =~ /;binary$/ );
-
-			# attribute name as the hash
-			my $attrVal =  @$valref{$attrName};
-
-			# convert to an ordinary hash
-			my $counter = scalar @$attrVal;
-			while($counter != 0) {
-				$counter--;
-				if ($attrName eq "@ldapprefix@hostcustomvar" || $attrName eq "@ldapprefix@servicecustomvar") {
-					@$attrVal[$counter] =~ m/([\d\w]*) (.*)/;
-					$return->{$_}->{$attrName}->{$1} = $2;
-				} elsif ($attrName eq "@ldapprefix@timeperiodvalue") {
-					@$attrVal[$counter] =~ m/(.*) +([-\w:]+(\,?)+[-\w:]+)/;
-					$return->{$_}->{$attrName}->{$counter}->{$1} = $2;
-				} else {
-					$return->{$_}->{$attrName} = @$attrVal[$counter];
-				}
-			}
-		}
-	}
-
-	# and return the hash
-	return $return;
-}
-
-sub addHostAttributes {
-	my $result  = shift;
-	my $host    = shift;
-	my $CLIENTS = shift;
-
-	foreach my $val1 (keys %{$result}) {
-		foreach my $val2 (keys %{$result->{$val1}}) {
-			# only defined attributes
-			if ($itemMap{$val2}) {
-				# only host attributes
-				if ($val2 =~ /@ldapprefix@host/ || $val2 eq '@ldapprefix@address' || $val2 eq '@ldapprefix@parent' || $val2 eq '@ldapprefix@alias') {
-					DebugOutput("Attribute $val2 [$result->{$val1}->{$val2}] found in $val1; valency: hostattribute => store!");
-
-					# additive inheritance?
-					if ($result->{$val1}->{$val2} =~ /^\s*\+/) {
-						# specified at host object class?
-						if (defined $CLIENTS->{$host.",".$optBaseDN}->{$val2} && $CLIENTS->{$host.",".$optBaseDN}->{$val2} =~ /^\+/) {
-							$result->{$val1}->{$val2} =~ s/\+//;
-							$CLIENTS->{$host.",".$optBaseDN}->{$val2} = $result->{$val1}->{$val2};
-						} else {
-							$result->{$val1}->{$val2} =~ s/\+/,/;
-
-							# empty var?
-							if (defined $CLIENTS->{$host.",".$optBaseDN}->{$val2}) {
-								$CLIENTS->{$host.",".$optBaseDN}->{$val2} = $CLIENTS->{$host.",".$optBaseDN}->{$val2}.$result->{$val1}->{$val2};
-							} else {
-								$result->{$val1}->{$val2} =~ s/,//;
-								$CLIENTS->{$host.",".$optBaseDN}->{$val2} = $result->{$val1}->{$val2};
-							}
-						}
-					} else {
-						if ($val2 =~ /@ldapprefix@hostcustomvar/) {
-							foreach(keys %{$result->{$val1}->{$val2}}) {
-								$CLIENTS->{$host.",".$optBaseDN}->{@ldapprefix@hostcustomvar}->{$_} = $result->{$val1}->{$val2}->{$_};
-								$INHERIT->{$host.",".$optBaseDN}->{@ldapprefix@hostcustomvar}->{$_} = $result->{$val1}->{dn};
-							}
-						} else {
-							$CLIENTS->{$host.",".$optBaseDN}->{$val2} = $result->{$val1}->{$val2};
-							$INHERIT->{$host.",".$optBaseDN}->{$val2} = $result->{$val1}->{dn};
-						}
-					}
-				} else {
-					DebugOutput("Attribute $val2 [$result->{$val1}->{$val2}] found in $val1; valency: no hostattribute => drop!");
-				}
-			}
-		}
-
-		# host dependencies
-		if ($result->{$val1}->{@ldapprefix@hostdependency}) {
-			$CLIENTS->{$host.",".$optBaseDN}->{DEPENDENCY}->{$result->{$val1}->{@ldapprefix@hostdependency}}->{@ldapprefix@hostdependencyexecutionfailurecriteria} = $result->{$val1}->{@ldapprefix@hostdependencyexecutionfailurecriteria} if $result->{$val1}->{@ldapprefix@hostdependencyexecutionfailurecriteria};
-			$CLIENTS->{$host.",".$optBaseDN}->{DEPENDENCY}->{$result->{$val1}->{@ldapprefix@hostdependency}}->{@ldapprefix@hostdependencynotificationfailurecriteria} = $result->{$val1}->{@ldapprefix@hostdependencynotificationfailurecriteria} if $result->{$val1}->{@ldapprefix@hostdependencynotificationfailurecriteria};
-		}
-	}
-
-	# return
-	return $CLIENTS;
-}
-
-sub addAlias {
-	my $result  = shift;
-	my $host    = shift;
-	my $CLIENTS = shift;
-
-	foreach my $alias (keys %{$result}) {
-		my $searchDN = $result->{$alias}->{aliasedobjectname};
-		my $val = LDAPsearch($ldap, $searchDN, "sub", "objectclass=@ldapprefix@Service");
-		$CLIENTS = addServices($val, $host, $CLIENTS, $searchDN);
-	}
-
-	# return
-	return $CLIENTS;
-}
-
-sub addServices {
-	my $result	= shift;
-	my $host	= shift;
-	my $CLIENTS	= shift;
-	my $searchTree	= shift;
-
-	# list service
-	foreach my $val1 (keys %{$result}) {
-		DebugOutput("Service $result->{$val1}->{cn} found in $val1");
-
-		# interited service attributes
-			# determine service name
-			my $service = $result->{$val1}->{cn};
-
-			# remove basedn from dn
-			my $val5 = $optBaseDN;
-			if ($val1 !~ /$val5/) {
-				my @val6 = split(/,/, $val5);
-				$val5 = ''; shift(@val6);
-				foreach(@val6) { $val5 .= ','.$_; }
-				$val5 =~ s/,//;
-			}
-			$val1 =~ s/,$val5//;
-
-			# split and reverse the DN
-			my @search = split(",", $val1);
-			@search = reverse(@search);
-
-			# search at base
-			my $searchDN = $val5;
-			my $result = LDAPsearch($ldap, $searchDN, "base", "objectclass=*");
-			my $CLIENTS = addServiceAttributes($result, "$service", $CLIENTS, $host);
-
-			# and search rest of the tree
-			foreach(@search) {
-				$searchDN = $_.",".$searchDN;
-				my $result = LDAPsearch($ldap, $searchDN, "base", "objectclass=*");
-				$CLIENTS = addServiceAttributes($result, "$service", $CLIENTS, $host);
-			}
-	}
-
-	# return
-	return $CLIENTS;
-}
-
-sub addServiceAttributes {
-	my $result   = shift;
-	my $service  = shift;
-	my $CLIENTS  = shift;
-	my $host     = shift;
-
-        foreach my $val1 (keys %{$result}) {
-		foreach my $val2 (keys %{$result->{$val1}}) {
-			# only service attributes
-			if ($val2 =~ /@ldapprefix@service/ || $val2 eq '@ldapprefix@checkcommand' || $val2 eq 'dn') {
-				DebugOutput("Attribute $val2 [$result->{$val1}->{$val2}] found in $val1; valency: serviceattribute => store!");
-
-				# additive inheritance?
-				if ($result->{$val1}->{$val2} =~ /^\s*\+/) {
-					# specified at service object class?
-					if (defined $CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2} && $CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2} =~ /^\+/) {
-						$result->{$val1}->{$val2} =~ s/\+//;
-						$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2} = $result->{$val1}->{$val2};
-					} else {
-						$result->{$val1}->{$val2} =~ s/\+/,/;
-
-						# empty var?
-						if (defined $CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2}) {
-							$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2} = $CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2}.$result->{$val1}->{$val2};
-						} else {
-							$result->{$val1}->{$val2} =~ s/,//;
-							$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2} = $result->{$val1}->{$val2};
-						}
-					}
-				} else {
-					if ($val2 =~ /@ldapprefix@servicecustomvar/) {
-						foreach(keys %{$result->{$val1}->{$val2}}) {
-							$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{@ldapprefix@servicecustomvar}->{$_} = $result->{$val1}->{$val2}->{$_};
-							$INHERIT->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{@ldapprefix@servicecustomvar}->{$_} = $result->{$val1}->{dn};
-						}
-					} else {
-						$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2} = $result->{$val1}->{$val2};
-						$INHERIT->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{$val2} = $result->{$val1}->{dn};
-					}
-				}
-			} else {
-				DebugOutput("Attribute $val2 [$result->{$val1}->{$val2}] found in $val1; valency: no serviceattribute => drop");
-			}
-		}
-
-		# service dependencies
-		if ($result->{$val1}->{@ldapprefix@servicedependency}) {
-			my ($depHost, $depService) = (split(/ *-> */, $result->{$val1}->{@ldapprefix@servicedependency}))[0,1];
-			$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{DEPENDENCY}->{$depHost}->{$depService}->{@ldapprefix@servicedependencyexecutionfailurecriteria} = $result->{$val1}->{@ldapprefix@servicedependencyexecutionfailurecriteria} if $result->{$val1}->{@ldapprefix@servicedependencyexecutionfailurecriteria};
-			$CLIENTS->{$host.",".$optBaseDN}->{SERVICES}->{$service}->{DEPENDENCY}->{$depHost}->{$depService}->{@ldapprefix@servicedependencynotificationfailurecriteria} = $result->{$val1}->{@ldapprefix@servicedependencynotificationfailurecriteria} if $result->{$val1}->{@ldapprefix@servicedependencynotificationfailurecriteria};
-		}
-	}
-
-	# return
-	return $CLIENTS;
-}
-
-sub createDirs {
-	my $searchDN    = shift;
-	my $writeFolder = shift;
-	my $dirStructure;
-
-	# - search ldap tree downwards
-	# - check if folder already exists
-	# - create folder (if needed)
-	my $result = LDAPsearch($ldap, $searchDN, "single", "ou=*");
-	foreach(keys %{$result}) {
-		my $folder = $writeFolder.'/'.$result->{$_}->{ou}."/";
-		if (!-d $folder) {
-			mkdir("$folder");
-			beVerbose('CREATE DIR', $folder);
-		}
-
-		createDirs($_, $folder);
-	}
-}
-
-sub copyGeneric {
-	my $source = shift;
-	my $target = shift;
-
-	qx(cp $source $target/);
-}
-
-sub genTimeperiods {
-	# get all timeperiods
-	my $result = LDAPsearch($ldap, $optBaseDN, "sub", "objectclass=@ldapprefix@Timeperiod");
-	foreach my $timeperiod (keys %{$result}) {
-		# build file path
-		my $writeFile = $optOutputDir.'/';
-		my $path = $result->{$timeperiod}->{dn};
-		$path =~ s/,$optBaseDN//;
-		my @path = split(",", $path);
-		@path = reverse(@path);
-		foreach my $items (@path) {
-			# file or folder?
-			if ($items =~ /cn/) {
-				my $val = (split(/\=/, $items))[1];
-				$writeFile .= $val.'.cfg';
-			} else {
-				my $val = (split(/\=/, $items))[1];
-				$writeFile .= $val.'/';
-			}
-		}
-
-		# open target file
-		open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
-
-		print FH "define timeperiod {\n";
-		foreach (keys %{$result->{$timeperiod}}) {
-			if ($itemMap{$_} || $_ eq '@ldapprefix@timeperiodvalue') {
-				if ($_ eq 'cn') {
-					print FH "\ttimeperiod_name\t$result->{$timeperiod}->{$_}\n";
-				} elsif ($_ eq '@ldapprefix@timeperiodvalue') {
-					foreach my $val (keys %{$result->{$timeperiod}->{$_}}) {
-						foreach my $timeperiod_value (keys %{$result->{$timeperiod}->{$_}->{$val}}) {
-							print FH "\t$timeperiod_value\t$result->{$timeperiod}->{$_}->{$val}->{$timeperiod_value}\n";
-						}
-					}
-				} else {
-					print FH "\t$itemMap{$_}\t$result->{$timeperiod}->{$_}\n";
-				}
-			}
-		}
-		print FH "}\n";
-
-		# close target file
-		close(FH);
-	}
-}
-
-sub genCommands {
-	# get all commands
-	my $result = LDAPsearch($ldap, $optBaseDN, "sub", "objectclass=@ldapprefix@Command");
-	foreach my $command (keys %{$result}) {
-		# build file path
-		my $writeFile = $optOutputDir.'/';
-		my $path = $result->{$command}->{dn};
-		$path =~ s/,$optBaseDN//;
-		my @path = split(",", $path);
-		@path = reverse(@path);
-		foreach my $items (@path) {
-			# file or folder?
-			if ($items =~ /cn/) {
-				my $val = (split(/\=/, $items))[1];
-				$writeFile .= $val.'.cfg';
-			} else {
-				my $val = (split(/\=/, $items))[1];
-				$writeFile .= $val.'/';
-			}
-		}
-
-		# open target file
-		open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
-
-		print FH "define command {\n";
-		foreach (keys %{$result->{$command}}) {
-			if ($itemMap{$_}) {
-				if ($_ eq 'cn') {
-					print FH "\tcommand_name\t$result->{$command}->{$_}\n";
-				} else {
-					print FH "\t$itemMap{$_}\t$result->{$command}->{$_}\n";
-				}
-			}
-		}
-		print FH "}\n";
-
-		# close target file
-		close(FH);
-	}
-}
-
-sub genContacts {
-	# get all contacts
-	my $result = LDAPsearch($ldap, $optBaseDN, "sub", "objectclass=@ldapprefix@Contact");
-	foreach my $contact (keys %{$result}) {
-		# build file path
-		my $writeFile = $optOutputDir.'/';
-		my $path = $result->{$contact}->{dn};
-		$path =~ s/,$optBaseDN//;
-		my @path = split(",", $path);
-		@path = reverse(@path);
-		foreach my $items (@path) {
-			# file or folder?
-			if ($items =~ /cn/) {
-				my $val = (split(/\=/, $items))[1];
-				$writeFile .= $val.'.cfg';
-			} else {
-				my $val = (split(/\=/, $items))[1];
-				$writeFile .= $val.'/';
-			}
-		}
-
-		# open target file
-		open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
-
-		print FH "define contact {\n";
-		print FH "\tuse generic-contact\n";
-		foreach(keys %{$result->{$contact}}) {
-			if ($itemMap{$_}) {
-				if ($_ eq 'cn') {
-					print FH "\tcontact_name\t$result->{$contact}->{$_}\n";
-				} else {
-					print FH "\t$itemMap{$_}\t$result->{$contact}->{$_}\n";
-				}
-			}
-		}
-		print FH "}\n";
-
-		# close target file
-		close(FH);
-	}
-}
-
-sub genContactgroups {
-	# get all contactgroups
-	my $result = LDAPsearch($ldap, $optBaseDN, "sub", "objectclass=@ldapprefix@Contactgroup");
-	foreach my $contactgroup (keys %{$result}) {
-		# build file path
-		my $writeFile = $optOutputDir.'/';
-		my $path = $result->{$contactgroup}->{dn};
-		$path =~ s/,$optBaseDN//;
-		my @path = split(",", $path);
-		@path = reverse(@path);
-		foreach my $items (@path) {
-			# file or folder?
-			if ($items =~ /cn/) {
-				my $val = (split(/\=/, $items))[1];
-				$writeFile .= $val.'.cfg';
-			} else {
-				my $val = (split(/\=/, $items))[1];
-				$writeFile .= $val.'/';
-			}
-		}
-
-		# open target file
-		open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
-
-		print FH "define contactgroup {\n";
-		foreach (keys %{$result->{$contactgroup}}) {
-			if ($itemMap{$_}) {
-				if ($_ eq 'cn') {
-					print FH "\tcontactgroup_name\t$result->{$contactgroup}->{$_}\n";
-				} else {
-					print FH "\t$itemMap{$_}\t$result->{$contactgroup}->{$_}\n";
-				}
-			}
-		}
-		print FH "}\n";
-
-		# close target file
-		close(FH);
-	}
-}
-
-sub genHostgroups {
-	my @HOSTGROUPS;
-
-	# get hostgroups (from client attributes)
-	foreach my $client (keys %{$CLIENTS}) {
-		if (defined $CLIENTS->{$client}->{@ldapprefix@hostgroups}) {
-			if ($CLIENTS->{$client}->{@ldapprefix@hostgroups} =~ /,/) {
-				my @val = split(/\s*,\s*/, $CLIENTS->{$client}->{@ldapprefix@hostgroups});
-				foreach(@val) { push(@HOSTGROUPS, $_); }
-			} else {
-				push(@HOSTGROUPS, $CLIENTS->{$client}->{@ldapprefix@hostgroups});
-			}
-		}
-	}
-
-	# write hostgroup files
-	foreach my $hostgroup (@HOSTGROUPS) {
-		# set file path
-		my $writeFile = $optOutputDir."/hostgroups/$hostgroup.cfg";
-
-		# open target file
-		open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
-		print FH "define hostgroup {\n";
-		print FH "\thostgroup_name\t$hostgroup\n";
-		print FH "\talias\t$hostgroup\n";
-		print FH "}\n";
-
-		# close target file
-		close(FH);
-	}
-
-	# get hostgroups (from objectclass '@ldapprefix@Hostgroup') and write files
-	my $result = LDAPsearch($ldap, $optBaseDN, "sub", "objectclass=@ldapprefix@Hostgroup");
-	foreach my $val1 (keys %{$result}) {
-		# set file path
-		my $writeFile = $optOutputDir."/hostgroups/$result->{$val1}->{cn}.cfg";
-
-		# open target file
-		open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
-
-		print FH "define hostgroup {\n";
-		print FH "\thostgroup_name\t$result->{$val1}->{cn}\n";
-		print FH "\talias\t$result->{$val1}->{@ldapprefix@alias}\n";
-		print FH "}\n";
-
-		# close target file
-		close(FH);
-
-		# add hosts of this hostgroup to $CLIENT hash;
-		# client config will write the config for membership
-		if (defined $result->{$val1}->{@ldapprefix@members}) {
-			my @val = split(/\s*,\s*/, $result->{$val1}->{@ldapprefix@members});
-			foreach(@val) {
-				# search full name im client hash :(
-				foreach my $client (keys %{$CLIENTS}) {
-					# if real name was found, add to $CLIENT hash
-					if ($client =~ /^cn=$_,/) {
-						if ($CLIENTS->{$client}->{@ldapprefix@hostgroups}) {
-							$CLIENTS->{$client}->{@ldapprefix@hostgroups} =  $CLIENTS->{$client}->{@ldapprefix@hostgroups}.','.$result->{$val1}->{cn};
-						} else {
-							$CLIENTS->{$client}->{@ldapprefix@hostgroups} = $result->{$val1}->{cn};
-						}
-					}
-				}
-			}
-		}
-	}
-}
-
-sub genServicegroups {
-	my @SERVICEGROUPS;
-
-	# get servicegroups (from client attributes)
-	foreach my $client (keys %{$CLIENTS}) {
-		for my $service (keys %{$CLIENTS->{$client}->{SERVICES}}) {
-			if (defined $CLIENTS->{$client}->{SERVICES}->{$service}->{@ldapprefix@servicegroups}) {
-				if ($CLIENTS->{$client}->{SERVICES}->{$service}->{@ldapprefix@servicegroups} =~ /,/) {
-					my @val = split(/\s*,\s*/, $CLIENTS->{$client}->{SERVICES}->{$service}->{@ldapprefix@servicegroups});
-					foreach(@val) { push(@SERVICEGROUPS, $_); }
-				} else {
-					push(@SERVICEGROUPS, $CLIENTS->{$client}->{SERVICES}->{$service}->{@ldapprefix@servicegroups});
-				}
-			}
-		}
-	}
-
-	# write servicegroup files
-	foreach my $servicegroup (@SERVICEGROUPS) {
-		# set file path
-		my $writeFile = $optOutputDir."/servicegroups/$servicegroup.cfg";
-
-		# open target file
-		open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
-
-		print FH "define servicegroup {\n";
-		print FH "\tservicegroup_name\t$servicegroup\n";
-		print FH "\talias\t$servicegroup\n";
-		print FH "}\n";
-
-		# close target file
-		close(FH);
-	}
-
-	# get servicegroups (from objectclass '@ldapprefix@Servicegroup') and write files
-	my $result = LDAPsearch($ldap, $optBaseDN, "sub", "objectclass=@ldapprefix@Servicegroup");
-	foreach my $val1 (keys %{$result}) {
-		# set file path
-		my $writeFile = $optOutputDir."/servicegroups/$result->{$val1}->{cn}.cfg";
-
-		# open target file
-		open(FH, ">$writeFile") || die "Can't write data: $writeFile $!\n";
-
-		print FH "define servicegroup {\n";
-		print FH "\tservicegroup_name\t$result->{$val1}->{cn}\n";
-		print FH "\talias\t$result->{$val1}->{cn}\n";
-		print FH "}\n";
-
-		# close target file
-		close(FH);
-
-		# add services of this servicegroup to $CLIENT hash
-		# client config will write the config for membership
-		if (defined $result->{$val1}->{@ldapprefix@members}) {
-			my @val = split(/\s*,\s*/, $result->{$val1}->{@ldapprefix@members});
-			my $counter = 0;
-			while($counter <= $#val) {
-				# search full name im client hash :(
-				foreach my $client (keys %{$CLIENTS}) {
-					# if real name was found, add to $CLIENT hash
-					if ($client =~ /^cn=$val[$counter],/) {
-						if ($CLIENTS->{$client}->{SERVICES}->{$val[$counter+1]}->{@ldapprefix@servicegroups}) {
-							$CLIENTS->{$client}->{SERVICES}->{$val[$counter+1]}->{@ldapprefix@servicegroups} = $CLIENTS->{$client}->{SERVICES}->{$val[$counter+1]}->{@ldapprefix@servicegroups}.','.$result->{$val1}->{cn};
-						} else {
-							$CLIENTS->{$client}->{SERVICES}->{$val[$counter+1]}->{@ldapprefix@servicegroups} = $result->{$val1}->{cn};
-						}
-					}
-				}
-
-				$counter = $counter+2;
-			}
-		}
-	}
-}
-
-sub genHostConfig {
-	# do for each client
-	foreach my $client (keys %{$CLIENTS}) {
-		my $host_name;
-
-		# build file path
-		my $writeFile = $optOutputDir.'/';
-		my $path = $CLIENTS->{$client}->{dn};
-		$path =~ s/,$optBaseDN//;
-		my @path = split(",", $path);
-		@path = reverse(@path);
-		foreach my $items (@path) {
-		# file or folder?
-			if ($items =~ /cn/) {
-				my $val = (split(/\=/, $items))[1];
-				$writeFile .= $val.'.cfg';
-				$host_name = $val;
-			} else {
-				my $val = (split(/\=/, $items))[1];
-				$writeFile .= $val.'/';
-			}
-		}
-
-		# only gen config if @ldapprefix@hostdisable is not set
-		if (!defined $CLIENTS->{$client}->{@ldapprefix@hostdisable}) {
-			# open target file
-			open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
-
-			# generate host definition
-			print FH "define host {\n";
-			print FH "\tuse\tgeneric-host\n";
-			print FH "\thost_name\t$host_name\n";
-			foreach (keys %{$CLIENTS->{$client}}) {
-				# generate all host attributes, except host dependency stuff
-				if ($_ !~ /@ldapprefix@hostdependency/ && $_ =~ /@ldapprefix@host/ || $_ eq '@ldapprefix@address' || $_ eq '@ldapprefix@parent' || $_ eq '@ldapprefix@alias' && $_ ne '@ldapprefix@hostdisable') {
-					if ($_ eq '@ldapprefix@hostcustomvar') {
-						foreach my $customvar (keys %{$CLIENTS->{$client}->{$_}}) {
-							if (defined $INHERIT->{$client}->{$_}->{$customvar} && $INHERIT->{$client}->{$_}->{$customvar} ne $CLIENTS->{$client}->{dn}) {
-								print FH "\t# from: $INHERIT->{$client}->{$_}->{$customvar}\n";
-							}
-							print FH "\t$customvar\t$CLIENTS->{$client}->{$_}->{$customvar}\n";
-						}
-					} else {
-						if (defined $INHERIT->{$client}->{$_} && $INHERIT->{$client}->{$_} ne $CLIENTS->{$client}->{dn}) {
-							print FH "\t# from: $INHERIT->{$client}->{$_}\n";
-						}
-						print FH "\t$itemMap{$_}\t$CLIENTS->{$client}->{$_}\n";
-					}
-				}
-			}
-			print FH "}\n";
-			print FH "\n";
-
-			# generate service definition
-			foreach my $service(keys %{$CLIENTS->{$client}->{SERVICES}}) {
-				if (!$CLIENTS->{$client}->{SERVICES}->{$service}->{@ldapprefix@servicedisable} && $service ne "INFO") {
-					if (defined $CLIENTS->{$client}->{SERVICES}->{$service}->{dn} && $CLIENTS->{$client}->{SERVICES}->{$service}->{dn} !~ /$CLIENTS->{$client}->{dn}/) {
-						print FH "# from: $CLIENTS->{$client}->{SERVICES}->{$service}->{dn}\n";
-					}
-					print FH "define service {\n";
-					print FH "\tuse\tgeneric-service\n";
-					print FH "\tservice_description\t$service\n";
-					print FH "\thost_name\t$host_name\n";
-					foreach(keys %{$CLIENTS->{$client}->{SERVICES}->{$service}}) {
-						# generate all service attributes, except service dependency stuff
-						if ($_ !~ /@ldapprefix@servicedependency/ && $_ =~ /@ldapprefix@service/ || $_ eq '@ldapprefix@checkcommand') {
-							if ($_ eq '@ldapprefix@servicecustomvar') {
-								foreach my $customvar (keys %{$CLIENTS->{$client}->{SERVICES}->{$service}->{$_}}) {
-									if (defined $INHERIT->{$client}->{SERVICES}->{$service}->{$_}->{$customvar} && $INHERIT->{$client}->{SERVICES}->{$service}->{$_}->{$customvar} ne $CLIENTS->{$client}->{SERVICES}->{$service}->{dn}) {
-										print FH "\t# from: $INHERIT->{$client}->{SERVICES}->{$service}->{$_}->{$customvar}\n";
-									}
-									print FH "\t$customvar\t$CLIENTS->{$client}->{SERVICES}->{$service}->{$_}->{$customvar}\n";
-								}
-							} else {
-								if (defined $INHERIT->{$client}->{SERVICES}->{$service}->{$_} && $INHERIT->{$client}->{SERVICES}->{$service}->{$_} ne $CLIENTS->{$client}->{SERVICES}->{$service}->{dn}) {
-									print FH "\t# from: $INHERIT->{$client}->{SERVICES}->{$service}->{$_}\n";
-								}
-								print FH "\t$itemMap{$_}\t$CLIENTS->{$client}->{SERVICES}->{$service}->{$_}\n";
-							}
-						}
-					}
-					print FH "}\n";
-					print FH "\n";
-				}
-			}
-
-			# generate host dependencies
-			foreach my $hostdep(keys %{$CLIENTS->{$client}->{DEPENDENCY}}) {
-				# only if host is not disabled
-				if (!$CLIENTS->{$client}->{@ldapprefix@hostdisable}) {
-					print FH "define hostdependency {\n";
-					print FH "\thost_name\t$hostdep\n";
-					print FH "\tdependent_host_name\t$CLIENTS->{$client}->{cn}\n";
-					foreach(keys %{$CLIENTS->{$client}->{DEPENDENCY}->{$hostdep}}) {
-						print FH "\t$itemMap{$_}\t$CLIENTS->{$client}->{DEPENDENCY}->{$hostdep}->{$_}\n" if $itemMap{$_};
-					}
-					print FH "}\n";
-					print FH "\n";
-				}
-			}
-
-			# generate service dependencies
-			foreach my $service(keys %{$CLIENTS->{$client}->{SERVICES}}) {
-				# only if service is not disabled
-				if (!$CLIENTS->{$client}->{SERVICES}->{$service}->{@ldapprefix@servicedisable}) {
-					foreach my $hostdep(keys %{$CLIENTS->{$client}->{SERVICES}->{$service}->{DEPENDENCY}}) {
-						foreach my $servicedep(keys %{$CLIENTS->{$client}->{SERVICES}->{$service}->{DEPENDENCY}->{$hostdep}}) {
-							print FH "define servicedependency {\n";
-							# special stuff for inheritance :-(
-							if ($hostdep eq "\$HOSTNAME\$") {
-								print FH "\thost_name\t$CLIENTS->{$client}->{cn}\n";
-							} else {
-								print FH "\thost_name\t$hostdep\n";
-							}
-        
-							print FH "\tservice_description\t$servicedep\n";
-							print FH "\tdependent_host_name\t$CLIENTS->{$client}->{cn}\n";
-							print FH "\tdependent_service_description\t$service\n";
-							foreach(keys %{$CLIENTS->{$client}->{SERVICES}->{$service}->{DEPENDENCY}->{$hostdep}->{$servicedep}}) {
-								print FH "\t$itemMap{$_}\t$CLIENTS->{$client}->{SERVICES}->{$service}->{DEPENDENCY}->{$hostdep}->{$servicedep}->{$_}\n";
-							}
-							print FH "}\n";
-							print FH "\n";
-						}
-					}
-				} 
-			}
-
-			# close target file
-			close(FH);
-		}
-	}
-}
-
-sub HostgroupServiceMapping {
-	# search for each host :(
-	foreach my $client (keys %{$CLIENTS}) {
-		# any hostgroup for this host?
-		if ($CLIENTS->{$client}->{@ldapprefix@hostgroups}) {
-			my @hostgroups = split(/\s*,\s*/, $CLIENTS->{$client}->{@ldapprefix@hostgroups});
-
-			# search after hostgroup (objectclass)
-			foreach my $hostgroup (@hostgroups) {
-				my $result = LDAPsearch($ldap, $optBaseDN, 'sub', "(&(objectclass=@ldapprefix@Hostgroup)(cn=$hostgroup))");
-
-				# search stuff in hostgroup dn
-				foreach my $val (keys %{$result}) {
-					# cut client's dn
-					$client =~ s/,$optBaseDN//;
-
-					# search services
-					my $result2 = LDAPsearch($ldap, $result->{$val}->{dn}, 'sub', 'objectclass=@ldapprefix@Service');
-					$CLIENTS = addServices($result2, $client, $CLIENTS, $result->{$val}->{dn});
-				}
-			}
-		}
-	}
-}
-
-sub makeRevisionProof {
-	my $optRevisionPath = shift;
-	my $optRevisionTemp = shift;
-	my $result;
-	my $SVNcmd = 'svn';
-
-	# check svn command
-	beVerbose("REVISION", "search after cmd");
-	$result = qx(which $SVNcmd);
-	LeaveScript(2, "command '$SVNcmd' not found") if !$result;
-
-	# create dir, if necessary
-	mkdir("$optRevisionTemp") if !-d $optRevisionTemp;
-	beVerbose("REVISION", "create tmp work dir") if !-d $optRevisionTemp;
-
-	# split the real dir from url
-	my @val = split(/\//, $optRevisionPath);
-	my $realDir = pop(@val);
-
-	# get revision stuff
-		# checkout or update?
-		if (-d "$optRevisionTemp/$realDir/.svn") {
-			# change working dir
-			chdir("$optRevisionTemp/$realDir");
-
-			# checkout
-			beVerbose("REVISION", "repository update");
-			$result = qx($SVNcmd update $optRevisionPath);
-			LeaveScript(2, "Something is gone wrong...") if $? != 0;
-		} else {
-			# change working dir
-			chdir("$optRevisionTemp");
-
-			# checkout
-			beVerbose("REVISION", "revision checkout");
-			$result = qx($SVNcmd checkout $optRevisionPath);
-			LeaveScript(2, "Something is gone wrong...") if $? != 0;
-
-			# change working dir
-			chdir("$optRevisionTemp/$realDir");
-		}
-
-	# collect data
-		# vardump
-		beVerbose("REVISION", "add VARDUMP to repository");
-		open(FH, ">$optRevisionTemp/$realDir/dump.vardmp");
-		print FH Dumper $CLIENTS;
-		close(FH);
-
-		# ldif dump
-		beVerbose("REVISION", "add LDIF to repository");
-		my $dump = $ldap->search(
-			base => "$optLDAPDN",
-			scope => "sub",
-			filter => "objectclass=*");
-		my $ldif = Net::LDAP::LDIF->new ("$optRevisionTemp/$realDir/dump.ldif", "w") or die $!;
-		$ldif->write_entry($dump->all_entries(  ));
-
-		# file dump
-		beVerbose("REVISION", "add FILEDUMP to repository");
-		qx(cp -a $optOutputDir $optRevisionTemp/$realDir/);
-
-	# add and commit data
-	$result = qx(svn --force add *);
-	$result = qx(svn commit -m 'hello wold auto commit');
-}
-
-
-
-
-
+# exit
+LeaveScript($exit->{code}, $exit->{message});

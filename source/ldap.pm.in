@@ -1,0 +1,255 @@
+#!/usr/bin/perl -w
+
+sub LDAPconnect {
+	my $login = shift;
+	my $ldap;
+	
+	if (defined $login) {
+		# do ldap connect with login
+		$ldap = Net::LDAP->new($cfg->{ldap}->{server}) or die "Can't connect to LDAP Server '$cfg->{ldap}->{server}'";
+		my $mesg=$ldap->bind("$cfg->{ldap}->{bindDN}", password => "$cfg->{ldap}->{bindPW}" );
+		beVerbose("LDAP CONNECT", "connect to Host: $cfg->{ldap}->{server}, User: $cfg->{ldap}->{bindDN}, Pass: ******");
+		LeaveScript(2, "Can't connect to ldap server! Wrong user and/or password?") if $mesg->{resultCode};
+	} else {
+		# anonymous bind
+		$ldap = Net::LDAP->new ($cfg->{ldap}->{server}) or die "Can't connect to LDAP Server $cfg->{ldap}->{server}: $!";
+	}
+		
+	return $ldap;
+}
+
+sub LDAPsearch {
+	my $ldap   = shift;
+	my $base   = shift;
+	my $scope  = shift;
+	my $filter = shift;
+	my $return;
+
+	# get entries
+	my $result = $ldap->search ( base       => $base,
+								 scope      => $scope,
+								 deref      => 'never',
+								 filter     => "$filter");
+
+	beVerbose("LDAP SEARCH", "SEARCH '$filter' ON '$base'");
+
+	# convert result to a hash
+	my $href = $result->as_struct;
+
+	# get an array of the DN names
+	my @arrayOfDNs  = keys %$href;
+
+	# process each DN using it as a key
+	foreach (@arrayOfDNs) {
+		$return->{$_}->{dn} = $_;
+		my $valref = $$href{$_};
+
+		# get an array of the attribute names
+		# passed for this one DN.
+		my @arrayOfAttrs = sort keys %$valref;
+
+		foreach my $attrName(@arrayOfAttrs) {
+			# can't handle binary data => skip!
+			next if ( $attrName =~ /;binary$/ );
+
+			# attribute name as the hash
+			my $attrVal =  @$valref{$attrName};
+
+			# convert to an ordinary hash
+			my $counter = scalar @$attrVal;
+			while($counter != 0) {
+				$counter--;
+				if ($attrName eq "$cfg->{ldap}->{prefix}hostcustomvar" || $attrName eq "$cfg->{ldap}->{prefix}servicecustomvar") {
+					@$attrVal[$counter] =~ m/([\d\w]*) (.*)/;
+					$return->{$_}->{$attrName}->{$1} = $2;
+				} elsif ($attrName eq "$cfg->{ldap}->{prefix}timeperiodvalue") {
+					@$attrVal[$counter] =~ m/(.*) +([-\w:]+(\,?)+[-\w:]+)/;
+					$return->{$_}->{$attrName}->{$counter}->{$1} = $2;
+				} else {
+					$return->{$_}->{$attrName} = @$attrVal[$counter];
+				}
+			}
+		}
+	}
+
+	# and return the hash
+	return $return;
+}
+
+sub addHostAttributes {
+	my $result  = shift;
+	my $host    = shift;
+	my $CLIENTS = shift;
+
+	foreach my $val1 (keys %{$result}) {
+		foreach my $val2 (keys %{$result->{$val1}}) {
+			# only defined attributes
+				if ($itemMap{$val2}) {
+					# only host attributes
+					if ($val2 =~ /$cfg->{ldap}->{prefix}host/ || $val2 eq '$cfg->{ldap}->{prefix}address' || $val2 eq '$cfg->{ldap}->{prefix}parent' || $val2 eq '$cfg->{ldap}->{prefix}alias' || $val2 eq 'description') {
+						DebugOutput("Attribute $val2 [$result->{$val1}->{$val2}] found in $val1; valency: hostattribute => store!");
+
+						# additive inheritance?
+						if ($result->{$val1}->{$val2} =~ /^\s*\+/) {
+							# specified at host object class?
+							if (defined $CLIENTS->{$host.",".$cfg->{ldap}->{baseDN}}->{$val2} && $CLIENTS->{$host.",".$cfg->{ldap}->{baseDN}}->{$val2} =~ /^\+/) {
+								$result->{$val1}->{$val2} =~ s/\+//;
+								$CLIENTS->{$host.",".$cfg->{ldap}->{baseDN}}->{$val2} = $result->{$val1}->{$val2};
+							} else {
+								$result->{$val1}->{$val2} =~ s/\+/,/;
+
+								# empty var?
+								if (defined $CLIENTS->{$host.",".$cfg->{ldap}->{baseDN}}->{$val2}) {
+									$CLIENTS->{$host.",".$cfg->{ldap}->{baseDN}}->{$val2} = $CLIENTS->{$host.",".$cfg->{ldap}->{baseDN}}->{$val2}.$result->{$val1}->{$val2};
+								} else {
+									$result->{$val1}->{$val2} =~ s/,//;
+									$CLIENTS->{$host.",".$cfg->{ldap}->{baseDN}}->{$val2} = $result->{$val1}->{$val2};
+								}
+							}
+					} else {
+						if ($val2 =~ /$cfg->{ldap}->{prefix}hostcustomvar/) {
+							foreach(keys %{$result->{$val1}->{$val2}}) {
+								$CLIENTS->{$host.",".$cfg->{ldap}->{baseDN}}->{"$cfg->{ldap}->{prefix}hostcustomvar"}->{$_} = $result->{$val1}->{$val2}->{$_};
+								$INHERIT->{$host.",".$cfg->{ldap}->{baseDN}}->{"$cfg->{ldap}->{prefix}hostcustomvar"}->{$_} = $result->{$val1}->{dn};
+							}
+						} else {
+							$CLIENTS->{$host.",".$cfg->{ldap}->{baseDN}}->{$val2} = $result->{$val1}->{$val2};
+							$INHERIT->{$host.",".$cfg->{ldap}->{baseDN}}->{$val2} = $result->{$val1}->{dn};
+						}
+					}
+				} else {
+					DebugOutput("Attribute $val2 [$result->{$val1}->{$val2}] found in $val1; valency: no hostattribute => drop!");
+				}
+			}
+		}
+		
+		# host dependencies
+		if ($result->{$val1}->{"$cfg->{ldap}->{prefix}hostdependency"}) {
+			$CLIENTS->{$host.",".$cfg->{ldap}->{baseDN}}->{DEPENDENCY}->{$result->{$val1}->{"$cfg->{ldap}->{prefix}hostdependency"}}->{"$cfg->{ldap}->{prefix}hostdependencyexecutionfailurecriteria"} = $result->{$val1}->{"$cfg->{ldap}->{prefix}hostdependencyexecutionfailurecriteria"} if $result->{$val1}->{"$cfg->{ldap}->{prefix}hostdependencyexecutionfailurecriteria"};
+			$CLIENTS->{$host.",".$cfg->{ldap}->{baseDN}}->{DEPENDENCY}->{$result->{$val1}->{"$cfg->{ldap}->{prefix}hostdependency"}}->{"$cfg->{ldap}->{prefix}hostdependencynotificationfailurecriteria"} = $result->{$val1}->{"$cfg->{ldap}->{prefix}hostdependencynotificationfailurecriteria"} if $result->{$val1}->{"$cfg->{ldap}->{prefix}hostdependencynotificationfailurecriteria"};
+		}
+	}
+
+	# return
+	return $CLIENTS;
+}
+
+sub addAlias {
+	my $result  = shift;
+	my $host    = shift;
+	my $CLIENTS = shift;
+
+	foreach my $alias (keys %{$result}) {
+		my $searchDN = $result->{$alias}->{aliasedobjectname};
+		my $val = LDAPsearch($ldap, $searchDN, "sub", "objectclass=$cfg->{ldap}->{prefix}Service");
+		$CLIENTS = addServices($val, $host, $CLIENTS, $searchDN);
+	}
+
+	# return
+	return $CLIENTS;
+}
+
+
+sub addServices {
+	my $result      = shift;
+	my $host        = shift;
+	my $CLIENTS     = shift;
+	my $searchTree  = shift;
+
+	# list service
+	foreach my $val1 (keys %{$result}) {
+		DebugOutput("Service $result->{$val1}->{cn} found in $val1");
+
+		# interited service attributes
+			# determine service name
+			my $service = $result->{$val1}->{cn};
+
+			# remove basedn from dn
+			my $val5 = $cfg->{ldap}->{baseDN};
+			if ($val1 !~ /$val5/) {
+				my @val6 = split(/,/, $val5);
+				$val5 = ''; shift(@val6);
+				foreach(@val6) { $val5 .= ','.$_; }
+				$val5 =~ s/,//;
+			}
+			$val1 =~ s/,$val5//;
+
+			# split and reverse the DN
+			my @search = split(",", $val1);
+			@search = reverse(@search);
+
+			# search at base
+			my $searchDN = $val5;
+			my $result = LDAPsearch($ldap, $searchDN, "base", "objectclass=*");
+			my $CLIENTS = addServiceAttributes($result, "$service", $CLIENTS, $host);
+
+			# and search rest of the tree
+			foreach(@search) {
+				$searchDN = $_.",".$searchDN;
+				my $result = LDAPsearch($ldap, $searchDN, "base", "objectclass=*");
+				$CLIENTS = addServiceAttributes($result, "$service", $CLIENTS, $host);
+			}
+	}
+
+	# return
+	return $CLIENTS;
+}
+
+sub addServiceAttributes {
+	my $result   = shift;
+	my $service  = shift;
+	my $CLIENTS  = shift;
+	my $host     = shift;
+
+	foreach my $val1 (keys %{$result}) {
+		foreach my $val2 (keys %{$result->{$val1}}) {
+			# only service attributes
+			if ($val2 =~ /$cfg->{ldap}->{prefix}service/ || $val2 eq "$cfg->{ldap}->{prefix}checkcommand" || $val2 eq 'dn' || $val2 eq 'description') {
+				DebugOutput("Attribute $val2 [$result->{$val1}->{$val2}] found in $val1; valency: serviceattribute => store!");
+
+				# additive inheritance?
+				if ($result->{$val1}->{$val2} =~ /^\s*\+/) {
+					# specified at service object class?
+					if (defined $CLIENTS->{$host.",".$cfg->{ldap}->{baseDN}}->{SERVICES}->{$service}->{$val2} && $CLIENTS->{$host.",".$cfg->{ldap}->{baseDN}}->{SERVICES}->{$service}->{$val2} =~ /^\+/) {
+						$result->{$val1}->{$val2} =~ s/\+//;
+						$CLIENTS->{$host.",".$cfg->{ldap}->{baseDN}}->{SERVICES}->{$service}->{$val2} = $result->{$val1}->{$val2};
+					} else {
+						$result->{$val1}->{$val2} =~ s/\+/,/;
+
+						# empty var?
+						if (defined $CLIENTS->{$host.",".$cfg->{ldap}->{baseDN}}->{SERVICES}->{$service}->{$val2}) {
+							$CLIENTS->{$host.",".$cfg->{ldap}->{baseDN}}->{SERVICES}->{$service}->{$val2} = $CLIENTS->{$host.",".$cfg->{ldap}->{baseDN}}->{SERVICES}->{$service}->{$val2}.$result->{$val1}->{$val2};
+						} else {
+							$result->{$val1}->{$val2} =~ s/,//;
+							$CLIENTS->{$host.",".$cfg->{ldap}->{baseDN}}->{SERVICES}->{$service}->{$val2} = $result->{$val1}->{$val2};
+						}
+					}
+				} else {
+					if ($val2 =~ /$cfg->{ldap}->{prefix}servicecustomvar/) {
+						foreach(keys %{$result->{$val1}->{$val2}}) {
+							$CLIENTS->{$host.",".$cfg->{ldap}->{baseDN}}->{SERVICES}->{$service}->{"$cfg->{ldap}->{prefix}servicecustomvar"}->{$_} = $result->{$val1}->{$val2}->{$_};
+							$INHERIT->{$host.",".$cfg->{ldap}->{baseDN}}->{SERVICES}->{$service}->{"$cfg->{ldap}->{prefix}servicecustomvar"}->{$_} = $result->{$val1}->{dn};
+						}
+					} else {
+						$CLIENTS->{$host.",".$cfg->{ldap}->{baseDN}}->{SERVICES}->{$service}->{$val2} = $result->{$val1}->{$val2};
+						$INHERIT->{$host.",".$cfg->{ldap}->{baseDN}}->{SERVICES}->{$service}->{$val2} = $result->{$val1}->{dn};
+					}
+				}
+			} else {
+				DebugOutput("Attribute $val2 [$result->{$val1}->{$val2}] found in $val1; valency: no serviceattribute => drop");
+			}
+		}
+
+		# service dependencies
+		if ($result->{$val1}->{"$cfg->{ldap}->{prefix}servicedependency"}) {
+			my ($depHost, $depService) = (split(/ *-> */, $result->{$val1}->{"$cfg->{ldap}->{prefix}servicedependency"}))[0,1];
+			$CLIENTS->{$host.",".$cfg->{ldap}->{baseDN}}->{SERVICES}->{$service}->{DEPENDENCY}->{$depHost}->{$depService}->{"$cfg->{ldap}->{prefix}servicedependencyexecutionfailurecriteria"} = $result->{$val1}->{"$cfg->{ldap}->{prefix}servicedependencyexecutionfailurecriteria"} if $result->{$val1}->{"$cfg->{ldap}->{prefix}servicedependencyexecutionfailurecriteria"};
+			$CLIENTS->{$host.",".$cfg->{ldap}->{baseDN}}->{SERVICES}->{$service}->{DEPENDENCY}->{$depHost}->{$depService}->{"$cfg->{ldap}->{prefix}servicedependencynotificationfailurecriteria"} = $result->{$val1}->{"$cfg->{ldap}->{prefix}servicedependencynotificationfailurecriteria"} if $result->{$val1}->{"$cfg->{ldap}->{prefix}servicedependencynotificationfailurecriteria"};
+		}
+	}
+
+	# return
+	return $CLIENTS;
+}
+
+1;

@@ -1,0 +1,113 @@
+#!/usr/bin/perl -w
+
+sub LeaveScript {
+	my $exitCode = $_[0];
+	my $comment  = $_[1];
+	
+	# unlock exporter
+	unlink($cfg->{export}->{lock});
+
+	print $state[$exitCode]." - $comment\n";
+	exit $exitCode;
+}
+
+sub beVerbose {
+	my $type = shift;
+	my $text = shift;
+
+	if (defined $opt->{verbose}) {
+		# generate message
+		my $message = localtime(time)." | Verbose: $type: $text\n";
+
+		# should write log to file or STDOUT?
+		if ($opt->{verbose} ne "") {
+			open(LOGF,">>$opt->{verbose}") || die $!;
+			print LOGF $message;
+			close(LOGF);
+		} else {
+			print $message;
+		}
+	}
+}
+
+sub DebugOutput {
+	my $text = shift;
+
+	if (defined $opt->{debug}) {
+		# generate message
+		my $message = localtime(time)." | Debug: $text\n";
+
+		# should write log to file or STDOUT?
+		if ($opt->{debug} ne "") {
+			open(LOGF,">>$opt->{debug}") || die $!;
+			print LOGF $message;
+			close(LOGF);
+		} else {
+			print $message;
+		}
+	}
+}
+
+sub createDirs {
+	my $searchDN    = shift;
+	my $writeFolder = shift;
+	my $dirStructure;
+
+	# - search ldap tree downwards
+	# - check if folder already exists
+	# - create folder (if needed)
+	my $result = LDAPsearch($ldap, $searchDN, "single", "ou=*");
+	foreach(keys %{$result}) {
+		my $folder = $writeFolder.'/'.$result->{$_}->{ou}."/";
+		if (!-d $folder) {
+			mkdir("$folder");
+			beVerbose('CREATE DIR', $folder);
+		}
+
+		createDirs($_, $folder);
+	}
+}
+
+sub checkRemoteDir {
+	my $host = shift;
+	my $remoteDir = shift;
+
+	beVerbose('CHECK', "login and dir on '$host'");
+	my $cmd = "ssh -o PasswordAuthentication=no "; $cmd .= $host ." \"ls -d $remoteDir\" 2>/dev/null";
+	my $val = system($cmd);
+    
+	if ($val != 0) {
+		if ($val == 512) {
+			LeaveScript(2, "Can't locate directory $remoteDir on $host");
+		} elsif ($val == 65280) {
+			LeaveScript(2, "Can't login on $host");
+		} else {
+			LeaveScript(2, "Unknown error during connection / test");
+		}
+	}
+	
+	return 'exists';
+}
+
+sub checkRemoteFile {
+	my $host = shift;
+	my $remoteFile = shift;
+	
+	beVerbose('CHECK', "login and file on '$host'");
+	my $cmd = "ssh -o PasswordAuthentication=no "; $cmd .= $host ." \"ls -f $remoteFile\" 2>/dev/null";
+	my $val = system($cmd);
+	
+	if ($val != 0) {
+		if ($val == 512) {
+			return 'no file found'
+		} elsif ($val == 65280) {
+			LeaveScript(2, "Can't login on $host");
+		} else {
+			LeaveScript(2, "Unknown error during connection / test");
+		}
+	}
+	
+	return 'exists';
+}
+
+1;

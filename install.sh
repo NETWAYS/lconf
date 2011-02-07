@@ -1,103 +1,260 @@
-#!/bin/bash
+#!/usr/bin/perl -w
 
-# set dirs
-DIR_SOURCE=./source
-DIR_MAIN=`pwd`
+# includes
+use strict;
 
-# load functions
-. $DIR_SOURCE/functions.base
-. $DIR_SOURCE/functions.wizard
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
+# setup 
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
 
-# welcome screen
-WizardWelcome
+# vars
+my $cfg;
+
+# get current dir
+$cfg->{mainDir} = $0;
+$cfg->{mainDir} =~ s/\/[^\/]*$//;
+$cfg->{mainDir} = '.' if $cfg->{mainDir} eq 'install.pl';
+	
+# tasks
+my $FILES = {	
+	'LConfExport.pl' => {
+			'source' => '/source/LConfExport.pl.in', 
+			'target' => '/',
+			'changes' => {
+					'PREFIX' => 'defined'
+			}
+	},
+	
+	'LConfImport.pl' => {
+			'source' => '/source/LConfImport.pl.in', 
+			'target' => '/',
+			'changes' => {
+					'PREFIX' => 'defined'
+			}
+	},
+	
+	'LConfSlaveExport.pl' => {
+			'source' => '/source/LConfSlaveExport.pl.in',
+			'target' => '/',
+			'changes' => {
+					'PREFIX' => 'defined'
+			}
+	},
+	
+	'config.pm' => {
+			'source' => '/source/config.pm.in',
+			'target' => '/etc',
+			'changes' => {
+					'LDAP_ROOT_DN' => 'defined',
+					'USER' => 'defined',
+					'LOCK_PATH' => '$PREFIX/var/LConfExport.lock',
+					'HASHDUMP' => '$PREFIX/var/LConfExport.hashdump',
+					'TMPDIR' => '$PREFIX/tmp',
+					'STARTINGPOINT' => 'defined',
+					'LDAP_PREFIX' => 'defined'
+			}
+	},
+	
+	'misc.pm' => {
+			'source' => '/source/misc.pm.in',
+			'target' => '/lib'
+	},
+	
+	'ldap.pm' => {
+			'source' => '/source/ldap.pm.in',
+			'target' => '/lib'
+	},
+	
+	'generate.pm' => {
+			'source' => '/source/generate.pm.in',
+			'target' => '/lib'
+	}
+	
+};
+
+# questions
+my $QUESTIONS = {
+	'1' => {
+		'name' => 'PREFIX',
+		'message' => 'Install files in...',
+		'suggestion' => '/usr/local/LConf'
+	},
+	
+	'2' => {
+		'name' => 'USER',
+		'message' => 'Install files with user...',
+		'suggestion' => 'icinga'
+	},
+	
+	'3' => {
+		'name' => 'GROUP',
+		'message' => 'Install files with group...',
+		'suggestion' => 'icinga'
+	},
+	
+	'4' => {
+		'name' => 'LDAP_SCHEMA_DIR',
+		'message' => "You can find LDAP schema files in...\nHINT: find /etc -name *.schema",
+		'suggestion' => '/etc/ldap/schema'
+	},
+	
+	'5' => {
+		'name' => 'LDAP_ROOT_DN',
+		'message' => 'Your ldap rootdn is...',
+		'suggestion' => 'dc=example,dc=org'
+	},
+	
+	'6' => {
+		'name' => 'LDAP_PREFIX',
+		'message' => 'Objectclass and attribute prefix will be...',
+		'suggestion' => 'lconf'
+	},
+	
+	'7' => {
+		'name' => 'STARTINGPOINT',
+		'message' => 'LConf Exporter should start exporting at...',
+		'suggestion' => 'IcingaConfig'
+	}
+};
+
+
+	
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
+# doing...
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
+
+# define vars
+my $data;
+
+# welcome message
+$data .= "##############################\n";
+$data .= "#    LConf Install Wizard    #\n";
+$data .= "##############################\n";
+$data .= "\n";
+$data .= "...simple, stupid, but works!\n";
+$data .= "\n";
 
 # only run as root
-if [ `id -u` != 0 ]; then
-	ScriptExit "You're not root! Please run installer as root..."
-fi
+my $id = qx(id -u);
+ScriptExit(2, "You're not root! Please run installer as root...") if $id != 0;
 
 # check for ldap utils
-ScriptOutput CHECK "ldap utils"
-PROG_LDAPADD=`which ldapadd`
-if [ "$?" != 0 ]; then
-	ScriptExit "OS package with ldap utils is not installed"
-fi
+print "CHECK: ldap utils...\n";
+my $ldapadd = qx(which ldapadd);
+if (!defined $ldapadd || $ldapadd eq '') {
+	ScriptExit(2, "OS package with ldap utils is not installed")
+}
 
-# check if perl (with ldap modules) is in place
-ScriptOutput CHECK "Perl Modules"
-perl -e "use strict" 2>/dev/null
-if [ "$?" != 0 ]; then
-	ScriptExit "Perl is not installed!";
-fi
+# check if perl ldap modules are in place
+print "CHECK: Perl Modules\n";
+eval { require Net::LDAP } or ScriptExit(2, "Perl module 'Net::LDAP' is not installed");
+eval { require Net::LDAP::Entry } or ScriptExit(2, "Perl module 'Net::LDAP::Entry' is not installed");
 
-perl -e "use Net::LDAP" 2>/dev/null
-if [ "$?" != 0 ]; then
-	ScriptExit "Perl module 'Net::LDAP' is not installed"
-fi
+# ask dumb questions
+foreach my $question (sort keys %{$QUESTIONS}) {
+	print "\n";
+	print "=> USER INTERACTION NEEDED!\n";
+	print "$QUESTIONS->{$question}->{message}\n";
+	print "[$QUESTIONS->{$question}->{suggestion}]: ";
+	
+	$QUESTIONS->{$question}->{data} = <STDIN>; chomp($QUESTIONS->{$question}->{data});
+	$QUESTIONS->{$question}->{data} = $QUESTIONS->{$question}->{suggestion} if $QUESTIONS->{$question}->{data} eq '';
+	
+	print "$QUESTIONS->{$question}->{name} = $QUESTIONS->{$question}->{data}\n\n";
+}
 
-perl -e "use Net::LDAP::Entry" 2>/dev/null
-if [ "$?" != 0 ]; then
-        ScriptExit "Perl module 'Net::LDAP::Entry' is not installed"
-fi
+# re-map the answers to config hash
+foreach my $val (keys %{$QUESTIONS}) { $cfg->{$QUESTIONS->{$val}->{name}} = $QUESTIONS->{$val}->{data}; } 
 
-WizardAsk
-echo ""
-
-# quote $PREFIX
-PREFIX_QUOTED=`echo $PREFIX | sed s/\\\\//\\\\\\\\\\\\//g`
-
+# NOW, DO THE INSTALLATION JOB!!
 # check ldap schema dir
-ScriptOutput CHECK "LDAP schema dir"
-RETURN=`ls $DIR_SCHEMA/*.schema 2>/dev/null | wc -l`
-if [ $RETURN -lt 3 ]; then
-	ScriptExit "$DIR_SCHEMA is not a LDAP schema directory!"
-fi
+print "CHECK: LDAP schema dir\n";
+my $filecount = qx(ls $cfg->{LDAP_SCHEMA_DIR}/*.schema 2>/dev/null | wc -l);
+$filecount =~ m/(\d+)/; $filecount = $1;
+ScriptExit(2, "'$cfg->{LDAP_SCHEMA_DIR}' is not a LDAP schema directory!") if $filecount == 0;
 
-ScriptOutput INSTALL "Dir structure"
-install -d -o $USER -g $GROUP -m 750 $PREFIX
-install -d -o $USER -g $GROUP -m 750 $PREFIX/etc
-install -d -o $USER -g $GROUP -m 750 $PREFIX/var
+print "INSTALL Dir structure\n";
+mkdir("$cfg->{PREFIX}", 0750);
+mkdir("$cfg->{PREFIX}/etc", 0750);
+mkdir("$cfg->{PREFIX}/lib", 0750);
+mkdir("$cfg->{PREFIX}/var", 0750);
+mkdir("$cfg->{PREFIX}/tmp", 0750);
 
-ScriptOutput CREATE "LConf Exporter"
-cat $DIR_SOURCE/LConfExport.pl.in | sed -e "s/@prefix@/$PREFIX_QUOTED/g" > $DIR_SOURCE/LConfExport.pl.tmp1
-cat $DIR_SOURCE/LConfExport.pl.tmp1 | sed -e "s/@ldapprefix@/$LDAPPREFIX/g" > $DIR_SOURCE/LConfExport.pl
-ScriptOutput INSTALL "LConf Exporter"
-install -o $USER -g $GROUP -m 750 $DIR_SOURCE/LConfExport.pl $PREFIX/
+# create files
+foreach my $file (keys %{$FILES}) {
+	print "CREATE file $file\n";
+	
+	# read
+	my $data = readFile("$cfg->{mainDir}/$FILES->{$file}->{source}");
+	
+	# change stuff
+	foreach (keys %{$FILES->{$file}->{changes}}) {
+		if ($FILES->{$file}->{changes}->{$_} eq 'defined') {
+			# evaluate
+			my $val = $FILES->{$file}->{changes}->{$_};
+			eval "\$val=\$cfg->{\$_};";
+			
+			# replace
+			$data =~ s/<-$_->/$val/;
+		} else {
+			# get var and evaluate
+			$FILES->{$file}->{changes}->{$_} =~ m/.*\$([\d\w]+)\/.*/;
+			my $val = $1; my $val_before = $val; eval "\$val=\$cfg->{\$val};";
+			
+			# replace
+			$FILES->{$file}->{changes}->{$_} =~ s/\$$val_before/$val/;
+			$data =~ s/<-$_->/$FILES->{$file}->{changes}->{$_}/;
+		}
+	}
+	
+	# generally, replace prefix with the real prefix
+	$data =~ s/<-LDAP_PREFIX->/$cfg->{LDAP_PREFIX}/g;
+	
+	# write
+	writeFile("$cfg->{PREFIX}$FILES->{$file}->{target}/$file", $data);
+}
 
-ScriptOutput CREATE "LConf Importer"
-cat $DIR_SOURCE/LConfImport.pl.in | sed -e "s/@prefix@/$PREFIX_QUOTED/g" > $DIR_SOURCE/LConfImport.pl.tmp1
-cat $DIR_SOURCE/LConfImport.pl.tmp1 | sed -e "s/@ldapprefix@/$LDAPPREFIX/g" > $DIR_SOURCE/LConfImport.pl
-ScriptOutput INSTALL "LConf Importer"
-install -o $USER -g $GROUP -m 750 $DIR_SOURCE/LConfImport.pl $PREFIX/
+# create ldap schema file
+print "CREATE ldap schema file\n";
+$data = readFile("$cfg->{mainDir}/source/netways.schema.in");
+$data =~ s/<-LDAP_PREFIX->/$cfg->{LDAP_PREFIX}/g;
+writeFile("$cfg->{LDAP_SCHEMA_DIR}/netways.schema", $data);
 
-ScriptOutput CREATE "LConf Slave Exporter"
-cat $DIR_SOURCE/LConfSlaveExport.pl.in | sed -e "s/@prefix@/$PREFIX_QUOTED/g" > $DIR_SOURCE/LConfSlaveExport.pl.tmp1
-cat $DIR_SOURCE/LConfSlaveExport.pl.tmp1 | sed -e "s/@ldapprefix@/$LDAPPREFIX/g" > $DIR_SOURCE/LConfSlaveExport.pl
-ScriptOutput INSTALL "LConf Slave Exporter"
-install -o $USER -g $GROUP -m 750 $DIR_SOURCE/LConfSlaveExport.pl $PREFIX/
 
-ScriptOutput CREATE "LConf Slave Syncer"
-cat $DIR_SOURCE/LConfSlaveSync.pl.in | sed -e "s/@prefix@/$PREFIX_QUOTED/g" > $DIR_SOURCE/LConfSlaveSync.pl
-ScriptOutput INSTALL "LConf Slave Syncer"
-install -o $USER -g $GROUP -m 750 $DIR_SOURCE/LConfSlaveSync.pl $PREFIX/
 
-ScriptOutput CREATE "LConf config file"
-cat $DIR_SOURCE/config.pm.in | sed -e "s/@domain@/$ROOTDN/g" > $DIR_SOURCE/config.pm.tmp1
-cat $DIR_SOURCE/config.pm.tmp1 | sed -e "s/@user@/$USER/g" > $DIR_SOURCE/config.pm.tmp2
-cat $DIR_SOURCE/config.pm.tmp2 | sed -e "s/@prefix@/$PREFIX_QUOTED/g" > $DIR_SOURCE/config.pm.tmp3
-cat $DIR_SOURCE/config.pm.tmp3 | sed -e "s/@ldapprefix@/$LDAPPREFIX/g" > $DIR_SOURCE/config.pm
-ScriptOutput INSTALL "LConf config file"
-install -o $USER -g $GROUP -m 700 $DIR_SOURCE/config.pm $PREFIX/etc/
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
+# functions
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
 
-ScriptOutput INSTALL "LDAP schema file"
-cat $DIR_SOURCE/netways.schema.in | sed -e "s/@ldapprefix@/$LDAPPREFIX/g" > $DIR_SOURCE/netways.schema
-install -o root -g root -m 644 $DIR_SOURCE/netways.schema $DIR_SCHEMA/
+sub ScriptExit {
+	my $code = shift;
+	my $message = shift;
+	
+	my @state = ('OK', 'WARNING', 'ERROR');
+	
+	print "$state[$code]: $message\n";
+	exit $code;
+}
 
-ScriptOutput INSTALL "Default templates"
-install -o $USER -g $GROUP -m 640 $DIR_SOURCE/default-templates.cfg $PREFIX/etc/
+sub readFile {
+	my $file = shift;
+	my $data;
+	
+	open FILEHANDLE, "$file" or die "Can't read '$file': $!";
+	while(<FILEHANDLE>) {
+		$data .= $_;
+	}
+	close FILEHANDLE;
+	
+	return $data;
+}
 
-ScriptOutput CREATE "LDAP base ldif"
-cat $DIR_SOURCE/base.ldif.in | sed -e "s/@domain@/$ROOTDN/g" > $DIR_SOURCE/base.ldif.tmp1
-cat $DIR_SOURCE/base.ldif.tmp1 | sed -e "s/@ldapprefix@/$LDAPPREFIX/g" > $DIR_SOURCE/base.ldif
-
-WizardManualy
+sub writeFile {
+	my $file = shift;
+	my $data = shift;
+	
+	
+	open (FILEHANDLE, ">$file") or die $!;
+	print FILEHANDLE $data;
+	close(FILEHANDLE);
+}

@@ -1,40 +1,40 @@
 #!/usr/bin/perl -w
 
 # COPYRIGHT:
-#  
+#
 # This software is Copyright (c) 2010 NETWAYS GmbH, Tobias Redel
 #                                <support@netways.de>
-# 
+#
 # (Except where explicitly superseded by other copyright notices)
-# 
-# 
+#
+#
 # LICENSE:
-# 
+#
 # This work is made available to you under the terms of Version 2 of
 # the GNU General Public License. A copy of that license should have
 # been provided with this software, but in any event can be snarfed
 # from http://www.fsf.org.
-# 
+#
 # This work is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301 or visit their web page on the internet at
 # http://www.fsf.org.
-# 
-# 
+#
+#
 # CONTRIBUTION SUBMISSION POLICY:
-# 
+#
 # (The following paragraph is not intended to limit the rights granted
 # to you to modify and distribute this software under the terms of
 # the GNU General Public License and is only of importance to you if
 # you choose to contribute your changes and enhancements to the
 # community by submitting them to NETWAYS GmbH.)
-# 
+#
 # By intentionally submitting any modifications, corrections or
 # derivatives to this work, or any other work intended for use with
 # this Software, to NETWAYS GmbH, you confirm that
@@ -46,7 +46,6 @@
 #
 # Nagios and the Nagios logo are registered trademarks of Ethan Galstad.
 
-
 =head1 NAME
 
 LConfImport.pl - import an existing Nagios / Icinga config into LConf
@@ -54,9 +53,9 @@ LConfImport.pl - import an existing Nagios / Icinga config into LConf
 =head1 SYNOPSIS
 
 LConfImport.pl  -o <path to objects.cache>
-                -v
-                -h
-                -V
+                [-v]
+                [-h]
+                [-V]
 
 Import an existing Nagios / Icinga config
 
@@ -86,323 +85,359 @@ print plugin version
 
 =cut
 
+# set libs
+use lib '<-PREFIX->';
 
+# includes
 use strict;
 use Getopt::Long qw(:config no_ignore_case bundling);
 use Pod::Usage;
 use Net::LDAP;
+use Net::LDAP::Entry;
 use POSIX;
+use etc::config;
+use lib::ldap;
+use lib::misc;
 
 # version string
-my $version = '1.0';
+my $version = '1.2';
 
 # define states
 our @state = ('OK', 'WARNING', 'ERROR');
 
 # get command-line parameters
-my ($optObjectsCache, $optCleanup, $optVerbose, $optHelp, $optVersion);
-
+our $opt;
 GetOptions(
-	"o|objectscache=s"      => \$optObjectsCache,
-	"c|cleanup=s"           => \$optCleanup,
-	"v|verbose:s"           => \$optVerbose,
-	"h|help"                => \$optHelp,
-	"V|version"             => \$optVersion
+	"o|objectscache=s"	=> \$opt->{objectsCache},
+	"c|cleanup=s"		=> \$opt->{cleanup},
+	"v|verbose:s"		=> \$opt->{verbose},
+	"h|help"			=> \$opt->{help},
+	"V|version"			=> \$opt->{version}
 );
-
-# import config
-use lib '@prefix@';
-use etc::config;
-use vars qw($optLDAPServer $optLDAPDN %itemMap);
 
 
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
-# help and version page and sample config...
+# help and version page
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
 
 # should print version?
-if (defined $optVersion) { print $version."\n"; exit 0; }
+if (defined $opt->{version}) { print $version."\n"; exit 0; }
 
 # should print help?
-if ($optHelp) { pod2usage(1); }
+if ($opt->{help}) { pod2usage(1); }
 
 
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
 # let's go!
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
 
-# fist of all... check if we're ready to run
-LeaveScript(2, "Variable '\$optLDAPServer' not set in config.pm'")      if !$optLDAPServer;
-LeaveScript(2, "Variable '\$optLDAPDN' not set in config.pm'")          if !$optLDAPDN;
-#LeaveScript(2, "Variable '\$optLDAPBindDN' not set in config.pm'")      if !$optLDAPBindDN;
-#LeaveScript(2, "Variable '\$optLDAPBindPW' not set in config.pm'")      if !$optLDAPBindPW;
-
-# ask user after BindDN and BindPW
-my ($optLDAPBindDN, $optLDAPBindPW);
-print "Please provide your LDAP user/pass to 'LConfImport.pl'\n";
-print "The import will need it to add config to ldap.\n\n";
-print "LDAP BindDN (eg. 'cn=admin,dc=netways,dc=org'): ";
-chop($optLDAPBindDN=<STDIN>);
-print "LDAP BindPW: ";
-system('stty','-echo');
-chop($optLDAPBindPW=<STDIN>);
-system('stty','echo');
-print "\n\n";
-
 # define vars
+use vars qw($cfg %itemMap);
 my @OBJECTSCACHE;
 my (@ID_TIMEPERIODS, @ID_CONTACTS, @ID_CONTACTGROUPS, @ID_HOSTS, @ID_HOSTGROUPS, @ID_COMMANDS, @ID_SERVICES);
 my ($TIMEPERIODS, $CONTACTS, $CONTACTGROUPS, $HOSTS, $HOSTGROUPS, $COMMANDS, $SERVICES);
 my $COMPARE_GROUPS;
 
+our $exit; $exit->{code} = 0; $exit->{message} = 'No errors';
+
+# fist of all... check if we're ready to run
+LeaveScript(2, "Variable '\$cfg->{ldap}->{server}' not set in config.pm'") if !$cfg->{ldap}->{server};
+LeaveScript(2, "Variable '\$cfg->{ldap}->{dn} not set in config.pm'")      if !$cfg->{ldap}->{dn};
+
+# ask user after BindDN and BindPW
+print "Please provide your LDAP user/pass to 'LConfImport.pl'\n";
+print "The import will need it to add config to ldap.\n\n";
+print "LDAP BindDN (eg. 'cn=admin,dc=netways,dc=org'): ";
+chop($cfg->{ldap}->{bindDN}=<STDIN>);
+print "LDAP BindPW: ";
+system('stty','-echo');
+chop($cfg->{ldap}->{bindPW}=<STDIN>);
+system('stty','echo');
+print "\n\n";
+
 # set up dn's
-my $optLDAPImportDN = 'ou=Import,'.$optLDAPDN;		# import DN
-my $optLDAPWorkDN   = 'ou=NagiosConfig,'.$optLDAPDN;	# work DN (where the config lives)
-my $targetDN = $optLDAPWorkDN;				# for later use
+$cfg->{ldap}->{importDN} = 'ou=Import,'.$cfg->{ldap}->{dn};                                # import DN
+$cfg->{ldap}->{workDN}   = 'ou='.$cfg->{export}->{startingpoint}.','.$cfg->{ldap}->{dn};   # work DN (where the config lives)
+my $targetDN = $cfg->{ldap}->{workDN};                                          # for later use
 
 # reorganize %itemMap
-my $newItemMap;
+our $newItemMap;
 foreach(keys %itemMap) { $newItemMap->{$itemMap{$_}}->{$_} = $_; }
 
-# add specian cn's
+# add special cn's
 $newItemMap->{'timeperiod_name'}->{'cn'} = 'cn';
 $newItemMap->{'command_name'}->{'cn'} = 'cn';
 $newItemMap->{'contact_name'}->{'cn'} = 'cn';
 $newItemMap->{'host_name'}->{'cn'} = 'cn';
 
 # connect to ldap
-my $ldap = LDAPconnect();
+our $ldap = LDAPconnect('login');
 
 # if '$optObjectsCache' is specified => run import
-if ($optObjectsCache) {
+if ($opt->{objectsCache}) {
 	# specified file is available?
-	LeaveScript(2, "'$optObjectsCache' is not a available") if !-f $optObjectsCache;
-
+	LeaveScript(2, "'$opt->{objectsCache}' is not a available") if !-f $opt->{objectsCache};
+	
 	# read objects.cache
-	open(IN,"<$optObjectsCache");
+	open(IN,"<$opt->{objectsCache}");
 	while(<IN>) {
 		@OBJECTSCACHE = <IN>;
 	}
 	close(IN);
-	beVerbose("OBJECTS CACHE", "work with file '$optObjectsCache'");
-
+	beVerbose("OBJECTS CACHE", "work with file '$opt->{objectsCache}'");
+	
 	# filter stuff from objects cache
-		# get entry points for each item
-		my $counter = 0;
-		foreach(@OBJECTSCACHE) {
-                        push(@ID_TIMEPERIODS, $counter)         if $_ =~ /define timeperiod\s+/;
-                        push(@ID_CONTACTS, $counter)            if $_ =~ /define contact\s+/;
-                        push(@ID_CONTACTGROUPS, $counter)       if $_ =~ /define contactgroup\s+/;
-                        push(@ID_HOSTS, $counter)               if $_ =~ /define host\s+/;
-                        push(@ID_HOSTGROUPS, $counter)          if $_ =~ /define hostgroup\s+/;
-                        push(@ID_COMMANDS, $counter)            if $_ =~ /define command\s+/;
-                        push(@ID_SERVICES, $counter)            if $_ =~ /define service\s+/;
+			# get entry points for each item
+			my $counter = 0;
+			foreach(@OBJECTSCACHE) {
+				push(@ID_TIMEPERIODS, $counter)         if $_ =~ /define timeperiod\s+/;
+				push(@ID_CONTACTS, $counter)            if $_ =~ /define contact\s+/;
+				push(@ID_CONTACTGROUPS, $counter)       if $_ =~ /define contactgroup\s+/;
+				push(@ID_HOSTS, $counter)               if $_ =~ /define host\s+/;
+				push(@ID_HOSTGROUPS, $counter)          if $_ =~ /define hostgroup\s+/;
+				push(@ID_COMMANDS, $counter)            if $_ =~ /define command\s+/;
+				push(@ID_SERVICES, $counter)            if $_ =~ /define service\s+/;
 
-                        $counter++;
-                }
+				$counter++;
+			}
+		
+			# get full items
+			$TIMEPERIODS    = getItems(@ID_TIMEPERIODS);            beVerbose("OBJECTS CACHE", "TIMEPERIODS imported");
+			$CONTACTS       = getItems(@ID_CONTACTS);               beVerbose("OBJECTS CACHE", "CONTACTS imported");
+			$CONTACTGROUPS  = getItems(@ID_CONTACTGROUPS);          beVerbose("OBJECTS CACHE", "CONTACTGROUPS imported");
+			$HOSTS          = getItems(@ID_HOSTS);                  beVerbose("OBJECTS CACHE", "HOSTS imported");
+			$HOSTGROUPS     = getItems(@ID_HOSTGROUPS);             beVerbose("OBJECTS CACHE", "HOSTGROUPS imported");
+			$COMMANDS       = getItems(@ID_COMMANDS);               beVerbose("OBJECTS CACHE", "COMMANDS imported");
+			$SERVICES       = getServiceItems(@ID_SERVICES);        beVerbose("OBJECTS CACHE", "SERVICES imported");
+		
+			# write <-LDAP_PREFIX-> config to ldap
+					# timeperiods
+							# set target folder
+							$targetDN = 'ou=timeperiods,'.$cfg->{ldap}->{workDN};
 
+							# check folder
+							checkDN($targetDN);
 
+							foreach my $timeperiod (keys %{$TIMEPERIODS}) {
+								# create new object
+								my $entry = Net::LDAP::Entry->new;
+								$entry->dn("cn=$timeperiod,$targetDN");
+								$entry->add(objectClass => "$cfg->{ldap}->{prefix}Timeperiod");
+								beVerbose("LDAP ADD", "cn=$timeperiod,$targetDN");
+								
+								foreach(keys %{$TIMEPERIODS->{$timeperiod}}) {
+									if (grep { /$_/ } values %{$newItemMap->{$_}}) {
+										$entry->add(values %{$newItemMap->{$_}} => "$TIMEPERIODS->{$timeperiod}->{$_}");
+									} else {
+										$entry->add("<-LDAP_PREFIX->TimeperiodValue" => "$_ $TIMEPERIODS->{$timeperiod}->{$_}");
+									}
+								}
 
-		# get full items
-		$TIMEPERIODS	= getItems(@ID_TIMEPERIODS);		beVerbose("OBJECTS CACHE", "TIMEPERIODS imported");
-		$CONTACTS	= getItems(@ID_CONTACTS);		beVerbose("OBJECTS CACHE", "CONTACTS imported");
-		$CONTACTGROUPS	= getItems(@ID_CONTACTGROUPS);		beVerbose("OBJECTS CACHE", "CONTACTGROUPS imported");
-		$HOSTS		= getItems(@ID_HOSTS);			beVerbose("OBJECTS CACHE", "HOSTS imported");
-		$HOSTGROUPS	= getItems(@ID_HOSTGROUPS);		beVerbose("OBJECTS CACHE", "HOSTGROUPS imported");
-		$COMMANDS	= getItems(@ID_COMMANDS);		beVerbose("OBJECTS CACHE", "COMMANDS imported");
-		$SERVICES	= getServiceItems(@ID_SERVICES);	beVerbose("OBJECTS CACHE", "SERVICES imported");
-
-		# write @ldapprefix@ config to ldap
-			# timeperiods
-				# set target folder
-				$targetDN = 'ou=timeperiods,'.$optLDAPWorkDN;
-
-				# check folder
-				checkDN($targetDN);
-
-				foreach my $timeperiod (keys %{$TIMEPERIODS}) {
-					# create new object
-					my $entry = Net::LDAP::Entry->new;
-					$entry->dn("cn=$timeperiod,$targetDN");
-					$entry->add(objectClass => '@ldapprefix@Timeperiod');
-					beVerbose("LDAP ADD", "cn=$timeperiod,$targetDN");
-
-					foreach(keys %{$TIMEPERIODS->{$timeperiod}}) {
-						if (grep { /$_/ } values %{$newItemMap->{$_}}) {
-							$entry->add(values %{$newItemMap->{$_}} => "$TIMEPERIODS->{$timeperiod}->{$_}");
-						} else {
-							$entry->add("@ldapprefix@TimeperiodValue" => "$_ $TIMEPERIODS->{$timeperiod}->{$_}");
-						}
-					}
-
-					# update ldap
-					my $result = $entry->update($ldap);
-					beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error) if $result->code != 0;
-				}
-
-			# commands
-				# set target folder
-				$targetDN = 'ou=commands,'.$optLDAPWorkDN;
-
-				# check folder
-				checkDN($targetDN);
-
-				foreach my $command (keys %{$COMMANDS}) {
-					# create new object
-					my $entry = Net::LDAP::Entry->new;
-					$entry->dn("cn=$command,$targetDN");
-					$entry->add(objectClass => '@ldapprefix@Command');
-					beVerbose("LDAP ADD", "cn=$command,$targetDN");
-
-					foreach(keys %{$COMMANDS->{$command}}) {
-						$entry->add(values %{$newItemMap->{$_}} => "$COMMANDS->{$command}->{$_}") if values %{$newItemMap->{$_}};
-					}
-
-					# update ldap
-					my $result = $entry->update($ldap);
-					beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error) if $result->code != 0;
-				}
-
-			# contacts
-				# set target folder
-				$targetDN = 'ou=contacts,'.$optLDAPWorkDN;
-
-				# check folder
-				checkDN($targetDN);
-
-				foreach my $contact (keys %{$CONTACTS}) {
-					# create new object
-					my $entry = Net::LDAP::Entry->new;
-					$entry->dn("cn=$contact,$targetDN");
-					$entry->add(objectClass => '@ldapprefix@Contact');
-					beVerbose("LDAP ADD", "cn=$contact,$targetDN");
-
-					foreach(keys %{$CONTACTS->{$contact}}) {
-						$entry->add(values %{$newItemMap->{$_}} => "$CONTACTS->{$contact}->{$_}") if values %{$newItemMap->{$_}};
-					}
-
-					# update ldap
-					my $result = $entry->update($ldap);
-					beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error) if $result->code != 0;
-				}
-
-			# contactgroup
-				# set target folder
-				$targetDN = 'ou=contactgroups,'.$optLDAPWorkDN;
-
-				# check folder
-				checkDN($targetDN);
-
-				foreach my $contactgroup (keys %{$CONTACTGROUPS}) {
-					# create new object
-					my $entry = Net::LDAP::Entry->new;
-					$entry->dn("cn=$contactgroup,$targetDN");
-					$entry->add(objectClass => '@ldapprefix@Contactgroup');
-					$entry->add(cn => "$contactgroup");
-					beVerbose("LDAP ADD", "cn=$contactgroup,$targetDN");
-
-					foreach(keys %{$CONTACTGROUPS->{$contactgroup}}) {
-						$entry->add(values %{$newItemMap->{$_}} => "$CONTACTGROUPS->{$contactgroup}->{$_}") if values %{$newItemMap->{$_}};
-					}
-
-					# update ldap
-					my $result = $entry->update($ldap);
-					beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error) if $result->code != 0;
-				}
-
-			# hostgroups
-				# set target folder
-				$targetDN = 'ou=hostgroups,'.$optLDAPWorkDN;
-
-				# check folder
-				checkDN($targetDN);
-
-				foreach my $hostgroup (keys %{$HOSTGROUPS}) {
-					# create new object
-					my $entry = Net::LDAP::Entry->new;
-					$entry->dn("cn=$hostgroup,$targetDN");
-					$entry->add(objectClass => '@ldapprefix@Hostgroup');
-					$entry->add(cn => "$hostgroup");
-					beVerbose("LDAP ADD", "cn=$hostgroup,$targetDN");
-
-					foreach(keys %{$HOSTGROUPS->{$hostgroup}}) {
-						$entry->add(values %{$newItemMap->{$_}} => "$HOSTGROUPS->{$hostgroup}->{$_}") if values %{$newItemMap->{$_}};
-					}
-
-					# update ldap
-					my $result = $entry->update($ldap);
-					beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error) if $result->code != 0;
-				}
-
-			# hosts
-				# check folder
-				checkDN($optLDAPImportDN);
-
-				foreach my $host (keys %{$HOSTS}) {
-					# create new object
-					my $entry = Net::LDAP::Entry->new;
-					$entry->dn("cn=$host,$optLDAPImportDN");
-					$entry->add(objectClass => '@ldapprefix@Host');
-					beVerbose("LDAP ADD", "cn=$host,$optLDAPImportDN");
-
-					foreach(keys %{$HOSTS->{$host}}) {
-						if (values %{$newItemMap->{$_}}) {
-							my $attName = getRightAttributeType($newItemMap->{$_}, 'host');
-							$entry->add($attName => "$HOSTS->{$host}->{$_}");
-						}
-					}
-
-					# update ldap
-					my $result = $entry->update($ldap);
-					beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error) if $result->code != 0;
-				}
-
-			# services
-				foreach my $host (keys %{$SERVICES}) {
-					# set target folder
-					$targetDN = "cn=$host,$optLDAPImportDN";
-
-					foreach my $service (keys %{$SERVICES->{$host}}) {
-						# create new object
-						my $entry = Net::LDAP::Entry->new;
-						$entry->dn("cn=$service,$targetDN");
-						$entry->add(objectClass => '@ldapprefix@Service');
-						$entry->add(cn => "$service");
-						beVerbose("LDAP ADD", "cn=$service,$targetDN");
-
-						foreach(keys %{$SERVICES->{$host}->{$service}}) {
-							if (values %{$newItemMap->{$_}}) {
-								my $attName = getRightAttributeType($newItemMap->{$_}, 'service');
-								$entry->add($attName => "$SERVICES->{$host}->{$service}->{$_}");
+								# update ldap
+								my $result = $entry->update($ldap);
+								if ($result->code != 0) {
+									beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error);
+									$exit->{code} = 2; $exit->{message} = $result->error;
+									goto EXIT;
+								}
 							}
-						}
+							
+					# commands
+							# set target folder
+							$targetDN = 'ou=commands,'.$cfg->{ldap}->{workDN};
 
-						# update ldap
-						my $result = $entry->update($ldap);
-						beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error) if $result->code != 0;
-					}
-				}
+							# check folder
+							checkDN($targetDN);
 
-# if '$optCleanup' is specified => run tree/attribute cleanup
-} elsif ($optCleanup) {
-	# check if DN is okay for cleanup
-	my $result = LDAPsearch($ldap, $optCleanup, "base", "objectclass=*");
-	LeaveScript(2, "Can't find '$optCleanup' in on LDAP host '$optLDAPServer'") if !$result;
+							foreach my $command (keys %{$COMMANDS}) {
+								# create new object
+								my $entry = Net::LDAP::Entry->new;
+								$entry->dn("cn=$command,$targetDN");
+								$entry->add(objectClass => "$cfg->{ldap}->{prefix}Command");
+								beVerbose("LDAP ADD", "cn=$command,$targetDN");
 
+								foreach(keys %{$COMMANDS->{$command}}) {
+									# convert command to utf-8 and add to entry
+									utf8::encode($COMMANDS->{$command}->{$_});
+									$entry->add(values %{$newItemMap->{$_}} => "$COMMANDS->{$command}->{$_}") if values %{$newItemMap->{$_}};
+								}
+
+								# update ldap
+								my $result = $entry->update($ldap);
+								if ($result->code != 0) {
+									beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error);
+									$exit->{code} = 2; $exit->{message} = $result->error;
+									goto EXIT;
+								}
+							}
+							
+					# contacts
+							# set target folder
+							$targetDN = 'ou=contacts,'.$cfg->{ldap}->{workDN};
+
+							# check folder
+							checkDN($targetDN);
+
+							foreach my $contact (keys %{$CONTACTS}) {
+								# create new object
+								my $entry = Net::LDAP::Entry->new;
+								$entry->dn("cn=$contact,$targetDN");
+								$entry->add(objectClass => "$cfg->{ldap}->{prefix}Contact");
+								beVerbose("LDAP ADD", "cn=$contact,$targetDN");
+
+								foreach(keys %{$CONTACTS->{$contact}}) {
+									$entry->add(values %{$newItemMap->{$_}} => "$CONTACTS->{$contact}->{$_}") if values %{$newItemMap->{$_}};
+								}
+
+								# update ldap
+								my $result = $entry->update($ldap);
+                                if ($result->code != 0) {
+									beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error);
+									$exit->{code} = 2; $exit->{message} = $result->error;
+									goto EXIT;
+								}
+							}
+							
+					# contactgroup
+							# set target folder
+							$targetDN = 'ou=contactgroups,'.$cfg->{ldap}->{workDN};
+
+							# check folder
+							checkDN($targetDN);
+
+							foreach my $contactgroup (keys %{$CONTACTGROUPS}) {
+								# create new object
+								my $entry = Net::LDAP::Entry->new;
+								$entry->dn("cn=$contactgroup,$targetDN");
+								$entry->add(objectClass => "$cfg->{ldap}->{prefix}Contactgroup");
+								$entry->add(cn => "$contactgroup");
+								beVerbose("LDAP ADD", "cn=$contactgroup,$targetDN");
+
+								foreach(keys %{$CONTACTGROUPS->{$contactgroup}}) {
+									$entry->add(values %{$newItemMap->{$_}} => "$CONTACTGROUPS->{$contactgroup}->{$_}") if values %{$newItemMap->{$_}};
+								}
+
+								# update ldap
+								my $result = $entry->update($ldap);
+                                if ($result->code != 0) {
+									beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error);
+									$exit->{code} = 2; $exit->{message} = $result->error;
+									goto EXIT;
+								}
+							}
+							
+					# hostgroups
+							# set target folder
+							$targetDN = 'ou=hostgroups,'.$cfg->{ldap}->{workDN};
+
+							# check folder
+							checkDN($targetDN);
+
+							foreach my $hostgroup (keys %{$HOSTGROUPS}) {
+								# create new object
+								my $entry = Net::LDAP::Entry->new;
+								$entry->dn("cn=$hostgroup,$targetDN");
+								$entry->add(objectClass => "$cfg->{ldap}->{prefix}Hostgroup");
+								$entry->add(cn => "$hostgroup");
+								beVerbose("LDAP ADD", "cn=$hostgroup,$targetDN");
+
+								foreach(keys %{$HOSTGROUPS->{$hostgroup}}) {
+									$entry->add(values %{$newItemMap->{$_}} => "$HOSTGROUPS->{$hostgroup}->{$_}") if values %{$newItemMap->{$_}};
+								}
+
+								# update ldap
+								my $result = $entry->update($ldap);
+								if ($result->code != 0) {
+									beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error);
+									$exit->{code} = 2; $exit->{message} = $result->error;
+									goto EXIT;
+								}
+							}
+							
+					# hosts
+							# check folder
+							checkDN($cfg->{ldap}->{importDN});
+
+							foreach my $host (keys %{$HOSTS}) {
+								# create new object
+								my $entry = Net::LDAP::Entry->new;
+								$entry->dn("cn=$host,$cfg->{ldap}->{importDN}");
+								$entry->add(objectClass => "$cfg->{ldap}->{prefix}Host");
+								beVerbose("LDAP ADD", "cn=$host,$cfg->{ldap}->{importDN}");
+
+								foreach(keys %{$HOSTS->{$host}}) {
+									if (values %{$newItemMap->{$_}}) {
+										my $attName = getRightAttributeType($newItemMap->{$_}, 'host');
+										$entry->add($attName => "$HOSTS->{$host}->{$_}");
+									} elsif ($_ =~ /^_/){
+										$entry->add("$cfg->{ldap}->{prefix}hostcustomvar" => "$_ $HOSTS->{$host}->{$_}");
+									}
+								}
+
+								# update ldap
+								my $result = $entry->update($ldap);
+								if ($result->code != 0) {
+									beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error);
+									$exit->{code} = 2; $exit->{message} = $result->error;
+									goto EXIT;
+								}
+							}
+							
+					# services
+							foreach my $host (keys %{$SERVICES}) {
+								# set target folder
+								$targetDN = "cn=$host,$cfg->{ldap}->{importDN}";
+
+								foreach my $service (keys %{$SERVICES->{$host}}) {
+									# create new object
+									my $entry = Net::LDAP::Entry->new;
+									$entry->dn("cn=$service,$targetDN");
+									$entry->add(objectClass => "$cfg->{ldap}->{prefix}Service");
+									$entry->add(cn => "$service");
+									beVerbose("LDAP ADD", "cn=$service,$targetDN");
+
+									foreach(keys %{$SERVICES->{$host}->{$service}}) {
+										if (values %{$newItemMap->{$_}}) {
+											my $attName = getRightAttributeType($newItemMap->{$_}, 'service');
+											
+											# convert command to utf-8 and add to entry
+											utf8::encode($SERVICES->{$host}->{$service}->{$_});
+											$entry->add($attName => "$SERVICES->{$host}->{$service}->{$_}");
+										} elsif ($_ =~ /^_/){
+											$entry->add("$cfg->{ldap}->{prefix}servicecustomvar" => "$_ $SERVICES->{$host}->{$service}->{$_}");
+										}
+									}
+
+									# update ldap
+									my $result = $entry->update($ldap);
+									if ($result->code != 0) {
+										beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error);
+										$exit->{code} = 2; $exit->{message} = $result->error;
+										goto EXIT;
+									}
+								}
+							}
+} elsif ($opt->{cleanup}) {
+	my $result = LDAPsearch($ldap, $opt->{cleanup}, "base", "objectclass=*");
+	LeaveScript(2, "Can't find '$opt->{cleanup}' in on LDAP host '$cfg->{ldap}->{server}") if !$result;
+	
 	# get all hosts
-	my $CLIENTS = LDAPsearch($ldap, $optCleanup, "sub", "objectclass=@ldapprefix@Host");
+	my $CLIENTS = LDAPsearch($ldap, $opt->{cleanup}, "sub", "objectclass=$cfg->{ldap}->{prefix}Host");
 	foreach my $client (keys %{$CLIENTS}) {
 		$client =~ /cn=[-_\d\w\s]*,(.*)/;
 		$COMPARE_GROUPS->{$1} = $1;
 	}
-
+	
 	# compare whole stuff
 	foreach my $compare_group (keys %{$COMPARE_GROUPS}) {
-		# service attributes
-		compareAttributes($compare_group, '@ldapprefix@Service');
-
 		# host attributes
-		compareAttributes($compare_group, '@ldapprefix@Host');
+		compareAttributes($compare_group, "$cfg->{ldap}->{prefix}Host");
+		
+		# service attributes
+		compareAttributes($compare_group, "$cfg->{ldap}->{prefix}Service");
+		
+		# services
+		#compareServices($compare_group); 
 	}
 } else {
 	pod2usage(1);
@@ -410,157 +445,89 @@ if ($optObjectsCache) {
 
 # disconnect from ldap
 $ldap->unbind();
-beVerbose("LDAP CONNECT", "disconnect from $optLDAPServer");
+
+# exit
+EXIT:
+LeaveScript($exit->{code}, $exit->{message});
 
 
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
 # functions...
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
 
-sub beVerbose {
-        my $type = shift;
-        my $text = shift;
-
-        if (defined $optVerbose) {
-                # generate message
-                my $message = localtime(time)." | Verbose: $type: $text\n";
-
-                # should write log to file or STDOUT?
-                if ($optVerbose ne "") {
-                        open(LOGF,">>$optVerbose") || die $!;
-                        print LOGF $message;
-                        close(LOGF);
-                } else {
-                        print $message;
-                }
-	}
-}
-
-sub LeaveScript {
-        my $exitCode = $_[0];
-        my $comment  = $_[1];
-
-        print $state[$exitCode]." - $comment\n";
-        exit $exitCode;
-}
-
-sub LDAPconnect {
-        my $ldap = Net::LDAP->new($optLDAPServer) or die "Can't connect to LDAP Server '$optLDAPServer'";
-        my $mesg=$ldap->bind("$optLDAPBindDN", password => "$optLDAPBindPW" );
-
-	beVerbose("LDAP CONNECT", "connect to Host: $optLDAPServer, User: $optLDAPBindDN, Pass: ******");
-	LeaveScript(2, "Can't connect to ldap server! Wrong user and/or password?") if $mesg->{resultCode} != 0;
-
-        return $ldap;
-}
-
-sub LDAPsearch {
-        my $ldap   = shift;
-        my $base   = shift;
-        my $scope  = shift;
-        my $filter = shift;
-        my $return;
-
-        # get entries
-        my $result = $ldap->search ( base       => $base,
-                                     scope      => $scope,
-                                     deref      => 'never',
-                                     filter     => "$filter");
-
-        beVerbose("LDAP SEARCH", "search '$filter' ON '$base'");
-
-        # convert result to a hash
-        my $href = $result->as_struct;
-
-        # get an array of the DN names
-        my @arrayOfDNs  = keys %$href;
-
-        # process each DN using it as a key
-        foreach (@arrayOfDNs) {
-                $return->{$_}->{dn} = $_;
-                my $valref = $$href{$_};
-
-                # get an array of the attribute names
-                # passed for this one DN.
-                my @arrayOfAttrs = sort keys %$valref;
-
-                foreach my $attrName(@arrayOfAttrs) {
-                        # can't handle binary data => skip!
-                        next if ( $attrName =~ /;binary$/ );
-
-                        # attribute name as the hash
-                        my $attrVal =  @$valref{$attrName};
-
-                        # convert to an ordinary hash
-                        my $counter = scalar @$attrVal;
-                        while($counter != 0) {
-                                $counter--;
-                                $return->{$_}->{$attrName} = @$attrVal[$counter];
-                        }
-                }
-        }
-
-        # and return the hash
-        return $return;
-}
-
 sub getItems {
-        #my $identifier = shift;
-        my @ID_ARRAY   = @_;
-        my $hash;
+	my @ID_ARRAY   = @_;
+	my $hash;
 
-        foreach(@ID_ARRAY) {
-                # determine name for hashref
-                $OBJECTSCACHE[$_+1] =~ m/[\w]+\s(.*)/;
-                my $name = $1;
+	foreach(@ID_ARRAY) {
+		# determine name for hashref 
+		$OBJECTSCACHE[$_+1] =~ m/[\w]+\s(.*)/;
+		my $name = $1;
 
-                # get all elements for this item
-                my $counter   = $_;
-                my $run_again = 'true';
+		# get all elements for this item
+		my $counter   = $_;   
+		my $run_again = 'true'; 
 
-                while($run_again eq 'true') {
-                        if ($OBJECTSCACHE[$counter] !~ /define/) {
-                                $OBJECTSCACHE[$counter] =~ m/([\w]+)\s*(.*)/;
-                                $hash->{$name}->{$1} = $2;
-                        }
+		# decide mode: default or timeperiod?
+		my $mode = 'default';
+		$mode = 'timeperiod' if $OBJECTSCACHE[$counter] =~ /define timeperiod/;
 
-                        $counter++;
-                        $run_again = 'exit' if $OBJECTSCACHE[$counter] =~ /}$/;
-                }
-        }
+		while($run_again eq 'true') {
+			if ($OBJECTSCACHE[$counter] !~ /define/) {
+				my ($val1, $val2);
+				 
+				if ($mode eq 'timeperiod') {
+					if ($OBJECTSCACHE[$counter] =~ /timeperiod_name/ || $OBJECTSCACHE[$counter] =~ /alias/) {
+						$OBJECTSCACHE[$counter] =~ m/([\w]+)\s*(.*)/;
+						$val1 = $1; $val2 = $2;
+					} else {
+						$OBJECTSCACHE[$counter] =~ m/(.*)\s+([\d\W]+)/;
+						$val1 = $1; $val2 = $2;
+					}       
+				} else {
+					$OBJECTSCACHE[$counter] =~ m/([\w]+)\s*(.*)/;
+					$val1 = $1; $val2 = $2;
+				}       
 
-        return $hash;
+				$hash->{$name}->{$val1} = $val2;
+			}       
+
+			$counter++;
+			$run_again = 'exit' if $OBJECTSCACHE[$counter] =~ /}$/;
+		}       
+	}       
+
+	return $hash;
 }
 
 sub getServiceItems {
-        my $identifier = shift;
-        my @ID_ARRAY   = @_;
-        my $hash;
+	my @ID_ARRAY   = @_;
+	my $hash;
 
-        foreach(@ID_ARRAY) {
-                # determine name for hashref
-                $OBJECTSCACHE[$_+1] =~ m/[\w]+\s(.*)/;
-                my $name1 = $1;
+	foreach(@ID_ARRAY) {
+		# determine name for hashref
+		$OBJECTSCACHE[$_+1] =~ m/[\w]+\s(.*)/;
+		my $name1 = $1;
 
-                $OBJECTSCACHE[$_+2] =~ m/[\w]+\s(.*)/;
-                my $name2 = $1;
+		$OBJECTSCACHE[$_+2] =~ m/[\w]+\s(.*)/;
+		my $name2 = $1;
 
-                # get all elements for this item
-                my $counter   = $_;
-                my $run_again = 'true';
+		# get all elements for this item
+		my $counter   = $_;
+		my $run_again = 'true';
 
-                while($run_again eq 'true') {
-                        if ($OBJECTSCACHE[$counter] !~ /define/) {
-                                $OBJECTSCACHE[$counter] =~ m/([\w]+)\s*(.*)/;
-                                $hash->{$name1}->{$name2}->{$1} = $2 if $1 ne "host_name";
-                        }
+		while($run_again eq 'true') {
+			if ($OBJECTSCACHE[$counter] !~ /define/) {
+				$OBJECTSCACHE[$counter] =~ m/([\w]+)\s*(.*)/;
+				$hash->{$name1}->{$name2}->{$1} = $2 if $1 ne "host_name";
+			}
 
-                        $counter++;
-                        $run_again = 'exit' if $OBJECTSCACHE[$counter] =~ /}$/;
-                }
-        }
+			$counter++;
+			$run_again = 'exit' if $OBJECTSCACHE[$counter] =~ /}$/;
+		}
+	}
 
-        return $hash;
+	return $hash;
 }
 
 sub checkDN {
@@ -575,7 +542,7 @@ sub checkDN {
 
 		my $entry = Net::LDAP::Entry->new;
 		$entry->dn($dn);
-		$entry->add ( objectClass => '@ldapprefix@StructuralObject' );
+		$entry->add ( objectClass => "$cfg->{ldap}->{prefix}StructuralObject" );
 		$entry->add ( $1 => "$2" );
 		my $result = $entry->update ( $ldap );
 		beVerbose("LDAP ADD", $dn);
@@ -601,7 +568,7 @@ sub compareAttributes {
 	my $searchDN    = shift;
 	my $objectClass = shift;
 	my $COMPARE;
-
+	
 	# get all elements in $searchDN for comparing
 	my $ITEMS = LDAPsearch($ldap, $searchDN, 'sub', "objectclass=$objectClass");
 	foreach my $item (keys %{$ITEMS}) {
@@ -616,7 +583,7 @@ sub compareAttributes {
 			}
 		}
 	}
-
+	
 	# calc threshold
 	my $countItems = keys %{$ITEMS};
 	my $countThreshold = ceil($countItems/2);
@@ -630,13 +597,126 @@ sub compareAttributes {
 				foreach(keys %{$to_delete}) {
 					# delete old entries
 					my $result = $ldap->modify($_, delete => { $val1 => $val2 });
-					beVerbose("LDAP DELETE", "ERROR - CODE: ".$result->code." - ".$result->error) if $result->code != 0;
+					if ($result->code != 0) {
+						beVerbose("LDAP DELETE", "ERROR - CODE: ".$result->code." - ".$result->error);
+						$exit->{code} = 2; $exit->{message} = $result->error;
+						goto EXIT;
+					}
 				}
 
 				# add entry on hirarchical top entry
 				my $result = $ldap->modify($searchDN, add => { $val1 => $val2 } );
-				beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error) if $result->code != 0
+				if ($result->code != 0) {
+					beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error);
+					$exit->{code} = 2; $exit->{message} = $result->error;
+					goto EXIT;
+				}
 			}
 		}
 	}
 }
+
+sub compareServices {
+	my $searchDN    = shift;
+	my $objectClass = "$cfg->{ldap}->{prefix}Service";
+	my $COMPARE;
+	
+	#my $ITEMS = LDAPsearch($ldap, $searchDN, 'sub', "objectclass=<-LDAP_PREFIX->Host");
+	#my $countItems = keys %{$ITEMS};
+	
+	my $ITEMS = LDAPsearch($ldap, $searchDN, 'sub', "objectclass=$objectClass");
+	foreach my $service (keys %{$ITEMS}) {
+		$service =~ /cn=([-_\d\w\s]*),(.*)/;
+		my $val = $1;
+		
+		if (!defined $COMPARE->{$val}) {
+			$COMPARE->{$val}->{count} = 1;
+			$COMPARE->{$val}->{longnames}->{$service} = $service;
+		} else {
+			$COMPARE->{$val}->{count}++;
+			$COMPARE->{$val}->{longnames}->{$service} = $service;
+		}
+	}
+	
+#	foreach my $val1 (keys %{$COMPARE}) {
+#		print "$val1 => $COMPARE->{$val1}->{count}\n";
+#		
+#		if ($COMPARE->{$val1} >= $countItems) {
+#			my $counter = 0;
+#			my $result;
+#		
+#			foreach my $val2 (keys %{$COMPARE->{$val1}->{longnames}}) {
+#				if ($counter == 0) {
+#					$result = $ldap->moddn($val2,
+#											newrdn => "cn=$val1",
+#											deleteoldrdn => '1',
+#											newsuperior => 'ou=finanzpark,ou=Import,ou=vbox-<-LDAP_PREFIX->-master,ou=NagiosConfig,ou=LConf,dc=netways,dc=org'
+#											);
+#					$counter++;
+#				} else {
+#					my $result = $ldap->delete($val2);
+#				}
+#				
+#				if ($result->code != 0) {
+#					beVerbose("LDAP MOVE", "ERROR - CODE: ".$result->code." - ".$result->error);
+#					$exit->{code} = 2; $exit->{message} = $result->error;
+#					goto EXIT;
+#				}
+#			}
+#		}
+#	}
+	
+	print "\n\n\n ============================ \n\n";
+}
+
+#sub compareAttributes {
+#	my $searchDN    = shift;
+#	my $objectClass = shift;
+#	my $COMPARE;
+#
+#	# get all elements in $searchDN for comparing
+#	my $ITEMS = LDAPsearch($ldap, $searchDN, 'sub', "objectclass=$objectClass");
+#	foreach my $item (keys %{$ITEMS}) {
+#		foreach(keys %{$ITEMS->{$item}}) {
+#			# exclude 'cn', 'dn' and 'objectclass'; leave them untouched
+#			if ($_ ne 'cn' && $_ ne 'dn' && $_ ne 'objectclass') {
+#				if (!defined $COMPARE->{$_}->{$ITEMS->{$item}->{$_}}) {
+#					$COMPARE->{$_}->{$ITEMS->{$item}->{$_}} = 1;
+#				} else {
+#					$COMPARE->{$_}->{$ITEMS->{$item}->{$_}}++;
+#				}
+#			}
+#		}
+#	}
+#
+#	# calc threshold
+#	my $countItems = keys %{$ITEMS};
+#	my $countThreshold = ceil($countItems/2);
+#
+#	# compare and create inheritance
+#	foreach my $val1 (keys %{$COMPARE}) {
+#		foreach my $val2 (keys %{$COMPARE->{$val1}}) {
+#			if ($COMPARE->{$val1}->{$val2} >= $countThreshold) {
+#				# search stuff to delete
+#				my $to_delete = LDAPsearch($ldap, $searchDN, "sub", "$val1=$val2");
+#				foreach(keys %{$to_delete}) {
+#					# delete old entries
+#					my $result = $ldap->modify($_, delete => { $val1 => $val2 });
+#					if ($result->code != 0) {
+#						beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error);
+#						$exit->{code} = 2; $exit->{message} = $result->error;
+#						goto EXIT;
+#					}
+#				}
+#
+#				# add entry on hirarchical top entry
+#				my $result = $ldap->modify($searchDN, add => { $val1 => $val2 } );
+#				if ($result->code != 0) {
+#					beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error);
+#					$exit->{code} = 2; $exit->{message} = $result->error;
+#					goto EXIT;
+#				}
+#			}
+#		}
+#	}
+#}
