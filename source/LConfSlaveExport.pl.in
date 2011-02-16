@@ -168,20 +168,18 @@ my $exportGLOBAL = LDAPsearch($ldap, $optBaseDN, "sub", "description=LCONF->EXPO
 # disconnect from LDAP Server
 $ldap->unbind();
 
-# first, clean remote dir
-beVerbose("CLEAN", "ssh $optHost 'rm -r $optTargetPath/*'");
-qx(ssh $optHost 'rm -r $optTargetPath/*');
-
-# copy defaults
-beVerbose("COPY", "scp -r $optSourcePath/default-templates.cfg $optHost:$optTargetPath");
-qx(scp $optSourcePath/default-templates.cfg $optHost:$optTargetPath);
-
-# second, clean local dir
+# clean local dir
 beVerbose("CLEAN LOCAL", "rm -r ${optTempPath}${optHost}_${optTargetPath}");
 qx(rm -r ${optTempPath}${optHost}_${optTargetPath});
 
-# copy config localy
+# make tempdir config localy
 qx(mkdir -p ${optTempPath}${optHost}_${optTargetPath});
+
+# copy defaults localy
+beVerbose("LOCAL COPY", "scp -r $optSourcePath/default-templates.cfg ${optTempPath}${optHost}_${optTargetPath}");
+qx(scp $optSourcePath/default-templates.cfg ${optTempPath}${optHost}_${optTargetPath});
+
+# copy config localy
 foreach(@export) {
 	beVerbose("LOCAL COPY", "scp -r $_ ${optTempPath}${optHost}_${optTargetPath}");
 	qx(scp -r $_ ${optTempPath}${optHost}_${optTargetPath});
@@ -212,17 +210,17 @@ foreach(@slaves) {
 	}
 }
 
+# copy hostgroups to local client dir
+beVerbose("LOCAL COPY", "scp -r $optSourcePath/hostgroups ${optTempPath}${optHost}_${optTargetPath}");
+qx(scp -r $optSourcePath/hostgroups ${optTempPath}${optHost}_${optTargetPath});
+
+# copy servicegroups to local client dir
+beVerbose("LOCAL COPY", "scp -r $optSourcePath/servicegroups ${optTempPath}${optHost}_${optTargetPath}");
+qx(scp -r $optSourcePath/servicegroups ${optTempPath}${optHost}_${optTargetPath});
+
 # copy config to client
-beVerbose("COPY", "scp -r ${optTempPath}${optHost}_${optTargetPath} $optHost:$optTargetPath");
-qx(scp -r ${optTempPath}${optHost}_${optTargetPath} $optHost:$optTargetPath);
-
-# copy hostgroups to client
-beVerbose("COPY", "scp -r $optSourcePath/hostgroups $optHost:$optTargetPath");
-qx(scp -r $optSourcePath/hostgroups $optHost:$optTargetPath);
-
-# copy servicegroups to client
-beVerbose("COPY", "scp -r $optSourcePath/servicegroups $optHost:$optTargetPath");
-qx(scp -r $optSourcePath/servicegroups $optHost:$optTargetPath);
+beVerbose("COPY", "rsync -nza --checksum --omit-dir-times --delay-updates --delete-after ${optTempPath}${optHost}_${optTargetPath} $optHost:$optTargetPath");
+qx(rsync -nza --checksum --omit-dir-times --delay-updates --delete-after ${optTempPath}${optHost}_${optTargetPath} $optHost:$optTargetPath);
 
 # reload Nagios / Icinga on slave
 #beVerbose("RELOAD", "ssh $optHost '/etc/init.d/icinga reload'");
