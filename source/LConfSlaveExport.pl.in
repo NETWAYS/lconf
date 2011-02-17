@@ -219,8 +219,8 @@ beVerbose("LOCAL COPY", "scp -r $optSourcePath/servicegroups ${optTempPath}${opt
 qx(scp -r $optSourcePath/servicegroups ${optTempPath}${optHost}_${optTargetPath});
 
 # copy config to client
-beVerbose("COPY", "rsync -nza --checksum --omit-dir-times --delay-updates --delete-after ${optTempPath}${optHost}_${optTargetPath} $optHost:$optTargetPath");
-qx(rsync -nza --checksum --omit-dir-times --delay-updates --delete-after ${optTempPath}${optHost}_${optTargetPath} $optHost:$optTargetPath);
+beVerbose("COPY", "rsync -zai -e ssh --stats --checksum --omit-dir-times --delay-updates --delete-after ${optTempPath}${optHost}_${optTargetPath} $optHost:$optTargetPath");
+qx(rsync -zai -e ssh --stats --checksum --omit-dir-times --delay-updates --delete-after ${optTempPath}${optHost}_${optTargetPath} $optHost:$optTargetPath);
 
 # reload Nagios / Icinga on slave
 #beVerbose("RELOAD", "ssh $optHost '/etc/init.d/icinga reload'");
