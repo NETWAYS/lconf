@@ -4,24 +4,25 @@
 #################################################
 # config
 #################################################
+SATELLITS=""
+for SH_ARG in $@; do
+	SATELLIT="$SATELLITS $SH_ARG"
+done
+# Define where your icinga binary lies
+ICINGABIN="/usr/local/icinga/bin/icinga"
+# Path of your LConf installation
+LCONFBINPATH="/usr/local/LConf"
+# Define where to export the config to
+LCONFDIR="/usr/local/icinga/etc/lconf"
+# Define where to export the temporary config to
+LCONFTMP="/usr/local/icinga/lconf.tmp"
+# Define where your icinga config lies
+ICINGACONFIG=/usr/local/icinga/etc/icinga.cfg
+# Define where your temporary created icinga config should lie
+ICINGATMPCONFIG=/usr/local/icinga/etc/icinga.tmp.cfg
 
-SATELLIT="satellit1 satellit2 satellit3"
-LCONFDIR="/etc/icinga/lconf"
-LCONFTMP="/etc/icinga/lconf.tmp"
-ICINGACONFIG=/etc/icinga/icinga.cfg
-ICINGATMPCONFIG=/etc/icinga/icinga.tmp.cfg
-ICINGAUSER=icinga
-ICINGAGROUP=icinga
-ICINGABIN=$(which icinga)
-
-
-if [ ! -x $ICINGABIN ] ; then
-  ICINGABIN=/usr/local/icinga/bin/icinga
-  if [ ! -x $ICINGABIN ] ; then
-    echo "ERROR: Could not find icinga binary to check the config!"
-    exit 2
-  fi
-fi
+ICINGAUSER="icinga"
+ICINGAGROUP="icinga"
 
 RUNUSER=$(whoami)
 SUDOCOMMAND=""
@@ -46,30 +47,46 @@ echo cfg_dir=$LCONFTMP >> $ICINGATMPCONFIG
 
 echo export config from LDAP
 # export original full config from LDAP
-(cd /usr/local/LConf/ ; $SUDOCOMMAND ./LConfExport.pl -o $LCONFTMP)
- 
+
+(cd $LCONFBINPATH ;$SUDOCOMMAND ./LConfExport.pl -o $LCONFTMP)	
+
+if [ $? != "0" ]; then
+	exit $?	
+fi
+(cd $LCONFBINPATH 
+if [ -f ./etc/default-templates.cfg ]; then 
+	$SUDOCOMMAND cp ./etc/default-templates.cfg  $LCONFTMP 
+fi 
+)
+
  
 # first test the config within the tmp dir
 if ( $ICINGABIN -v $ICINGATMPCONFIG ) then
+ 
+  # copy the preliminary config in place to pass the check
+  $SUDOCOMMAND -i rsync -a --del "$LCONFTMP"/* "$LCONFDIR"
  
   # generate config for satellites
   # this process may alter the original config
   # (disable checks of satellite components on the master...)
   for HOST in $SATELLIT ; do
     echo deploy config on $HOST
-    (cd /usr/local/LConf/ ; \
+    (cd $LCONFBINBATH ; \
      $SUDOCOMMAND \
-     ./LConfSlaveExport.pl -H $HOST \
+     $LCONFBINPATH/LConfSlaveExport.pl -H $HOST \
      -s $LCONFTMP \
      -t $LCONFDIR -v )
   done
 
   # copy the final config in place
-  $SUDOCOMMAND -i rsync -a --del "$LCONFTMP"/ "$LCONFDIR"
+  $SUDOCOMMAND rsync -a --del "$LCONFTMP"/* "$LCONFDIR"
 
   # reload the final config on the master
   echo reload config on Master $(hostname -f)
   $SUDOCOMMAND /etc/init.d/icinga reload
-
+  exit $?
+else 
+	exit 1	
 fi
+
 
