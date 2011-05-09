@@ -4,6 +4,10 @@
 #################################################
 # config
 #################################################
+
+# preset satellits. any on cmd line given will be added
+#SATELLIT="satellit1 satellit2 satellit3"
+
 SATELLITS=""
 for SH_ARG in $@; do
 	SATELLIT="$SATELLITS $SH_ARG"
@@ -23,6 +27,13 @@ ICINGATMPCONFIG=/usr/local/icinga/etc/icinga.tmp.cfg
 
 ICINGAUSER="icinga"
 ICINGAGROUP="icinga"
+if [ ! -x $ICINGABIN ] ; then
+  ICINGABIN=/usr/local/icinga/bin/icinga
+  if [ ! -x $ICINGABIN ] ; then
+    echo "ERROR: Could not find icinga binary to check the config!"
+    exit 2
+  fi
+fi
 
 RUNUSER=$(whoami)
 SUDOCOMMAND=""
@@ -53,18 +64,9 @@ echo export config from LDAP
 if [ $? != "0" ]; then
 	exit $?	
 fi
-(cd $LCONFBINPATH 
-if [ -f ./etc/default-templates.cfg ]; then 
-	$SUDOCOMMAND cp ./etc/default-templates.cfg  $LCONFTMP 
-fi 
-)
-
  
 # first test the config within the tmp dir
 if ( $ICINGABIN -v $ICINGATMPCONFIG ) then
- 
-  # copy the preliminary config in place to pass the check
-  $SUDOCOMMAND -i rsync -a --del "$LCONFTMP"/* "$LCONFDIR"
  
   # generate config for satellites
   # this process may alter the original config
@@ -79,7 +81,7 @@ if ( $ICINGABIN -v $ICINGATMPCONFIG ) then
   done
 
   # copy the final config in place
-  $SUDOCOMMAND rsync -a --del "$LCONFTMP"/* "$LCONFDIR"
+  $SUDOCOMMAND -i rsync -a --del "$LCONFTMP"/ "$LCONFDIR"
 
   # reload the final config on the master
   echo reload config on Master $(hostname -f)
