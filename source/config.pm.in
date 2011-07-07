@@ -4,6 +4,10 @@
 $optLDAPServer  = '127.0.0.1';
 $optLDAPDN      = 'ou=LConf,@domain@';
 
+# comment in, if an authentication is required
+#$optExportLDAPBindDN 	= 'cn=Manager,@domain@';
+#$optExportLDAPBindPW	= 'secret';
+
 # export script's user
 $optExportUser  = '@user@';
 

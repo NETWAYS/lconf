@@ -119,7 +119,7 @@ GetOptions(
 # import config
 use lib '@prefix@';
 use etc::config;
-use vars qw($optLDAPServer $optLDAPDN $optExportUser $optRemovePraentsOnSatellite $optTempPath $optEnableProcessPerfdataOnSatellite $optAlterSatelliteChecksOnMaster);
+use vars qw($optLDAPServer $optLDAPDN $optExportUser $optExportLDAPBindDN $optExportLDAPBindPW $optRemovePraentsOnSatellite $optTempPath $optEnableProcessPerfdataOnSatellite $optAlterSatelliteChecksOnMaster);
 
 
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
@@ -260,8 +260,19 @@ sub LeaveScript {
 }
 
 sub LDAPconnect {
-        my $ldap = Net::LDAP->new ($optLDAPServer) or die "Can't connect to LDAP Server '$optLDAPServer'";
-        return $ldap;
+        if (defined $optExportLDAPBindDN) {
+                LeaveScript(2, "Variable '\$optExportLDAPBindPW' not set in config.pm'")      if !$optExportLDAPBindPW;
+                my $ldap = Net::LDAP->new($optLDAPServer) or die "Can't connect to LDAP Server '$optLDAPServer'";
+                my $mesg=$ldap->bind("$optExportLDAPBindDN", password => "$optExportLDAPBindPW" );
+
+                #beVerbose("LDAP CONNECT", "connect to Host: $optLDAPServer, User: $optExportLDAPBindDN, Pass: ******");
+                #LeaveScript(2, "Can't connect to ldap server! Wrong user and/or password?") if $mesg->{resultCode} != 0;
+                return $ldap;
+        }
+        else {
+                my $ldap = Net::LDAP->new ($optLDAPServer) or die "Can't connect to LDAP Server '$optLDAPServer'";
+                return $ldap;
+        }
 }
 
 sub LDAPsearch {
