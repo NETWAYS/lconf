@@ -38,7 +38,7 @@ fi
 RUNUSER=$(whoami)
 SUDOCOMMAND=""
 if [ "$RUNUSER" != $ICINGAUSER ] ; then
-  SUDOCOMMAND="sudo -u $ICINGAUSER"
+  SUDOCOMMAND="sudo -u $ICINGAUSER -i"
 fi
 
 
@@ -80,12 +80,8 @@ if ( $ICINGABIN -v $ICINGATMPCONFIG ) then
      -t $LCONFDIR -v )
   done
 
-SUDOCOMMANDEXEC=""
-if [ "$RUNUSER" != $ICINGAUSER ] ; then
-  SUDOCOMMANDEXEC="sudo -u $ICINGAUSER -i"
-fi
   # copy the final config in place
-  $SUDOCOMMANDEXEC rsync -a --del "$LCONFTMP"/ "$LCONFDIR"
+  $SUDOCOMMAND rsync -a --del "$LCONFTMP"/ "$LCONFDIR"
 
   # reload the final config on the master
   echo reload config on Master $(hostname -f)
