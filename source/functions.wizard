@@ -48,10 +48,14 @@ function WizardAsk {
 	WizardInteraction
 	echo "You can find LDAP schema files in..."
 	echo "HINT: find /etc -name *.schema"
-	echo -n "[/etc/ldap/schema]: "
+	DIR_SCHEMA_GUESS=$(find /etc -name core.schema -print0 | xargs -0 -n 1 dirname 2> /dev/null | head -n 1)
+	if [ "$DIR_SCHEMA_GUESS" = "" ]; then
+		DIR_SCHEMA_GUESS=/etc/ldap/schema
+	fi
+	echo -n "[$DIR_SCHEMA_GUESS]: "
 	read DIR_SCHEMA
 	if [ "$DIR_SCHEMA" = "" ]; then
-		DIR_SCHEMA=/etc/ldap/schema
+		DIR_SCHEMA=$DIR_SCHEMA_GUESS
 	fi
 	echo LDAP schema dir = $DIR_SCHEMA
 
