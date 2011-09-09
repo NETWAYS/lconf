@@ -1,0 +1,85 @@
+#!/bin/bash
+#
+# lconf         slave sync daemon
+#
+# Author:       Birger Schmidt <info@netways.de>
+#
+# chkconfig:	345 97 03
+#
+# description:  This is a daemon which periodically collect check results \
+#               from slaves or satellites in a distributed Icinga / Nagios \
+#               monitoring environment.
+# processname:  /usr/local/LConf/LConfSlaveSync.pl
+# config:       /usr/local/LConf/etc/config.pm
+# pidfile:      defined in config.pm
+#
+
+### BEGIN INIT INFO
+# Provides: LConfSlaveSync.pl
+# Required-Start: 
+# Required-Stop: 
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: lconf slave sync daemon
+# Description: Daemon which collect check results from slave servers.
+### END INIT INFO
+
+
+DAEMONUSER=icinga
+DAEMON=/usr/local/LConf/LConfSlaveSync.pl
+SUBSYS=/var/lock/subsys/LConfSlaveSync
+
+RUNUSER=$(whoami)
+SUDOCOMMAND=""
+if [ "$RUNUSER" != "$DAEMONUSER" ] ; then
+  SUDOCOMMAND="su - $DAEMONUSER -c "
+fi
+
+# source function library
+. /etc/rc.d/init.d/functions
+
+RETVAL=0
+
+start() {
+	echo -n $"Starting LConfSlaveSync: "
+	[ -z "$SUDOCOMMAND" ] && $DAEMON start || $SUDOCOMMAND "$DAEMON start"
+	RETVAL=$?
+	echo
+	[ $RETVAL -eq 0 ] && [ "$RUNUSER" = "root" ] && touch $SUBSYS
+}
+
+stop() {
+	echo -n $"Stopping LConfSlaveSync: "
+	$DAEMON stop
+	echo
+	[ $RETVAL -eq 0 ] && [ "$RUNUSER" = "root" ] && rm -f $SUBSYS
+}
+
+restart() {
+	stop
+	start
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop) 
+	stop
+	;;
+  restart|force-reload|reload)
+	restart
+	;;
+  condrestart|try-restart)
+	[ -f $SUBSYS ] && restart
+	;;
+  status)
+	status $DAEMON
+	RETVAL=$?
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|status|restart|reload|force-reload|condrestart}"
+	exit 1
+esac
+
+exit $RETVAL
