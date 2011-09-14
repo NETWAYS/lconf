@@ -73,7 +73,7 @@ if ( $ICINGABIN -v $ICINGATMPCONFIG ) then
   # (disable checks of satellite components on the master...)
   for HOST in $SATELLIT ; do
     echo deploy config on $HOST
-    (cd $LCONFBINBATH ; \
+    (cd $LCONFBINPATH ; \
      $SUDOCOMMAND \
      $LCONFBINPATH/LConfSlaveExport.pl -H $HOST \
      -s $LCONFTMP \
