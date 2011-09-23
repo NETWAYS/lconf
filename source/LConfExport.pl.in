@@ -121,7 +121,7 @@ use lib '@prefix@';
 use etc::config;
 use vars qw($optLDAPServer $optLDAPDN $optExportUser $optExportLDAPBindDN $optExportLDAPBindPW $optExportLock $optRevisionEnabled $optRevisionPath $optRevisionTemp %itemMap);
 
-
+DebugOutput("Start");
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
 # help and version page
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
@@ -156,7 +156,9 @@ LeaveScript('2', "'$optOutputDir' is not writeable")   if !-w $optOutputDir;
 open (FH, ">$optExportLock"); close(FH);
 
 # clean old output dir
+DebugOutput("start - removing content of $optOutputDir");
 qx(rm -r $optOutputDir/* 2>/dev/null);
+DebugOutput("finished - removing content of $optOutputDir");
 
 #
 # NOW, WE'RE READY TO RUN :)
