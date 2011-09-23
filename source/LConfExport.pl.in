@@ -982,7 +982,12 @@ sub genHostConfig {
 
 			# generate host definition
 			print FH "define host {\n";
-			print FH "\tuse\tgeneric-host\n";
+			print FH "\tuse\t";
+				if (defined $CLIENTS->{$client}->{'@ldapprefix@hostcustomvar'}->{'use'}){
+					print FH "$CLIENTS->{$client}->{'@ldapprefix@hostcustomvar'}->{'use'},";
+					delete $CLIENTS->{$client}->{'@ldapprefix@hostcustomvar'}->{'use'};
+			}
+			print FH "generic-host\n";
 			print FH "\thost_name\t$host_name\n";
 			foreach (keys %{$CLIENTS->{$client}}) {
 				# generate all host attributes, except host dependency stuff
@@ -1012,7 +1017,13 @@ sub genHostConfig {
 						print FH "# from: $CLIENTS->{$client}->{SERVICES}->{$service}->{dn}\n";
 					}
 					print FH "define service {\n";
-					print FH "\tuse\tgeneric-service\n";
+					print FH "\tuse\t";
+						if (defined $CLIENTS->{$client}->{'SERVICES'}->{$service}->{'@ldapprefix@servicecustomvar'}->{'use'}){
+							print FH "$CLIENTS->{$client}->{'SERVICES'}->{$service}->{'@ldapprefix@servicecustomvar'}->{'use'},";
+							delete $CLIENTS->{$client}->{'SERVICES'}->{$service}->{'@ldapprefix@servicecustomvar'}->{'use'};
+						}
+
+					print FH "generic-service\n";
 					print FH "\tservice_description\t$service\n";
 					print FH "\thost_name\t$host_name\n";
 					foreach(keys %{$CLIENTS->{$client}->{SERVICES}->{$service}}) {
