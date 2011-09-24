@@ -98,6 +98,8 @@ use Pod::Usage;
 use Data::Dumper;
 use Net::LDAP;
 use Net::LDAP::LDIF;
+use File::Find;
+use File::Basename;
 
 # version string
 my $version = '1.0';
@@ -155,10 +157,15 @@ LeaveScript('2', "'$optOutputDir' is not writeable")   if !-w $optOutputDir;
 # lock exporter
 open (FH, ">$optExportLock"); close(FH);
 
-# clean old output dir
-DebugOutput("start - removing content of $optOutputDir");
-qx(rm -r $optOutputDir/* 2>/dev/null);
-DebugOutput("finished - removing content of $optOutputDir");
+# prepare to clean old output dir (remember files)
+my %existingTree;
+# find all dirs/files except .svn and store depth for sorting later
+find(
+	sub {
+		! /\.svn/ && 
+		($existingTree{$File::Find::name} =()= $File::Find::name =~ /\//g)
+		}, $optOutputDir 
+	);
 
 #
 # NOW, WE'RE READY TO RUN :)
@@ -280,9 +287,12 @@ if (-f 'custom/mid.pl') {
 
 # build dir structure and copy generic templates
 createDirs($optBaseDN, $optOutputDir);
-mkdir("$optOutputDir/hostgroups/");
-mkdir("$optOutputDir/servicegroups/");
+mkdir("$optOutputDir/hostgroups");
+syncTree("$optOutputDir/hostgroups");
+mkdir("$optOutputDir/servicegroups");
+syncTree("$optOutputDir/servicegroups");
 copyGeneric('@prefix@/etc/default-templates.cfg', $optOutputDir);
+syncTree("$optOutputDir/default-templates.cfg");
 
 # write config
 genTimeperiods();
@@ -293,6 +303,14 @@ genHostgroups();
 HostgroupServiceMapping();
 genServicegroups();
 genHostConfig();
+
+beVerbose("CLEANUP ", "remove stale content from $optOutputDir");
+foreach my $key ( # sort by depth - deepest first
+	sort { $existingTree{$b} <=> $existingTree{$a} } keys %existingTree) {
+	# TODO: take care of versioning here first.
+	-f $key && (unlink $key or warn "Could not remove $key: $!");
+	-d $key && (rmdir $key or warn "Could not remove dir $key: $!");
+}
 
 # run custom script (post)
 if (-f 'custom/post.pl') {
@@ -617,6 +635,8 @@ sub createDirs {
 	my $writeFolder = shift;
 	my $dirStructure;
 
+	syncTree("$writeFolder");
+
 	# - search ldap tree downwards
 	# - check if folder already exists
 	# - create folder (if needed)
@@ -624,8 +644,12 @@ sub createDirs {
 	foreach(keys %{$result}) {
 		my $folder = $writeFolder.'/'.$result->{$_}->{ou}."/";
 		if (!-d $folder) {
-			mkdir("$folder");
 			beVerbose('CREATE DIR', $folder);
+			# if there is a file with the same name,
+			# (uncommon because files ends with .cfg)
+			# delete it first
+			if (-f $folder) { unlink("$folder"); }
+			mkdir("$folder");
 		}
 
 		createDirs($_, $folder);
@@ -662,6 +686,7 @@ sub genTimeperiods {
 
 		# open target file
 		open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
+		syncTree("$writeFile");
 
 		print FH "define timeperiod {\n";
 		foreach (keys %{$result->{$timeperiod}}) {
@@ -709,6 +734,7 @@ sub genCommands {
 
 		# open target file
 		open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
+		syncTree("$writeFile");
 
 		print FH "define command {\n";
 		foreach (keys %{$result->{$command}}) {
@@ -750,6 +776,7 @@ sub genContacts {
 
 		# open target file
 		open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
+		syncTree("$writeFile");
 
 		print FH "define contact {\n";
 		print FH "\tuse generic-contact\n";
@@ -792,6 +819,7 @@ sub genContactgroups {
 
 		# open target file
 		open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
+		syncTree("$writeFile");
 
 		print FH "define contactgroup {\n";
 		foreach (keys %{$result->{$contactgroup}}) {
@@ -832,6 +860,7 @@ sub genHostgroups {
 
 		# open target file
 		open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
+		syncTree("$writeFile");
 		print FH "define hostgroup {\n";
 		print FH "\thostgroup_name\t$hostgroup\n";
 		print FH "\talias\t$hostgroup\n";
@@ -849,6 +878,7 @@ sub genHostgroups {
 
 		# open target file
 		open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
+		syncTree("$writeFile");
 
 		print FH "define hostgroup {\n";
 		print FH "\thostgroup_name\t$result->{$val1}->{cn}\n";
@@ -903,6 +933,7 @@ sub genServicegroups {
 
 		# open target file
 		open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
+		syncTree("$writeFile");
 
 		print FH "define servicegroup {\n";
 		print FH "\tservicegroup_name\t$servicegroup\n";
@@ -921,6 +952,7 @@ sub genServicegroups {
 
 		# open target file
 		open(FH, ">$writeFile") || die "Can't write data: $writeFile $!\n";
+		syncTree("$writeFile");
 
 		print FH "define servicegroup {\n";
 		print FH "\tservicegroup_name\t$result->{$val1}->{cn}\n";
@@ -981,6 +1013,7 @@ sub genHostConfig {
 		if (!defined $CLIENTS->{$client}->{@ldapprefix@hostdisable}) {
 			# open target file
 			open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
+			syncTree("$writeFile");
 
 			# generate host definition
 			print FH "define host {\n";
@@ -1192,6 +1225,20 @@ sub makeRevisionProof {
 }
 
 
-
+sub syncTree {
+	# Before we start, put the files and directorys below
+	# $optOutputDir in %existingTree. During generate of
+	# the config files use this function to remove all
+	# generated files from the hash.
+	# In the end %existingTree will contain all files
+	# that have to be removed for a correct config.
+	# At this time we could also remove them from a
+	# versioning system.
+	my $path = shift;
+	# some things are allowed but confusing - remove them.
+	$path =~ s#//#/#g;	# double slashes within directory names 
+	$path =~ s#/$##g;	# tailing slashes
+	if ( exists $existingTree{$path} ) { delete($existingTree{$path}); } 
+}
 
 
