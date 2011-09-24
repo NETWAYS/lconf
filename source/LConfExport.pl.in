@@ -162,7 +162,8 @@ my %existingTree;
 # find all dirs/files except .svn and store depth for sorting later
 find(
 	sub {
-		! /\.svn/ && 
+		1 &&
+		#! /\.svn/ && 
 		($existingTree{$File::Find::name} =()= $File::Find::name =~ /\//g)
 		}, $optOutputDir 
 	);
