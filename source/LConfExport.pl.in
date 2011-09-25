@@ -98,6 +98,8 @@ use Pod::Usage;
 use Data::Dumper;
 use Net::LDAP;
 use Net::LDAP::LDIF;
+use Net::LDAP::Util qw(canonical_dn);
+use MIME::Base64;
 use File::Find;
 use File::Basename;
 
@@ -1203,7 +1205,7 @@ sub makeRevisionProof {
 	# collect data
 		# vardump
 		beVerbose("REVISION", "add VARDUMP to repository");
-		open(FH, ">$optRevisionTemp/$realDir/dump.vardmp");
+		open(FH, ">$optRevisionTemp/$realDir/dump.vardmp") || die "Can't write data: $optRevisionTemp/$realDir/dump.vardmp: $!\n";
 		print FH Dumper $CLIENTS;
 		close(FH);
 
@@ -1213,8 +1215,45 @@ sub makeRevisionProof {
 			base => "$optLDAPDN",
 			scope => "sub",
 			filter => "objectclass=*");
-		my $ldif = Net::LDAP::LDIF->new ("$optRevisionTemp/$realDir/dump.ldif", "w") or die $!;
+		my $ldif = Net::LDAP::LDIF->new ("$optRevisionTemp/$realDir/unsorteddump.ldif", "w", sort => 1) or die $!;
 		$ldif->write_entry($dump->all_entries(  ));
+		$ldif->done();
+
+		# now sort the ldif dump to be usefull as a diff (versioning)
+		$/ = "";
+		open(LDIFH, "$optRevisionTemp/$realDir/unsorteddump.ldif") || die "$optRevisionTemp/$realDir/unsorteddump.ldif: $!\n";
+
+		my $pos = 0;
+		my @valuepos;
+		while (<LDIFH>) {
+			my $value;
+			1 while s/^(dn:.*)?\n /$1/im; # Handle line continuations
+			if (/^dn(::?) (.*)$/im) {
+				$value = $2;
+				$value = decode_base64($value) if $1 eq '::';
+			}
+			push @valuepos, [ $value, $pos ];
+			$pos = tell;
+		}
+
+		my %canonicaldns;
+		my @sorted;
+		@sorted = sort { 
+			my $cadn = ($canonicaldns{$a->[0]} ||= lc(canonical_dn($a->[0])));
+			my $cbdn = ($canonicaldns{$b->[0]} ||= lc(canonical_dn($b->[0])));
+			$cadn cmp $cbdn;
+		} @valuepos;
+
+		open(FH, ">$optRevisionTemp/$realDir/dump.ldif") || die "$optRevisionTemp/$realDir/dump.ldif: $!\n";
+		foreach my $valuepos (@sorted) {
+			seek(LDIFH, $valuepos->[1], 0);
+			my $entry = <LDIFH>;
+			print FH $entry;
+			print FH "\n" if $entry !~ /\n\n$/;
+		}
+		close(FH);
+		close(LDIFH);
+		unlink("$optRevisionTemp/$realDir/unsorteddump.ldif") || warn "$optRevisionTemp/$realDir/unsorteddump.ldif: $!\n";
 
 		# file dump
 		beVerbose("REVISION", "add FILEDUMP to repository");
