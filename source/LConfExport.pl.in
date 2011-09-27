@@ -123,7 +123,7 @@ GetOptions(
 # import config
 use lib '@prefix@';
 use etc::config;
-use vars qw($optLDAPServer $optLDAPDN $optExportUser $optExportLDAPBindDN $optExportLDAPBindPW $optExportLock $optRevisionEnabled $optRevisionPath $optRevisionTemp %itemMap);
+use vars qw($optLDAPServer $optLDAPDN $optExportUser $optExportLDAPBindDN $optExportLDAPBindPW $optExportLock $optRevisionEnabled $optRevisionPath $optRevisionTemp %itemMap $optPreservePattern);
 
 DebugOutput("Start");
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
@@ -161,14 +161,20 @@ open (FH, ">$optExportLock"); close(FH);
 
 # prepare to clean old output dir (remember files)
 my %existingTree;
-# find all dirs/files except .svn and store depth for sorting later
+# find all dirs/files except $optPreservePattern and store depth for sorting later
 find(
-	sub {
-		1 &&
-		#! /\.svn/ && 
-		($existingTree{$File::Find::name} =()= $File::Find::name =~ /\//g)
-		}, $optOutputDir 
-	);
+	sub { 
+		if (defined $optPreservePattern) {
+				if (! ($File::Find::name =~ /$optPreservePattern/) ) {
+					$existingTree{$File::Find::name} =()= $File::Find::name =~ /\//g;
+				}else{
+					DebugOutput("PRESERVE $File::Find::name");
+				}
+		} else {
+			$existingTree{$File::Find::name} =()= $File::Find::name =~ /\//g;
+		}
+	}, $optOutputDir 
+);
 
 #
 # NOW, WE'RE READY TO RUN :)

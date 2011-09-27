@@ -35,6 +35,9 @@ $optRevisionEnabled = '0';
 $optRevisionPath = 'https://MySVNServer/playground/lconf';
 $optRevisionTemp = '@prefix@/var/revision';
 
+# preserve files/directorys that match the pattern during export (do not delete them)
+#$optPreservePattern = qr[(^|/)\.(cvs|svn|git)(/|$)];
+
 # options for slave sync (if used)
 $optSlaveSyncHosts     = 'host1, host2, host3';
 $optSlaveSyncDirLocal  = '/usr/local/icinga/var/perfdata-local';
