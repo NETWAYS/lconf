@@ -1,0 +1,74 @@
+dn: ou=LConf,@LDAP_DN@
+ou: LConf
+objectClass: organizationalUnit
+
+dn: ou=IcingaConfig,ou=LConf,@LDAP_DN@
+ou: IcingaConfig
+objectClass: @LDAP_PREFIX@StructuralObject
+
+dn: ou=Templates,ou=LConf,@LDAP_DN@
+ou: Templates
+objectClass: @LDAP_PREFIX@StructuralObject
+
+dn: ou=Examples,ou=LConf,@LDAP_DN@
+ou: Examples
+objectClass: @LDAP_PREFIX@StructuralObject
+
+dn: cn=example-timeperiod,ou=Examples,ou=LConf,@LDAP_DN@
+cn: example-timeperiod
+@LDAP_PREFIX@Alias: 24 Hours A Day, 7 Days A Week
+description: 24x7
+@LDAP_PREFIX@TimeperiodValue: sunday 00:00-24:00
+@LDAP_PREFIX@TimeperiodValue: monday 00:00-24:00
+@LDAP_PREFIX@TimeperiodValue: tuesday 00:00-24:00
+@LDAP_PREFIX@TimeperiodValue: wednesday 00:00-24:00
+@LDAP_PREFIX@TimeperiodValue: thursday 00:00-24:00
+@LDAP_PREFIX@TimeperiodValue: friday 00:00-24:00
+@LDAP_PREFIX@TimeperiodValue: saturday 00:00-24:00
+objectClass: @LDAP_PREFIX@Timeperiod
+
+dn: cn=example-command,ou=Examples,ou=LConf,@LDAP_DN@
+cn: example-command
+@LDAP_PREFIX@Commandline: $USER1$/check_users -w 50 -c 100
+objectClass: @LDAP_PREFIX@Command
+
+dn: cn=example-contact,ou=Examples,ou=LConf,@LDAP_DN@
+cn: example-contact
+@LDAP_PREFIX@Alias: example-contact
+@LDAP_PREFIX@Email: user@example.net
+@LDAP_PREFIX@Pager: +491701234567
+objectClass: @LDAP_PREFIX@Contact
+
+dn: cn=example-contactgroup,ou=Examples,ou=LConf,@LDAP_DN@
+cn: example-contactgroup
+@LDAP_PREFIX@Alias: example-contactgroup
+@LDAP_PREFIX@Members: example-contact
+objectClass: @LDAP_PREFIX@Contactgroup
+
+dn: cn=example-host,ou=Examples,ou=LConf,@LDAP_DN@
+cn: example-host
+@LDAP_PREFIX@Address: 127.0.0.1
+@LDAP_PREFIX@Alias: example-host
+objectClass: @LDAP_PREFIX@Host
+
+dn: cn=example-hostgroup,ou=Examples,ou=LConf,@LDAP_DN@
+cn: example-hostgroup
+@LDAP_PREFIX@Alias: example-hostgroup
+@LDAP_PREFIX@Members: example-host
+objectClass: @LDAP_PREFIX@Hostgroup
+
+dn: cn=example-service,ou=Examples,ou=LConf,@LDAP_DN@
+cn: example-service
+@LDAP_PREFIX@Checkcommand: example-command
+objectClass: @LDAP_PREFIX@Service
+
+dn: ou=example-structural-object,ou=Examples,ou=LConf,@LDAP_DN@
+ou: example-structural-object
+objectClass: @LDAP_PREFIX@StructuralObject
+
+dn: ou=example-alias,ou=Examples,ou=LConf,@LDAP_DN@
+objectClass: top
+objectClass: alias
+objectClass: extensibleObject
+ou: example-alias
+aliasedObjectName: ou=example-target

@@ -1,0 +1,322 @@
+#!/usr/bin/perl -w
+
+# COPYRIGHT:
+#
+# This software is Copyright (c) 2011 NETWAYS GmbH
+#                                <support@netways.de>
+#
+# (Except where explicitly superseded by other copyright notices)
+#
+#
+# LICENSE:
+#
+# This work is made available to you under the terms of Version 2 of
+# the GNU General Public License. A copy of that license should have
+# been provided with this software, but in any event can be snarfed
+# from http://www.fsf.org.
+#
+# This work is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301 or visit their web page on the internet at
+# http://www.fsf.org.
+#
+#
+# CONTRIBUTION SUBMISSION POLICY:
+#
+# (The following paragraph is not intended to limit the rights granted
+# to you to modify and distribute this software under the terms of
+# the GNU General Public License and is only of importance to you if
+# you choose to contribute your changes and enhancements to the
+# community by submitting them to NETWAYS GmbH.)
+#
+# By intentionally submitting any modifications, corrections or
+# derivatives to this work, or any other work intended for use with
+# this Software, to NETWAYS GmbH, you confirm that
+# you are the copyright holder for those contributions and you grant
+# NETWAYS GmbH a nonexclusive, worldwide, irrevocable,
+# royalty-free, perpetual, license to use, copy, create derivative
+# works based on those contributions, and sublicense and distribute
+# those contributions and any derivatives thereof.
+#
+# Nagios and the Nagios logo are registered trademarks of Ethan Galstad.
+
+=head1 NAME
+
+LConfSlaveSync.pl - Sync different Icinga cluster nodes (master/slave)
+
+=head1 SYNOPSIS
+
+LConfSlaveSync.pl start
+                  stop
+
+Sync different Icinga cluster nodes (master/slave)
+
+=head1 OPTIONS
+
+=over
+
+=item start
+
+Start SlaveSync Daemon
+
+=item stop
+
+Stop SlaveSync Daemon
+
+=item -h|--help
+
+print help page
+
+=item -V|--version
+
+print plugin version
+
+=cut
+
+# set libs
+use lib '@PREFIX@';
+
+# includes
+use strict;
+use POSIX qw(setsid);
+use LWP::Simple;
+use Pod::Usage;
+use threads;
+use etc::config;
+use lib::misc;
+
+# version string
+my $version = '1.2';
+
+# define states
+our @state = ('OK', 'WARNING', 'ERROR');
+
+
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
+# help and version page
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
+
+pod2usage(1) if !defined $ARGV[0];
+pod2usage(1) if $ARGV[0] eq '-h';
+pod2usage(1) if $ARGV[0] eq '--help';
+print $version."\n" if $ARGV[0] eq '-V';
+print $version."\n" if $ARGV[0] eq '--version';
+
+
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
+# let's go!
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
+
+# define vars
+use vars qw($cfg);
+
+# fist of all... check if we're ready to run
+LeaveScript(2, "Variable '\$cfg->{slavesync}->{HOSTS}' not set in config.pm")        if !$cfg->{slavesync}->{HOSTS};
+LeaveScript(2, "Variable '\$cfg->{slavesync}->{localDir}' not set in config.pm")     if !$cfg->{slavesync}->{localDir};
+LeaveScript(2, "Variable '\$cfg->{slavesync}->{remoteDir}' not set in config.pm")    if !$cfg->{slavesync}->{remoteDir};
+LeaveScript(2, "Variable '\$cfg->{slavesync}->{spoolDir}' not set in config.pm")     if !$cfg->{slavesync}->{spoolDir};
+LeaveScript(2, "Variable '\$cfg->{slavesync}->{ExtCMD}' not set in config.pm")       if !$cfg->{slavesync}->{ExtCMD};
+LeaveScript(2, "Variable '\$cfg->{slavesync}->{pidFile}' not set in config.pm")      if !$cfg->{slavesync}->{pidFile};
+LeaveScript(2, "Variable '\$cfg->{slavesync}->{getInterval}' not set in config.pm")  if !$cfg->{slavesync}->{getInterval};
+LeaveScript(2, "Variable '\$cfg->{slavesync}->{pushInterval}' not set in config.pm") if !$cfg->{slavesync}->{pushInterval};
+LeaveScript(2, "Variable '\$cfg->{slavesync}->{debugLog}' not set in config.pm")     if !$cfg->{slavesync}->{debugLog};
+
+# debug mode?
+if (defined $cfg->{slavesync}->{debug} && $cfg->{slavesync}->{debug} == 1) {
+	our $opt; $opt->{verbose} = $cfg->{slavesync}->{debugLog};
+}
+
+# start or stop?
+if ($ARGV[0] eq 'start') {
+	# convert variable to array
+	my @HOSTS = split(/\s*,\s*/, $cfg->{slavesync}->{HOSTS});
+	
+	# flush buffer
+	$| = 1;
+	
+	# check few things
+	check($cfg->{slavesync}->{localDir}, $cfg->{slavesync}->{remoteDir}, @HOSTS);
+	
+	# daemonize
+	daemonize($cfg->{slavesync}->{pidFile});
+	
+	# start execution thread (direct IO or old style?)
+	my %thread_handle;
+	if (defined $cfg->{slavesync}->{directIO} && $cfg->{slavesync}->{directIO} == 1) {
+		$thread_handle{0} = threads->create('processFilesSpoolDir', $cfg->{slavesync}->{localDir}, $cfg->{slavesync}->{spoolDir}, $cfg->{slavesync}->{pushInterval});
+	} else {
+		$thread_handle{0} = threads->create('processFilesExtCMD', $cfg->{slavesync}->{localDir}, $cfg->{slavesync}->{spoolDir}, $cfg->{slavesync}->{pushInterval}, $cfg->{slavesync}->{ExtCMD});
+	}
+	
+	# run main function
+	main($cfg->{slavesync}->{getInterval}, $cfg->{slavesync}->{localDir}, $cfg->{slavesync}->{remoteDir}, @HOSTS);
+	
+	# join thread
+	$thread_handle{0}->join();
+} elsif ($ARGV[0] eq 'stop') {
+	killProc($cfg->{slavesync}->{pidFile});
+} else {
+	pod2usage(1);
+}
+
+
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
+# functions...
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
+
+sub check {
+	my $localDir  = shift;
+	my $remoteDir = shift;
+	my @HOSTS     = @_;
+
+	beVerbose('CHECK', "'$localDir' exists?");
+	if (! -d $localDir) { print "ERROR: can't localte directory '$localDir'\n"; exit 1; }
+
+	# login on each remote host possible and $remtoeDir exists?
+	foreach(@HOSTS) {
+		beVerbose('CHECK', "login on '$_'");
+		my $cmd = "ssh -o PasswordAuthentication=no "; $cmd .= $_ ." \"ls -d $remoteDir\" 2>/dev/null";
+		my $val = system($cmd);
+
+		if ($val != 0) {
+			if ($val == 512) {
+				LeaveScript(2, "Can't locate directory $remoteDir on $_");
+			} elsif ($val == 65280) {
+				LeaveScript(2, "Can't login on $_");
+			} else {
+				LeaveScript(2, "Unknown error during connection / test");
+			}
+		}
+	}
+}
+
+sub daemonize {
+	my $pidFile = shift;
+
+	chdir '/tmp' or die "Can't chdir to /tmp: $!";
+	open STDIN, '/dev/null' or die "Can't read /dev/null: $!";
+	open STDOUT, '>>/dev/null' or die "Can't write to /dev/null: $!";
+	open STDERR, '>>/dev/null' or die "Can't write to /dev/null: $!";
+
+	defined(my $pid = fork) or die "Can't fork: $!";
+	exit if $pid;
+	setsid or die "Can't start a new session: $!";
+
+	open(FH, ">$pidFile") || die "Can't write $pidFile: $!\n";
+	print FH $$;
+	close(FH);
+
+	umask 0;
+}
+
+sub main {
+	my $sleepHostThread = shift;
+	my $localDir        = shift;
+	my $remoteDir       = shift;
+	my @HOSTS = @_;
+
+	while(1) {
+		foreach(@HOSTS) {
+			getFiles($_, $localDir, $remoteDir);
+		}
+
+		beVerbose('MAIN', "sleep $sleepHostThread");
+		sleep $sleepHostThread;
+	}
+}
+
+sub getFiles {
+	my $host      = shift;
+	my $localDir  = shift;
+	my $remoteDir = shift;
+
+	beVerbose("GET FILES", "from host '$host'");
+	my $cmd = "rsync --remove-sent-files -azd -e ssh $host:$remoteDir/ $localDir";
+	my $val = system($cmd);
+
+	if ($val != 0) { print "ERROR: data sync with $host failed!\n"}
+}
+
+sub killProc {
+	my $pidFile = shift;
+
+	open(FH, "<$pidFile") || die "Can't read $pidFile: $!\n";
+	while(<FH>) {
+		qx(kill -9 $_);
+	}
+	close(FH);
+	qx(rm $pidFile);
+}
+
+sub processFilesSpoolDir {
+	my $localDir        = shift;
+	my $spoolDir        = shift;
+	my $sleepExecThread = shift;
+}
+
+sub processFilesExtCMD {
+	my $localDir            = shift;
+	my $spoolDir            = shift;
+	my $sleepExecThread     = shift;
+	my $ExternalCommandInterface = shift;
+
+	while(1) {
+		my $counter = 999999999;
+
+		# define array
+		my @FILES;
+
+		# get files
+		opendir(DIR, $localDir) || die "can't open dir $localDir: $!";
+		while((my $val = readdir(DIR))) {
+			push(@FILES, $val);
+		}
+		closedir(DIR);
+
+		# sort stuff
+		@FILES = sort(@FILES);
+
+		# how mouch in spool?
+		my $size_all = 0;
+		opendir(DIR, $spoolDir) || die "can't open dir $spoolDir: $!";
+		while((my $val = readdir(DIR))) {
+			if ($val ne "." && $val ne "..") {
+				my $size_file = -s "$spoolDir/$val";
+				$size_all = $size_all + $size_file;
+			}
+		}
+		closedir(DIR);
+
+		# re-calc
+		$size_all = $size_all/1024;
+		$size_all = $size_all/1024;
+
+		# reset?
+		if ($size_all <= 1) {
+			$counter = 0;
+			beVerbose('PROCESS_FILES', 'reset counter => proceed!');
+		}
+
+		# execute stuff
+		foreach my $val (@FILES) {
+			if ($counter <= 30) {
+				if ($val ne "." && $val ne ".." && $val =~ /\./) {
+					my $cmd =  "[".time()."] PROCESS_FILE;$localDir/"."$val;1";
+					qx(echo "$cmd" > $ExternalCommandInterface);
+					beVerbose('PROCESS_FILES', "proceed file '$val'");
+				}
+			}
+			$counter++;
+		}
+
+		beVerbose('PROCESS_FILES', "sleep $sleepExecThread");
+		sleep $sleepExecThread;
+	}
+}
+				

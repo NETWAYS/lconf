@@ -1,0 +1,299 @@
+#!/usr/bin/perl -w
+
+# COPYRIGHT:
+#
+# This software is Copyright (c) 2011 NETWAYS GmbH
+#                                <support@netways.de>
+#
+# (Except where explicitly superseded by other copyright notices)
+#
+#
+# LICENSE:
+#
+# This work is made available to you under the terms of Version 2 of
+# the GNU General Public License. A copy of that license should have
+# been provided with this software, but in any event can be snarfed
+# from http://www.fsf.org.
+#
+# This work is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301 or visit their web page on the internet at
+# http://www.fsf.org.
+#
+#
+# CONTRIBUTION SUBMISSION POLICY:
+#
+# (The following paragraph is not intended to limit the rights granted
+# to you to modify and distribute this software under the terms of
+# the GNU General Public License and is only of importance to you if
+# you choose to contribute your changes and enhancements to the
+# community by submitting them to NETWAYS GmbH.)
+#
+# By intentionally submitting any modifications, corrections or
+# derivatives to this work, or any other work intended for use with
+# this Software, to NETWAYS GmbH, you confirm that
+# you are the copyright holder for those contributions and you grant
+# NETWAYS GmbH a nonexclusive, worldwide, irrevocable,
+# royalty-free, perpetual, license to use, copy, create derivative
+# works based on those contributions, and sublicense and distribute
+# those contributions and any derivatives thereof.
+#
+# Nagios and the Nagios logo are registered trademarks of Ethan Galstad.
+
+=head1 NAME
+
+LConfSlaveExport.pl - export an Nagios / Icinga config from LConf to a slave cluster
+
+=head1 SYNOPSIS
+
+LConfSlaveExport.pl  -H <name of slave server>
+                     -t <path to config on slave host>
+                     -v
+                     -h
+                     -V
+
+Export an Nagios / Icinga config from LConf to a slave cluster
+
+=head1 OPTIONS
+
+=over
+
+=item -H|--host <name of slave server>
+
+Export config to this server
+
+=item -t|--target <path to config on slave host>
+
+Target path on slave server
+
+=item -v|--verbose <path to logfile>
+
+Verbose mode. If no logfile is specified, verbose output will be printend to STDOUT
+
+=item -h|--help
+
+print help page
+
+=item -V|--version
+
+print plugin version
+
+=cut
+
+# set libs
+use lib '@PREFIX@';
+
+# includes
+use strict;
+use Getopt::Long qw(:config no_ignore_case bundling);
+use Pod::Usage;
+use Net::LDAP;
+use etc::config;
+use lib::ldap;
+use lib::generate;
+use lib::misc;
+
+# version string
+my $version = '1.2';
+
+# define states
+our @state = ('OK', 'WARNING', 'ERROR');
+
+# get command-line parameters
+our $opt;
+GetOptions(
+	"H|host=s"			=> \$opt->{host},
+	"t|target=s"		=> \$opt->{target},
+	"v|verbose:s"		=> \$opt->{verbose},
+	"h|help"			=> \$opt->{help},
+	"V|version"			=> \$opt->{version}
+);
+
+
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
+# help and version page
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
+
+# should print version?
+if (defined $opt->{version}) { print $version."\n"; exit 0; }
+
+# should print help?
+if ($opt->{help} || !$opt->{target}) { pod2usage(1); }
+
+
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
+# let's go!
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
+
+# define vars
+use vars qw($cfg);
+$cfg->{ldap}->{baseDN} = 'ou='.$cfg->{export}->{startingpoint}.',ou=LConf,'.$cfg->{ldap}->{dn};
+our $CLIENTS;
+my @export;
+my @hosts;
+
+our $exit; $exit->{code} = 0; $exit->{message} = 'No errors';
+
+# fist of all... check if we're ready to run
+LeaveScript(2, "Variable '\$cfg->{ldap}->{server}' not set in config.pm'") if !$cfg->{ldap}->{server};
+LeaveScript(2, "Variable '\$cfg->{ldap}->{dn}' not set in config.pm'")     if !$cfg->{ldap}->{dn};
+LeaveScript(2, "Variable '\$cfg->{export}->{user}' not set in config.pm'") if !$cfg->{export}->{user};
+
+# export with right user?
+LeaveScript(2, "You're not user '$cfg->{export}->{user}'!") if $ENV{USER} ne $cfg->{export}->{user};
+
+# hashdump exists?
+LeaveScript(2, "Hashdump from LConfExport.pl does not exist!") if !-f $cfg->{epxort}->{hashdump};
+
+#
+# NOW, WE'RE READY TO RUN :)
+#
+
+# import hashdump
+my $data; my $VAR1;
+open FILE, "<$cfg->{epxort}->{hashdump}" or die $!; while(<FILE>) { $data .= $_; } close FILE;
+eval($data);
+$CLIENTS = $VAR1;
+
+# connect to LDAP server
+our $ldap = LDAPconnect();
+
+# define target hosts / host is set?
+if (!defined $opt->{host}) {
+	# search after all hosts
+	my $result;
+	$result = LDAPsearch($ldap, $cfg->{ldap}->{baseDN}, "sub", "description=LCONF->EXPORT->HOST*");
+	foreach my $host (keys %{$result}) { $result->{$host}->{description} =~ m/^LCONF->EXPORT->HOST[\s=_-]*([-_\w\d]+)/; push(@hosts, $1); }
+	
+	$result = LDAPsearch($ldap, $cfg->{ldap}->{baseDN}, "sub", "description=LCONF->EXPORT->CLUSTER*");
+	foreach my $host (keys %{$result}) { $result->{$host}->{description} =~ m/^LCONF->EXPORT->CLUSTER[\s=_-]*([-_\w\d]+)/; push(@hosts, $1); }
+} else {
+	push(@hosts, $opt->{host});
+}
+
+# proceed config for each host
+foreach my $host (@hosts) {
+	# re-map var
+	$opt->{host} = $host;
+	
+	# get global tree's
+	my $exportGLOBAL = LDAPsearch($ldap, $cfg->{ldap}->{baseDN}, "sub", "description=LCONF->EXPORT->GLOBAL");
+	@export = addPaths($exportGLOBAL, @export) if defined $exportGLOBAL;
+
+	# get slaves cluster tree's
+	# LCONF->EXPORT->CLUSTER and LCONF->EXPORT->HOST. Both will work...
+	my $exportSLAVE = LDAPsearch($ldap, $cfg->{ldap}->{baseDN}, "sub", "description=LCONF->EXPORT->CLUSTER*$opt->{host}");
+	@export = addPaths($exportSLAVE, @export) if defined $exportSLAVE;
+	$exportSLAVE = LDAPsearch($ldap, $cfg->{ldap}->{baseDN}, "sub", "description=LCONF->EXPORT->HOST*$opt->{host}");
+	@export = addPaths($exportSLAVE, @export) if defined $exportSLAVE;
+
+	# delete useless items from $CLIENTS
+	foreach my $client (keys %{$CLIENTS}) {
+		my $delete = 1;
+		foreach(@export) { if ($client =~ /,$_/) { $delete = 0; } }
+		delete $CLIENTS->{$client} if $delete == 1;
+	}
+
+	# modifications?
+	foreach my $client (keys %{$CLIENTS}) {
+		# delete excluded hosts
+		if (defined $CLIENTS->{$client}->{description}) {
+			foreach my $desc (keys %{$CLIENTS->{$client}->{description}}) {
+				# modify hostattribute if LCONF->EXPORT->MODIFY->HOST is set
+				if ($desc =~ /^LCONF->EXPORT->MODIFY->HOST/) {
+					$desc =~ m/^LCONF->EXPORT->MODIFY->HOST\s+(.*)\s+(.*)/;
+					$CLIENTS->{$client}->{$1} = $2;
+				}
+
+				# delete host if LCONF->EXPORT->EXCLUDE is set
+				delete $CLIENTS->{$client} if $desc eq 'LCONF->EXPORT->EXCLUDE';
+			}
+		}
+
+		foreach my $service (keys %{$CLIENTS->{$client}->{SERVICES}}) {
+			if (defined $CLIENTS->{$client}->{SERVICES}->{$service}->{description}) {
+				foreach my $desc (keys %{$CLIENTS->{$client}->{SERVICES}->{$service}->{description}}) {
+					# modify serviceattribute if LCONF->EXPORT->MODIFY->HOST is set
+					if ($desc =~ /^LCONF->EXPORT->MODIFY->SERVICE/) {
+						$desc =~ m/^LCONF->EXPORT->MODIFY->SERVICE\s+(.*)\s+(.*)/;
+						$CLIENTS->{$client}->{SERVICES}->{$service}->{$1} = $2;
+					}
+
+					# delete service if LCONF->EXPORT->EXCLUDE is set
+					delete $CLIENTS->{$client}->{SERVICES}->{$service} if $desc eq 'LCONF->EXPORT->EXCLUDE';
+				}
+			}
+		}
+	}
+
+	# create tmp target
+	$opt->{outputDir} = $cfg->{epxort}->{tmpdir}.'/'.$opt->{host}.'/';
+	mkdir("$opt->{outputDir}") if !-d $opt->{outputDir};
+
+	# clean tmp target
+	qx(rm -r $opt->{outputDir}/*) if -f "$opt->{outputDir}/lconf.identify";
+
+	# create identifier
+	open(FH, ">$opt->{outputDir}/lconf.identify") || die "Can't write data: $opt->{outputDir}/lconf.identify $!\n"; close(FH);
+	
+	 # copy defaults localy
+ 	beVerbose("LOCAL COPY", "cp @PREFIX@/etc/default-templates.cfg $opt->{outputDir}/");
+ 	qx(cp @PREFIX@/etc/default-templates.cfg $opt->{outputDir}/);
+
+	# create dirs and write config
+	createDirs($cfg->{ldap}->{baseDN}, $opt->{outputDir});
+	mkdir("$opt->{outputDir}/hostgroups/");
+	mkdir("$opt->{outputDir}/servicegroups/");
+	foreach(@export) {
+		genTimeperiods($_);
+		genCommands($_);
+		genContacts($_);
+		genContactgroups($_);
+		genHostgroups($_);
+		HostgroupServiceMapping($_);
+		genServicegroups($_);
+	}
+	genHostConfig();
+
+	# disconnect from LDAP Server
+	$ldap->unbind();
+
+	#
+	# NOW, START WORKING ON TARGET SERVER's REMOTE DIR
+	#
+
+	# remote dir exists?
+	checkRemoteDir($opt->{host}, $opt->{target});
+
+	# copy config to client		
+	beVerbose("COPY", "rsync -zai -e ssh --stats --checksum --omit-dir-times --delay-updates --delete-after $opt->{outputDir}/* $opt->{host}:$opt->{target}");
+	qx(rsync -zai -e ssh --stats --checksum --omit-dir-times --delay-updates --delete-after $opt->{outputDir}/* $opt->{host}:$opt->{target});
+	
+	# reload Nagios / Icinga on slave
+	#beVerbose("RELOAD", "ssh $optHost '/etc/init.d/icinga reload'");
+	#my $result = qx(ssh $optHost '/etc/init.d/icinga reload');
+	#print $result;
+}
+
+# exit
+LeaveScript($exit->{code}, $exit->{message});
+
+
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
+# functions
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
+
+sub addPaths {
+	my $result = shift;
+	my @to_return = @_;
+	
+	foreach(keys %{$result}) { push(@to_return, $_); }
+	
+	return @to_return;
+}

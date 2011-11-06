@@ -1,0 +1,346 @@
+#!/usr/bin/perl -w
+
+# COPYRIGHT:
+#
+# This software is Copyright (c) 2011 NETWAYS GmbH
+#                                <support@netways.de>
+#
+# (Except where explicitly superseded by other copyright notices)
+#
+#
+# LICENSE:
+#
+# This work is made available to you under the terms of Version 2 of
+# the GNU General Public License. A copy of that license should have
+# been provided with this software, but in any event can be snarfed
+# from http://www.fsf.org.
+#
+# This work is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301 or visit their web page on the internet at
+# http://www.fsf.org.
+#
+#
+# CONTRIBUTION SUBMISSION POLICY:
+#
+# (The following paragraph is not intended to limit the rights granted
+# to you to modify and distribute this software under the terms of
+# the GNU General Public License and is only of importance to you if
+# you choose to contribute your changes and enhancements to the
+# community by submitting them to NETWAYS GmbH.)
+#
+# By intentionally submitting any modifications, corrections or
+# derivatives to this work, or any other work intended for use with
+# this Software, to NETWAYS GmbH, you confirm that
+# you are the copyright holder for those contributions and you grant
+# NETWAYS GmbH a nonexclusive, worldwide, irrevocable,
+# royalty-free, perpetual, license to use, copy, create derivative
+# works based on those contributions, and sublicense and distribute
+# those contributions and any derivatives thereof.
+#
+# Nagios and the Nagios logo are registered trademarks of Ethan Galstad.
+
+=head1 NAME
+
+LConfExport.pl - export a Nagios / Icinga config from LConf
+
+=head1 SYNOPSIS
+
+LConfExport.pl	-o <output dir>
+				[-v]
+				[-d]
+				[-f]
+				[-h]
+				[-V]
+				
+Export a Nagios / Icinga config from LConf
+
+=head1 OPTIONS
+
+=over
+
+=item -o|--output <output dir>
+
+Output dir for config
+
+=item -v|--verbose [<path to logfile>]
+
+Verbose mode. If no logfile specified, verbose output will be printed to STDOUT
+
+=item -d|--debug [<path to logfile>]
+
+Debug mode. If no logfile specified, debug output will be printed to STDOUT
+
+=item -f|--filter <hostname>
+
+Export only this host (e.g. for debugging)
+
+=item -h|--help
+
+print help page
+
+=item -V|--version
+
+print plugin version
+
+=cut
+
+# set lib path
+use lib '@PREFIX@';
+
+# includes
+use strict;
+use Getopt::Long qw(:config no_ignore_case bundling);
+use Pod::Usage;
+use Net::LDAP;
+use Data::Dumper;
+use etc::config;
+use lib::ldap;
+use lib::generate;
+use lib::misc;
+
+# version string
+my $version = '1.2';
+
+# define states
+our @state = ('OK', 'WARNING', 'ERROR');
+
+# get command-line parameters
+our $opt;
+GetOptions(
+	"o|output=s"	=> \$opt->{outputDir},
+	"v|verbose:s"	=> \$opt->{verbose},
+	"d|debug:s"		=> \$opt->{debug},
+	"f|filter=s"	=> \$opt->{filter},
+	"h|help"		=> \$opt->{help},
+	"V|version"		=> \$opt->{version}
+);
+
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
+# help and version page
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
+
+# should print version?
+if (defined $opt->{version}) { print $version."\n"; exit 0; }
+
+# should print help?
+if ($opt->{help} || !$opt->{outputDir}) { pod2usage(1); }
+
+
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
+# let's go!
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
+
+# define vars
+use vars qw($cfg %itemMap);
+our $CLIENTS;
+our $INHERIT;
+
+our $exit; $exit->{code} = 0; $exit->{message} = 'No errors';
+$cfg->{ldap}->{baseDN} = 'ou='.$cfg->{export}->{startingpoint}.',ou=LConf,'.$cfg->{ldap}->{dn};
+
+# fist of all... check if we're ready to run
+LeaveScript(2, "Variable '\$cfg->{ldap}->{server}' not set in config.pm'")	 	if !$cfg->{ldap}->{server};
+LeaveScript(2, "Variable '\$cfg->{ldap}->{dn}' not set in config.pm'")			if !$cfg->{ldap}->{dn};
+LeaveScript(2, "Variable '\$cfg->{export}->{user}' not set in config.pm'")		if !$cfg->{export}->{user};
+
+# export with right user?
+LeaveScript(2, "You're not user '$cfg->{export}->{user}'!") if $ENV{USER} ne $cfg->{export}->{user};
+
+# export already running?
+LeaveScript(2, "LConfExport locked! Anyone is already using it!") if -f $cfg->{export}->{lock};
+
+# check output dir
+LeaveScript('2', "'$opt->{outputDir}' is not a directory") if !-d $opt->{outputDir};
+LeaveScript('2', "'$opt->{outputDir}' is not writeable")   if !-w $opt->{outputDir};
+
+# lock exporter
+open (FH, ">$cfg->{export}->{lock}"); close(FH);
+
+# clean old output dir
+DebugOutput("start - removing content of $opt->{outputDir}");
+qx(rm -r $opt->{outputDir}/* 2>/dev/null);
+DebugOutput("finished - removing content of $opt->{outputDir}");
+
+#
+# NOW, WE'RE READY TO RUN :)
+#
+
+# connect to LDAP server
+our $ldap = LDAPconnect();
+
+# get all clients to monitor
+if (defined $opt->{filter}) {
+	$CLIENTS = LDAPsearch($ldap, $cfg->{ldap}->{baseDN}, "sub", "cn=$opt->{filter}");
+} else {
+	$CLIENTS = LDAPsearch($ldap, $cfg->{ldap}->{baseDN}, "sub", "objectclass=$cfg->{ldap}->{prefix}Host");
+}
+
+# run custom script (pre)
+if (-f 'custom/pre.pl') {
+	require '@PREFIX@/custom/pre.pl';
+	$CLIENTS = CustomPre($CLIENTS);
+}
+
+# delete all 'description'-fields of all hosts (otherwise it will give some problems with LCONF->... functions)
+foreach my $client (keys %{$CLIENTS}) { delete $CLIENTS->{$client}->{description}; }
+
+# inherited host and service configuration
+foreach my $client (keys %{$CLIENTS}) {
+	# remove basedn from dn
+	$client =~ s/,$cfg->{ldap}->{baseDN}//;
+	
+	# split and reverse the DN
+	my @search = split(",", $client);
+	@search = reverse(@search);
+	
+	# debug output
+	DebugOutput("CREATE HOSTOBJECT $client");
+	DebugOutput("BUILD HOSTATTRIBUTES for $client");
+	
+	# search aliases for host
+		# search at base
+		my $searchDN = $cfg->{ldap}->{baseDN};
+		my $result = LDAPsearch($ldap, $searchDN, "single", "objectclass=alias");
+		foreach(keys %{$result}) {
+			DebugOutput("Link ou=$result->{$_}->{ou} found on $searchDN");
+			my $result = LDAPsearch($ldap, $result->{$_}->{aliasedobjectname}, "base", "objectclass=*");
+			$CLIENTS = addHostAttributes($result, $client, $CLIENTS);
+		}
+		
+		# and search rest of the three
+		foreach(@search) {
+			$searchDN = $_.",".$searchDN;
+			my $result = LDAPsearch($ldap, $searchDN, "single", "objectclass=alias");
+			foreach(keys %{$result}) {
+				DebugOutput("Link ou=$result->{$_}->{ou} found on $searchDN");
+				my $result = LDAPsearch($ldap, $result->{$_}->{aliasedobjectname}, "base", "objectclass=*");
+				$CLIENTS = addHostAttributes($result, $client, $CLIENTS);
+			}
+		}
+		
+	# search main for host
+		# search at base
+		$searchDN = $cfg->{ldap}->{baseDN};
+		$result = LDAPsearch($ldap, $searchDN, "base", "objectclass=*");
+		$CLIENTS = addHostAttributes($result, $client, $CLIENTS);
+
+		# and search rest of the tree
+		foreach(@search) {
+			$searchDN = $_.",".$searchDN;
+			my $result = LDAPsearch($ldap, $searchDN, "base", "objectclass=*");
+			$CLIENTS = addHostAttributes($result, $client, $CLIENTS);
+		}
+
+		DebugOutput("BUILD SERVICEATTRIBUTES for $client");
+		
+		# search aliases for services
+			# reset search base
+			$searchDN = $cfg->{ldap}->{baseDN};
+			$result = LDAPsearch($ldap, $searchDN, "single", "objectclass=alias");
+			foreach(keys %{$result}) {
+				DebugOutput("Link ou=$result->{$_}->{ou} found on $searchDN");
+				$CLIENTS = addAlias($result, $client, $CLIENTS);
+			}
+
+			# and search rest of the tree (from top to item)
+			foreach(@search) {
+				$searchDN = $_.",".$searchDN;
+				$result = LDAPsearch($ldap, $searchDN, "single", "objectclass=alias");
+				foreach(keys %{$result}) {
+					DebugOutput("Link ou=$result->{$_}->{ou} found on $searchDN");
+					$CLIENTS = addAlias($result, $client, $CLIENTS);
+				}
+			}
+
+		# search main for services
+			# reset search base
+			$searchDN = $cfg->{ldap}->{baseDN};
+			$result = LDAPsearch($ldap, $searchDN, "single", "objectclass=$cfg->{ldap}->{prefix}Service");
+			$CLIENTS = addServices($result, $client, $CLIENTS, $cfg->{ldap}->{baseDN});
+
+			# and search rest of the tree (from top to item)
+			foreach(@search) {
+				$searchDN = $_.",".$searchDN;
+				$result = LDAPsearch($ldap, $searchDN, "single", "objectclass=$cfg->{ldap}->{prefix}Service");
+				$CLIENTS = addServices($result, $client, $CLIENTS, $cfg->{ldap}->{baseDN});
+			}
+
+			# (from item to bottom)
+			$result = LDAPsearch($ldap, $searchDN, "sub", "objectclass=$cfg->{ldap}->{prefix}Service");
+			$CLIENTS = addServices($result, $client, $CLIENTS, $cfg->{ldap}->{baseDN});
+			
+		# search main for host escalations
+			# reset search base
+			$searchDN = $cfg->{ldap}->{baseDN};
+			$result = LDAPsearch($ldap, $searchDN, "single", "objectclass=$cfg->{ldap}->{prefix}HostEscalation");
+			$CLIENTS = addHostEscalation($result, $client, $CLIENTS, $cfg->{ldap}->{baseDN});
+
+			# and search rest of the tree (from top to item)
+			foreach(@search) {
+				$searchDN = $_.",".$searchDN;
+				$result = LDAPsearch($ldap, $searchDN, "single", "objectclass=$cfg->{ldap}->{prefix}HostEscalation");
+				$CLIENTS = addHostEscalation($result, $client, $CLIENTS, $cfg->{ldap}->{baseDN});
+			}
+		
+		 # search main for service escalations
+    		# reset search base
+    		$searchDN = $cfg->{ldap}->{baseDN};
+    		$result = LDAPsearch($ldap, $searchDN, "single", "objectclass=$cfg->{ldap}->{prefix}ServiceEscalation");
+    		$CLIENTS = addServiceEscalation($result, $client, $CLIENTS, $cfg->{ldap}->{baseDN});
+    		
+    		# and search rest of the tree (from top to item)
+    		foreach(@search) {
+    			$searchDN = $_.",".$searchDN;
+    			$result = LDAPsearch($ldap, $searchDN, "single", "objectclass=$cfg->{ldap}->{prefix}ServiceEscalation");
+    			$CLIENTS = addServiceEscalation($result, $client, $CLIENTS, $cfg->{ldap}->{baseDN});
+    		}
+    		
+    		# (from item to bottom)
+    		$result = LDAPsearch($ldap, $searchDN, "sub", "objectclass=$cfg->{ldap}->{prefix}ServiceEscalation");
+    		$CLIENTS = addServiceEscalation($result, $client, $CLIENTS, $cfg->{ldap}->{baseDN});
+}
+
+# run custom script (mid)
+if (-f '@PREFIX@/custom/mid.pl') {
+	require 'custom/mid.pl';
+	$CLIENTS = CustomMid($CLIENTS);
+}
+
+# build dir structure and copy generic templates
+createDirs($cfg->{ldap}->{baseDN}, $opt->{outputDir});
+mkdir("$opt->{outputDir}/hostgroups/");
+mkdir("$opt->{outputDir}/servicegroups/");
+copyGeneric('@PREFIX@/etc/default-templates.cfg', $opt->{outputDir});
+
+# write config
+genTimeperiods();
+genCommands();
+genContacts();
+genContactgroups();
+genHostgroups();
+HostgroupServiceMapping();
+genServicegroups();
+genHostConfig();
+
+# run custom script (post)
+if (-f '@PREFIX@/custom/post.pl') {
+	require 'custom/post.pl';
+	$CLIENTS = CustomPost($CLIENTS);
+}
+
+# dump data to filesystem
+my $data = Dumper($CLIENTS); open FILE, ">$cfg->{epxort}->{hashdump}" or die $!; print FILE $data; close FILE;
+
+
+# disconnect from LDAP
+$ldap->unbind();
+
+# exit
+LeaveScript($exit->{code}, $exit->{message});

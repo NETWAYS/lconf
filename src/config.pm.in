@@ -1,0 +1,144 @@
+#!/usr/bin/perl -w
+
+#
+# LDAP connection
+#
+$cfg->{ldap}->{server}            = '@LDAP_SERVER@';
+$cfg->{ldap}->{dn}                = '@LDAP_DN@';
+$cfg->{ldap}->{prefix}            = '@LDAP_PREFIX@';
+$cfg->{ldap}->{binddn}		  = 'cn=admin,dc=netways,dc=org';
+$cfg->{ldap}->{bindpw}		  = 'Ihate12K';
+
+
+#
+# LConfExport.pl
+#
+$cfg->{export}->{user}            = '@LCONF_CLI_USER@';
+$cfg->{export}->{lock}            = '@PREFIX@/var/LConfExport.lock';
+$cfg->{export}->{startingpoint}   = 'IcingaConfig';
+$cfg->{epxort}->{hashdump}        = '@PREFIX@/var/LConfExport.hashdump';
+$cfg->{epxort}->{tmpdir}          = '@PREFIX@/tmp';
+
+
+#
+# LConfSlaveSync.pl
+#
+$cfg->{slavesync}->{HOSTS}        = 'host1, host2, host3';
+$cfg->{slavesync}->{localDir}     = '/usr/local/icinga/var/perfdata-local';
+$cfg->{slavesync}->{remoteDir}    = '/usr/local/icinga/var/perfdata-remote';
+$cfg->{slavesync}->{spoolDir}     = '/usr/local/icinga/var/spool/checkresults';
+$cfg->{slavesync}->{ExtCMD}       = '/usr/local/icinga/var/rw/icinga.cmd';
+$cfg->{slavesync}->{getInterval}  = '60';
+$cfg->{slavesync}->{pushInterval} = '30';
+$cfg->{slavesync}->{directIO}     = '0';
+$cfg->{slavesync}->{pidFile}      = '@PREFIX@/var/LConfSlaveSync.pid';
+$cfg->{slavesync}->{debugLog}     = '@PREFIX@/var/LConfSlaveSync.debug';
+$cfg->{slavesync}->{debug}        = '0';
+
+
+# WARNING! DO NOT CHANGE THIS!!
+%itemMap = (
+	# .2.1 | lconf attributes (generally)
+	lconfalias                                        => 'alias',
+	lconftimeperiodvalue                              => '',
+	lconfcommandline                                  => 'command_line',
+	lconfmembers                                      => 'members',
+
+	# .2.2   | lconf attributes (contact)
+	lconfemail                                        => 'email',
+	lconfpager                                        => 'pager',
+	lconfcontactservicenotificationperiod             => 'service_notification_period',
+	lconfcontacthostnotificationperiod                => 'host_notification_period',
+	lconfcontactservicenotificationoptions            => 'service_notification_options',
+	lconfcontacthostnotificationoptions               => 'host_notification_options',
+	lconfcontactservicenotificationcommands           => 'service_notification_commands',
+	lconfcontacthostnotificationcommands              => 'host_notification_commands',
+	lconfcontactservicenotificationsenabled           => 'service_notifications_enabled',
+	lconfcontacthostnotificationsenabled              => 'host_notifications_enabled',
+	lconfcontactcansubmitcommands                     => 'can_submit_commands',
+	lconfcontactgroups				  => 'contactgroups',
+	
+	# .2.3 | lconf attributes (host)
+	lconfaddress                                      => 'address',
+	lconfparent                                       => 'parents',
+	lconfhostcustomvar                                => 'PLACEHOLDER',
+	lconfhostcontacts                                 => 'contacts',
+	lconfhostcontactgroups                            => 'contact_groups',
+	lconfhostnotificationoptions                      => 'notification_options',
+	lconfhostnotificationinterval                     => 'notification_interval',
+	lconfhostnotificationperiod                       => 'notification_period',
+	lconfhostcheckperiod                              => 'check_period',
+	lconfhostcheckinterval                            => 'check_interval',
+	lconfhostcheckretryinterval                       => 'retry_interval',
+	lconfhostcheckmaxcheckattempts                    => 'max_check_attempts',
+	lconfhostprocessperfdata                          => 'process_perf_data',
+	lconfhostactivechecksenabled                      => 'active_checks_enabled',
+	lconfhostpassivechecksenabled                     => 'passive_checks_enabled',
+	lconfhostflapdetectionenabled                     => 'flap_detection_enabled',
+	lconfhostflapdetectionoptions                     => 'flap_detection_options',
+	lconfhosteventhandler                             => 'event_handler',
+	lconfhostnotesurl                                 => 'notes_url',
+	lconfhostactionurl                                => 'action_url',
+	lconfhostgroups                                   => 'hostgroups',
+	lconfhostdependency                               => 'PLACEHOLDER',
+	lconfhostdependencyexecutionfailurecriteria       => 'execution_failure_criteria',
+	lconfhostdependencynotificationfailurecriteria    => 'notification_failure_criteria',
+	lconfhostdependencyinheritsparent                 => 'inherits_parent',
+	lconfhostnotificationsenabled                     => 'notifications_enabled',
+	lconfhostfreshnessthreshold                       => 'freshness_threshold',
+	lconfhostcheckfreshness                           => 'check_freshness',
+	lconfhostcheckcommand                             => 'check_command',
+	lconfhostdisable                                  => '',
+	
+	# .2.4 | lconf attributes (service)
+	lconfcheckcommand                                 => 'check_command',
+	lconfservicecustomvar                             => 'PLACEHOLDER',
+	lconfservicecontacts                              => 'contacts',
+	lconfservicecontactgroups                         => 'contact_groups',
+	lconfservicenotificationoptions                   => 'notification_options',
+	lconfservicenotificationinterval                  => 'notification_interval',
+	lconfservicenotificationperiod                    => 'notification_period',
+	lconfservicecheckperiod                           => 'check_period',
+	lconfservicecheckinterval                         => 'check_interval',
+	lconfservicecheckretryinterval                    => 'retry_interval',
+	lconfservicecheckmaxcheckattempts                 => 'max_check_attempts',
+	lconfserviceprocessperfdata                       => 'process_perf_data',
+	lconfserviceactivechecksenabled                   => 'active_checks_enabled',
+	lconfservicepassivechecksenabled                  => 'passive_checks_enabled',
+	lconfserviceflapdetectionenabled                  => 'flap_detection_enabled',
+	lconfserviceflapdetectionoptions                  => 'flap_detection_options',
+	lconfserviceeventhandler                          => 'event_handler',
+	lconfservicenotesurl                              => 'notes_url',
+	lconfserviceactionurl                             => 'action_url',
+	lconfservicegroups                                => 'servicegroups',
+	lconfservicedependency                            => 'PLACEHOLDER',
+	lconfservicedependencyexecutionfailurecriteria    => 'execution_failure_criteria',
+	lconfservicedependencynotificationfailurecriteria => 'notification_failure_criteria',
+	lconfservicedependencyinheritsparent              => 'inherits_parent',
+	lconfservicenotificationsenabled                  => 'notifications_enabled',
+	lconfservicefreshnessthreshold                    => 'freshness_threshold',
+	lconfservicecheckfreshness                        => 'check_freshness',
+	lconfservicecheckcommand                          => 'check_command',
+	lconfservicedisable                               => '',
+	
+	# .2.5 | lconf attributes (host escalations)
+	lconfhostescalationfirstnotification              => 'first_notification',
+	lconfhostescalationlastnotification               => 'last_notification',
+	lconfhostescalationnotificationInterval           => 'notification_interval',
+	lconfhostescalationcontacts                       => 'contacts',
+	lconfhostescalationcontactgroups                  => 'contact_groups',
+	lconfhostescalationperiod                         => 'escalation_period',
+	lconfhostescalationoptions                        => 'escalation_options',
+	
+	# .2.6 | lconf attributes (service escalations)
+	lconfserviceescalationfirstnotification           => 'first_notification',
+	lconfserviceescalationlastnotification            => 'last_notification',
+	lconfserviceescalationnotificationInterval        => 'notification_interval',
+	lconfserviceescalationcontacts                    => 'contacts',
+	lconfserviceescalationcontactgroups               => 'contact_groups',
+	lconfserviceescalationperiod                      => 'escalation_period',
+	lconfserviceescalationoptions                     => 'escalation_options',
+
+	# special stuff ;-)
+	cn                                                => 'PLACEHOLDER'
+);

@@ -1,0 +1,23 @@
+#!/usr/bin/perl -w
+ 
+sub CustomMid {
+  my $CLIENTS = shift;
+ 
+  # proceed each host
+  foreach my $client (keys %{$CLIENTS}) {
+    # add hostattribute '_DN' to all hosts
+    $CLIENTS->{$client}->{@LDAP_PREFIX@hostcustomvar}->{'_DN'} = $CLIENTS->{$client}->{dn};
+ 
+    # add serviceattribute '_DN' to all services of this host
+    foreach my $service (keys %{$CLIENTS->{$client}->{'SERVICES'}}) {
+      foreach (keys %{$CLIENTS->{$client}->{'SERVICES'}->{$service}}) {
+        $CLIENTS->{$client}->{'SERVICES'}->{$service}->{@LDAP_PREFIX@servicecustomvar}->{'_DN'} = 
+          $CLIENTS->{$client}->{'SERVICES'}->{$service}->{dn};
+      }
+    }
+  }
+  return $CLIENTS;
+}
+ 
+1;
+EOF

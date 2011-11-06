@@ -1,0 +1,187 @@
+#
+# Makefile for LConf
+#
+
+# version info
+VERSION=1.2
+
+# path settings
+PREFIX=@prefix@
+PREFIX_QUOTED=`echo $(PREFIX) | sed s/\\\\//\\\\\\\\\\\\//g`
+EXEC_DIR=@exec_dir@
+
+# lconf settings
+LCONF_CLI_USER=@lconf_cli_user@
+LCONF_CLI_GROUP=@lconf_cli_group@
+LDAP_SERVER=@ldap_server@
+LDAP_DN=@ldap_dn@
+LDAP_BIND_DN=@ldap_bind_dn@
+LDAP_BIND_PASSWORD=@ldap_bind_password@
+LDAP_PREFIX=@ldap_prefix@
+LDAP_CONFIG_STYLE=@ldap_config_style@
+
+ifeq ($(LDAP_CONFIG_STYLE),old)
+	LDAP_CONFIG_STYLE="old (with slapd.conf)"
+	LDAP_ADD_SCHEMA="cp src/netways.schema /path/to/your/ldap/schema/\n\n       and include the following line into your slapd.conf:\n       include /path/to/your/ldap/schema/netways.schema\n"
+else
+	LDAP_CONFIG_STYLE="new (with cn=config)"
+	LDAP_ADD_SCHEMA="ldapadd -Y EXTERNAL -H ldapi:/// -f src/netways.schema.ldif"
+endif
+
+
+all: info
+
+info:
+	@echo ""
+	@echo " * * * LConf $(VERSION) * * *"
+	@echo ""
+	@echo "targets:"
+	@echo ""
+	@echo "   install - Install LConf"
+	@echo "   clean   - Clean up generated tmp files"
+	@echo ""
+	@echo ""
+	@echo " * * * Current Settings * * *"
+	@echo ""
+	@echo "   install prefix:       "$(PREFIX)	
+	@echo ""
+	@echo "   lconf_cli_user:       "$(LCONF_CLI_USER)
+	@echo "   lconf_cli_group:      "$(LCONF_CLI_GROUP)
+	@echo ""
+	@echo "   ldap_server:          "$(LDAP_SERVER)
+	@echo "   ldap_dn:              "$(LDAP_DN)
+	@echo "   ldap_bind_dn:         "$(LDAP_BIND_DN)
+	@echo "   ldap_bind_password:   "$(LDAP_BIND_PASSWORD)
+	@echo "   ldap_prefix:          "$(LDAP_PREFIX)
+	@echo ""
+	@echo "   ldap_config_style:    "$(LDAP_CONFIG_STYLE)
+	@echo ""
+	
+install:
+	if [ `id -u` != 0 ]; then \
+		echo ""; \
+		echo "You're not root! Please run installer as root..."; \
+		exit 1; \
+	fi
+	
+	# create prefix dir
+	if [ ! -d $(PREFIX) ]; then install -d -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 755 $(PREFIX); fi
+	# create lib dir
+	if [ ! -d $(PREFIX)/lib ]; then install -d -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 755 $(PREFIX)/lib; fi
+	# create etc dir
+	if [ ! -d $(PREFIX)/etc ]; then install -d -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 755 $(PREFIX)/etc; fi
+	# create var dir
+	if [ ! -d $(PREFIX)/var ]; then install -d -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 755 $(PREFIX)/var; fi
+	# create tmp dir
+	if [ ! -d $(PREFIX)/tmp ]; then install -d -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 755 $(PREFIX)/tmp; fi
+	# create contrib dir
+	if [ ! -d contrib ]; then install -d -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 755 contrib; fi
+	
+	# generate and install files
+		# $PREFIX
+			# LConfExport.pl
+				cat src/LConfExport.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" > src/LConfExport.pl
+				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/LConfExport.pl $(PREFIX)/
+			
+			# LConfImport.pl
+				cat src/LConfImport.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" > src/LConfImport.pl
+				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/LConfImport.pl $(PREFIX)/
+			
+			# LConfSlaveExport.pl
+				cat src/LConfSlaveExport.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" > src/LConfSlaveExport.pl
+				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/LConfSlaveExport.pl $(PREFIX)/
+			
+			# LConfSlaveSync.pl
+				cat src/LConfSlaveSync.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" > src/LConfSlaveSync.pl
+				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/LConfSlaveSync.pl $(PREFIX)/
+				
+		# $PREFIX/etc
+			# config.pm
+				cat src/config.pm.in | sed -e "s/@LDAP_SERVER@/$(LDAP_SERVER)/g" > src/config.pm.1
+				cat src/config.pm.1 | sed -e "s/@LDAP_DN@/$(LDAP_DN)/g" > src/config.pm.2
+				cat src/config.pm.2 | sed -e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" > src/config.pm.3
+				cat src/config.pm.3 | sed -e "s/@LDAP_BIND_DN@/$(LDAP_BIND_DN)/g" > src/config.pm.4
+				cat src/config.pm.4 | sed -e "s/@LDAP_BIND_PASSWORD@/$(LDAP_BIND_PASSWORD)/g" > src/config.pm.5
+				cat src/config.pm.5 | sed -e "s/@LCONF_CLI_USER@/$(LCONF_CLI_USER)/g" > src/config.pm.6
+				cat src/config.pm.6 | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" > src/config.pm
+				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/config.pm $(PREFIX)/etc/
+				
+			# default-templates.cfg.in
+				cat src/default-templates.cfg.in > src/default-templates.cfg
+				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/default-templates.cfg $(PREFIX)/etc/
+			
+		# $PREFIX/lib
+			# misc.pm
+				cat src/misc.pm.in > src/misc.pm
+				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/misc.pm $(PREFIX)/lib/
+			
+			# ldap.pm
+				cat src/ldap.pm.in > src/ldap.pm
+				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/ldap.pm $(PREFIX)/lib/
+			
+			# generate.pm
+				cat src/generate.pm.in > src/generate.pm
+				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/generate.pm $(PREFIX)/lib/
+				
+		# $PREFIX/contrib
+			# create_lconf-web-dn-mid.pl
+				cat src/create_lconf-web-dn-mid.pl.in | sed -e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" > src/create_lconf-web-dn-mid.pl
+				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/create_lconf-web-dn-mid.pl contrib/
+				
+			# lconf-slavesync
+				cat src/lconf-slavesync.in > src/lconf-slavesync
+				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/lconf-slavesync contrib/
+				
+			# lconf_deploy.sh
+				cat src/lconf_deploy.sh.in > src/lconf_deploy.sh
+				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/lconf_deploy.sh contrib/
+				
+		# LDAP schema and base.ldif
+			# netways.schema
+				cat src/netways.schema.in | sed -e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" > src/netways.schema
+				
+			# netways.schema.ldif
+				cat src/netways.schema.ldif.in | sed -e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" > src/netways.schema.ldif
+				
+			# base.ldif
+				cat src/base.ldif.in | sed -e "s/@LDAP_DN@/$(LDAP_DN)/g" > src/base.ldif.1
+				cat src/base.ldif.1 | sed -e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" > src/base.ldif
+				
+		# FINISHING OUTPUT
+		@echo ""
+		@echo ""
+		@echo " * * * LConf $(VERSION) - finish the installation * * *"
+		@echo ""
+		@echo "You have configured LConf with the "$(LDAP_CONFIG_STYLE)" ldap configuration."
+		@echo ""
+		@echo "To finish the installation you have to:"
+		@echo ""
+		@echo "    1) add the LConf schema to your ldap server"
+		@echo "    3) restart your ldap server"
+		@echo "    2) add the base ldif file to your ldap tree"
+		@echo ""
+		@echo "So... what's to do?"
+		@echo ""
+		@echo "    1) "$(LDAP_ADD_SCHEMA)
+		@echo "    2) /etc/init.d/slapd restart"
+		@echo "    3) ldapadd -h "$(LDAP_SERVER)" -x -D \""$(LDAP_BIND_DN)"\" -W -f src/base.ldif"
+		@echo ""
+			
+clean:
+	cd $(EXEC_DIR)
+	rm -f Makefile config.log config.status
+	rm -f src/LConfExport.pl src/LConfExport.pl.[0-9]
+	rm -f src/LConfImport.pl src/LConfImport.pl.[0-9]
+	rm -f src/LConfSlaveExport.pl src/LConfSlaveExport.pl.[0-9]
+	rm -f src/LConfSlaveSync.pl src/LConfSlaveSync.pl.[0-9]
+	rm -f src/config.pm src/config.pm.[0-9]
+	rm -f src/misc.pm src/misc.pm.[0-9]
+	rm -f src/ldap.pm src/ldap.pm.[0-9]
+	rm -f src/generate.pm src/generate.pm.[0-9]
+	rm -f src/create_lconf-web-dn-mid.pl
+	rm -f src/lconf-slavesync
+	rm -f src/lconf_deploy.sh
+	rm -f src/netways.schema
+	rm -f src/netways.schema.ldif
+	rm -f src/base.ldif src/base.ldif.[0-9]
+	rm -f src/default-templates.cfg src/default-templates.cfg.[0-9]

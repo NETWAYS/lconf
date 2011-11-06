@@ -1,0 +1,42 @@
+# IcingaConfig, LConf, netways.org
+dn: ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+objectClass: lconfStructuralObject
+ou: IcingaConfig
+
+# layer1, IcingaConfig, LConf, netways.org
+dn: ou=layer1,ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+objectClass: lconfStructuralObject
+ou: layer1
+lconfHostContacts: contact-will-be-overwritten-host
+lconfServiceContacts: contact-will-be-overwritten-service
+
+# layer2, layer1, IcingaConfig, LConf, netways.org
+dn: ou=layer2,ou=layer1,ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+objectClass: lconfStructuralObject
+ou: layer2
+
+# layer3, layer2, layer1, IcingaConfig, LConf, netways.org
+dn: ou=layer3,ou=layer2,ou=layer1,ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+objectClass: lconfStructuralObject
+ou: layer3
+
+# testhost, layer3, layer2, layer1, IcingaConfig, LConf, netways.org
+dn: cn=testhost,ou=layer3,ou=layer2,ou=layer1,ou=IcingaConfig,ou=LConf,dc=netw
+ ays,dc=org
+lconfAddress: 127.0.0.1
+objectClass: lconfHost
+objectClass: lconfTemplateHost
+objectClass: top
+cn: testhost
+lconfHostContacts: test-contact-host
+
+# testservice, testhost, layer3, layer2, layer1, IcingaConfig, LConf, netways
+ .org
+dn: cn=testservice,cn=testhost,ou=layer3,ou=layer2,ou=layer1,ou=IcingaConfig,o
+ u=LConf,dc=netways,dc=org
+lconfCheckcommand: testcommand
+objectClass: lconfService
+objectClass: lconfTemplateService
+objectClass: top
+cn: testservice
+lconfServiceContacts: test-contact-service
