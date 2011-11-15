@@ -226,7 +226,8 @@ sub genHostgroups {
 
 		print FH "define hostgroup {\n";
 		print FH "\thostgroup_name\t$result->{$val1}->{cn}\n";
-		print FH "\talias\t$result->{$val1}->{lconfalias}\n";
+		print FH "\talias\t$result->{$val1}->{$cfg->{ldap}->{prefix}.'alias'}\n";
+		print FH "\thostgroup_members\t$result->{$val1}->{$cfg->{ldap}->{prefix}.'hostgroupmembers'}\n" if defined $result->{$val1}->{$cfg->{ldap}->{prefix}.'hostgroupmembers'};
 		print FH "}\n";
 
 		# close target file

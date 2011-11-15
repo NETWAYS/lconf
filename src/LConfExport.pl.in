@@ -100,6 +100,7 @@ use Getopt::Long qw(:config no_ignore_case bundling);
 use Pod::Usage;
 use Net::LDAP;
 use Data::Dumper;
+use Fcntl qw(:flock);
 use etc::config;
 use lib::ldap;
 use lib::generate;
@@ -154,14 +155,15 @@ LeaveScript(2, "Variable '\$cfg->{export}->{user}' not set in config.pm'")		if !
 LeaveScript(2, "You're not user '$cfg->{export}->{user}'!") if $ENV{USER} ne $cfg->{export}->{user};
 
 # export already running?
-LeaveScript(2, "LConfExport locked! Anyone is already using it!") if -f $cfg->{export}->{lock};
+open(LOCK, ">$cfg->{export}->{lock}") or LeaveScript(2, "Cannot open $cfg->{export}->{lock}");
+flock(LOCK, LOCK_EX|LOCK_NB) or LeaveScript(2, "LConfExport locked! Someone is already using it!");
 
 # check output dir
 LeaveScript('2', "'$opt->{outputDir}' is not a directory") if !-d $opt->{outputDir};
 LeaveScript('2', "'$opt->{outputDir}' is not writeable")   if !-w $opt->{outputDir};
 
 # lock exporter
-open (FH, ">$cfg->{export}->{lock}"); close(FH);
+#open (FH, ">$cfg->{export}->{lock}"); close(FH);
 
 # clean old output dir
 DebugOutput("start - removing content of $opt->{outputDir}");

@@ -144,17 +144,6 @@ our $exit; $exit->{code} = 0; $exit->{message} = 'No errors';
 LeaveScript(2, "Variable '\$cfg->{ldap}->{server}' not set in config.pm'") if !$cfg->{ldap}->{server};
 LeaveScript(2, "Variable '\$cfg->{ldap}->{dn} not set in config.pm'")      if !$cfg->{ldap}->{dn};
 
-# ask user after BindDN and BindPW
-print "Please provide your LDAP user/pass to 'LConfImport.pl'\n";
-print "The import will need it to add config to ldap.\n\n";
-print "LDAP BindDN (eg. 'cn=admin,dc=netways,dc=org'): ";
-chop($cfg->{ldap}->{bindDN}=<STDIN>);
-print "LDAP BindPW: ";
-system('stty','-echo');
-chop($cfg->{ldap}->{bindPW}=<STDIN>);
-system('stty','echo');
-print "\n\n";
-
 # set up dn's
 $cfg->{ldap}->{importDN} = 'ou=Import,'.$cfg->{ldap}->{dn};                                # import DN
 $cfg->{ldap}->{workDN}   = 'ou='.$cfg->{export}->{startingpoint}.',ou=LConf,'.$cfg->{ldap}->{dn};   # work DN (where the config lives)

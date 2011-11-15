@@ -5,7 +5,11 @@ sub LeaveScript {
 	my $comment  = $_[1];
 	
 	# unlock exporter
-	unlink($cfg->{export}->{lock});
+	if (defined(fileno(LOCK))) {
+		# only remove the lockfile if we have an exclusive lock
+		unlink($cfg->{export}->{lock}) if flock(LOCK, LOCK_EX|LOCK_NB);
+		close(LOCK);
+	}
 
 	print $state[$exitCode]." - $comment\n";
 	exit $exitCode;
@@ -71,9 +75,16 @@ sub createDirs {
 sub checkRemoteDir {
 	my $host = shift;
 	my $remoteDir = shift;
-
-	beVerbose('CHECK', "login and dir on '$host'");
-	my $cmd = "ssh -o PasswordAuthentication=no "; $cmd .= $host ." \"ls -d $remoteDir\" 2>/dev/null";
+	my $port = shift;
+	my $cmd;
+	
+	if (defined $port) {
+		beVerbose('CHECK', "login and dir on '$host' via SSH port $port");
+		$cmd = "ssh -p $port -o PasswordAuthentication=no "; $cmd .= $host ." \"ls -d $remoteDir\" 2>/dev/null";
+	} else {
+		beVerbose('CHECK', "login and dir on '$host'");
+		$cmd = "ssh -o PasswordAuthentication=no "; $cmd .= $host ." \"ls -d $remoteDir\" 2>/dev/null";
+	}
 	my $val = system($cmd);
     
 	if ($val != 0) {
@@ -92,9 +103,15 @@ sub checkRemoteDir {
 sub checkRemoteFile {
 	my $host = shift;
 	my $remoteFile = shift;
+	my $port = shift;
 	
-	beVerbose('CHECK', "login and file on '$host'");
-	my $cmd = "ssh -o PasswordAuthentication=no "; $cmd .= $host ." \"ls -f $remoteFile\" 2>/dev/null";
+	if (defined $port) {
+		beVerbose('CHECK', "login and file on '$host' via SSH port $port");
+		my $cmd = "ssh -p $port -o PasswordAuthentication=no "; $cmd .= $host ." \"ls -f $remoteFile\" 2>/dev/null";
+	} else {
+		beVerbose('CHECK', "login and file on '$host'");
+		my $cmd = "ssh -o PasswordAuthentication=no "; $cmd .= $host ." \"ls -f $remoteFile\" 2>/dev/null";
+	}
 	my $val = system($cmd);
 	
 	if ($val != 0) {

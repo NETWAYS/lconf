@@ -53,6 +53,7 @@ LConfSlaveExport.pl - export an Nagios / Icinga config from LConf to a slave clu
 =head1 SYNOPSIS
 
 LConfSlaveExport.pl  -H <name of slave server>
+                     -p <port>
                      -t <path to config on slave host>
                      -v
                      -h
@@ -67,6 +68,10 @@ Export an Nagios / Icinga config from LConf to a slave cluster
 =item -H|--host <name of slave server>
 
 Export config to this server
+
+=item -p|--port <port>
+
+Connect to target host via port <port>
 
 =item -t|--target <path to config on slave host>
 
@@ -109,6 +114,7 @@ our @state = ('OK', 'WARNING', 'ERROR');
 our $opt;
 GetOptions(
 	"H|host=s"			=> \$opt->{host},
+	"p|port=s"			=> \$opt->{port},
 	"t|target=s"		=> \$opt->{target},
 	"v|verbose:s"		=> \$opt->{verbose},
 	"h|help"			=> \$opt->{help},
@@ -269,16 +275,27 @@ foreach my $host (@hosts) {
 	#
 
 	# remote dir exists?
-	checkRemoteDir($opt->{host}, $opt->{target});
+	checkRemoteDir($opt->{host}, $opt->{target}, $opt->{port});
 
-	# copy config to client		
-	beVerbose("COPY", "rsync -zai -e ssh --stats --checksum --omit-dir-times --delay-updates --delete-after $opt->{outputDir}/* $opt->{host}:$opt->{target}");
-	qx(rsync -zai -e ssh --stats --checksum --omit-dir-times --delay-updates --delete-after $opt->{outputDir}/* $opt->{host}:$opt->{target});
+	# copy config to client
+	my $cmd;
+	if (defined $opt->{port}) {
+		$cmd = "rsync -zai -e 'ssh -p $opt->{port}' --stats --checksum --omit-dir-times --delay-updates --delete-after $opt->{outputDir}/* $opt->{host}:$opt->{target}";
+	} else {
+		$cmd = "rsync -zai -e ssh --stats --checksum --omit-dir-times --delay-updates --delete-after $opt->{outputDir}/* $opt->{host}:$opt->{target}";
+	}
+	beVerbose("COPY", $cmd);
+	qx($cmd);
 	
 	# reload Nagios / Icinga on slave
-	#beVerbose("RELOAD", "ssh $optHost '/etc/init.d/icinga reload'");
-	#my $result = qx(ssh $optHost '/etc/init.d/icinga reload');
-	#print $result;
+	if (defined $opt->{port}) {
+		$cmd = "ssh -p $opt->{port} $opt->{host} '/etc/init.d/icinga reload'";
+	} else {
+		$cmd = "ssh $opt->{host} '/etc/init.d/icinga reload'";
+	}
+	beVerbose("RELOAD", $cmd);
+	my $result = qx($cmd);
+	print $result;
 }
 
 # exit
