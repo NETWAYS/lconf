@@ -22,7 +22,7 @@ LDAP_CONFIG_STYLE=@ldap_config_style@
 
 ifeq ($(LDAP_CONFIG_STYLE),old)
 	LDAP_CONFIG_STYLE="old (with slapd.conf)"
-	LDAP_ADD_SCHEMA="cp src/netways.schema /path/to/your/ldap/schema/\n\n       and include the following line into your slapd.conf:\n       include /path/to/your/ldap/schema/netways.schema\n"
+	LDAP_ADD_SCHEMA="cp src/netways.schema /path/to/your/ldap/schema/ and include the following line into your slapd.conf: include /path/to/your/ldap/schema/netways.schema"
 else
 	LDAP_CONFIG_STYLE="new (with cn=config)"
 	LDAP_ADD_SCHEMA="ldapadd -Y EXTERNAL -H ldapi:/// -f src/netways.schema.ldif"
