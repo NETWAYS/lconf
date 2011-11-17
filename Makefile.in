@@ -136,6 +136,11 @@ install:
 				cat src/lconf_deploy.sh.in > src/lconf_deploy.sh
 				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/lconf_deploy.sh contrib/
 				
+		# $PREFIX/dev/test
+			# test.pl
+				cat src/test.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" > src/test.pl
+				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/test.pl dev/test/
+				
 		# LDAP schema and base.ldif
 			# netways.schema
 				cat src/netways.schema.in | sed -e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" > src/netways.schema
@@ -185,3 +190,4 @@ clean:
 	rm -f src/netways.schema.ldif
 	rm -f src/base.ldif src/base.ldif.[0-9]
 	rm -f src/default-templates.cfg src/default-templates.cfg.[0-9]
+	rm -f src/test.pl src/test.pl.[0-9]
