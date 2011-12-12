@@ -1,6 +1,6 @@
 # info and default prefix
 AC_INIT(LConf, 1.2, support@netways.de)
-AC_PREFIX_DEFAULT(/tmp/LConf-1.2-install-test)
+AC_PREFIX_DEFAULT(/usr/local/LConf)
 
 
 # set special stuff

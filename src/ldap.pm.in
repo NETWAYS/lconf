@@ -65,6 +65,8 @@ sub LDAPsearch {
 				} elsif ($attrName eq "$cfg->{ldap}->{prefix}timeperiodvalue") {
 					@$attrVal[$counter] =~ m/(.*) +([-\w:]+(\,?)+[-\w:]+)/;
 					$return->{$_}->{$attrName}->{$counter}->{$1} = $2;
+				} elsif ($attrName eq "description") {
+					$return->{$_}->{$attrName}->{@$attrVal[$counter]} = @$attrVal[$counter];
 				} else {
 					$return->{$_}->{$attrName} = @$attrVal[$counter];
 				}
@@ -107,19 +109,22 @@ sub addHostAttributes {
 									$CLIENTS->{$host.",".$cfg->{ldap}->{baseDN}}->{$val2} = $result->{$val1}->{$val2};
 								}
 							}
-					} else {
-						if ($val2 =~ /$cfg->{ldap}->{prefix}hostcustomvar/) {
-							foreach(keys %{$result->{$val1}->{$val2}}) {
-								$CLIENTS->{$host.",".$cfg->{ldap}->{baseDN}}->{"$cfg->{ldap}->{prefix}hostcustomvar"}->{$_} = $result->{$val1}->{$val2}->{$_};
-								$INHERIT->{$host.",".$cfg->{ldap}->{baseDN}}->{"$cfg->{ldap}->{prefix}hostcustomvar"}->{$_} = $result->{$val1}->{dn};
-							}
-						} elsif ($val2 eq 'description') {
-							# only save description, if it's a internal LConf command
-							$CLIENTS->{$host.",".$cfg->{ldap}->{baseDN}}->{'description'}->{$result->{$val1}->{$val2}} = $result->{$val1}->{$val2} if $result->{$val1}->{$val2} =~ /^LCONF->/;
 						} else {
-							$CLIENTS->{$host.",".$cfg->{ldap}->{baseDN}}->{$val2} = $result->{$val1}->{$val2};
-							$INHERIT->{$host.",".$cfg->{ldap}->{baseDN}}->{$val2} = $result->{$val1}->{dn};
-						}
+							if ($val2 =~ /$cfg->{ldap}->{prefix}hostcustomvar/) {
+								foreach(keys %{$result->{$val1}->{$val2}}) {
+									$CLIENTS->{$host.",".$cfg->{ldap}->{baseDN}}->{"$cfg->{ldap}->{prefix}hostcustomvar"}->{$_} = $result->{$val1}->{$val2}->{$_};
+									$INHERIT->{$host.",".$cfg->{ldap}->{baseDN}}->{"$cfg->{ldap}->{prefix}hostcustomvar"}->{$_} = $result->{$val1}->{dn};
+								}
+							} elsif ($val2 eq 'description') {
+								# only save description, if it's a internal LConf command
+								# ...and save multiple description values
+								foreach my $description (keys %{$result->{$val1}->{$val2} if $result->{$val1}->{$val2}}) {
+									$CLIENTS->{$host.",".$cfg->{ldap}->{baseDN}}->{'description'}->{$description} = $description;
+								}
+							} else {
+								$CLIENTS->{$host.",".$cfg->{ldap}->{baseDN}}->{$val2} = $result->{$val1}->{$val2};
+								$INHERIT->{$host.",".$cfg->{ldap}->{baseDN}}->{$val2} = $result->{$val1}->{dn};
+							}
 					}
 				} else {
 					DebugOutput("Attribute $val2 [$result->{$val1}->{$val2}] found in $val1; valency: no hostattribute => drop!");
@@ -238,7 +243,10 @@ sub addServiceAttributes {
 						}
 					} elsif ($val2 eq 'description') {
 						# only save description, if it's a internal LConf command
-                		$CLIENTS->{$host.",".$cfg->{ldap}->{baseDN}}->{SERVICES}->{$service}->{description}->{$result->{$val1}->{$val2}} = $result->{$val1}->{$val2} if $result->{$val1}->{$val2} =~ /^LCONF->/;
+						# ...and save multiple description values
+						foreach my $description (keys %{$result->{$val1}->{$val2} if $result->{$val1}->{$val2}}) {
+							$CLIENTS->{$host.",".$cfg->{ldap}->{baseDN}}->{SERVICES}->{$service}->{description}->{$description} = $description;
+						}
 					} else {
 						$CLIENTS->{$host.",".$cfg->{ldap}->{baseDN}}->{SERVICES}->{$service}->{$val2} = $result->{$val1}->{$val2};
 						$INHERIT->{$host.",".$cfg->{ldap}->{baseDN}}->{SERVICES}->{$service}->{$val2} = $result->{$val1}->{dn};
