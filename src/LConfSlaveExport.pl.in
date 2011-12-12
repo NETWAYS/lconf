@@ -213,7 +213,7 @@ foreach my $host (@hosts) {
 			foreach my $desc (keys %{$CLIENTS->{$client}->{description}}) {
 				# modify hostattribute if LCONF->EXPORT->MODIFY->HOST is set
 				if ($desc =~ /^LCONF->EXPORT->MODIFY->HOST/) {
-					$desc =~ m/^LCONF->EXPORT->MODIFY->HOST\s+(.*)\s+(.*)/;
+					$desc =~ m/^LCONF->EXPORT->MODIFY->HOST\s+([a-zA-Z]+)\s+(.*)/;
 					$CLIENTS->{$client}->{$1} = $2;
 				}
 
@@ -227,7 +227,7 @@ foreach my $host (@hosts) {
 				foreach my $desc (keys %{$CLIENTS->{$client}->{SERVICES}->{$service}->{description}}) {
 					# modify serviceattribute if LCONF->EXPORT->MODIFY->HOST is set
 					if ($desc =~ /^LCONF->EXPORT->MODIFY->SERVICE/) {
-						$desc =~ m/^LCONF->EXPORT->MODIFY->SERVICE\s+(.*)\s+(.*)/;
+						$desc =~ m/^LCONF->EXPORT->MODIFY->SERVICE\s+([a-zA-Z]+)\s+(.*)/;
 						$CLIENTS->{$client}->{SERVICES}->{$service}->{$1} = $2;
 					}
 
