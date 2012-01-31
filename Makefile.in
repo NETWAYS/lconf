@@ -65,15 +65,15 @@ install:
 	fi
 	
 	# create prefix dir
-	if [ ! -d $(PREFIX) ]; then install -d -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 755 $(PREFIX); fi
+	if [ ! -d ${DESTDIR}$(PREFIX) ]; then install -d -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 755 ${DESTDIR}$(PREFIX); fi
 	# create lib dir
-	if [ ! -d $(PREFIX)/lib ]; then install -d -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 755 $(PREFIX)/lib; fi
+	if [ ! -d ${DESTDIR}$(PREFIX)/lib ]; then install -d -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 755 ${DESTDIR}$(PREFIX)/lib; fi
 	# create etc dir
-	if [ ! -d $(PREFIX)/etc ]; then install -d -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 755 $(PREFIX)/etc; fi
+	if [ ! -d ${DESTDIR}$(PREFIX)/etc ]; then install -d -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 755 ${DESTDIR}$(PREFIX)/etc; fi
 	# create var dir
-	if [ ! -d $(PREFIX)/var ]; then install -d -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 755 $(PREFIX)/var; fi
+	if [ ! -d ${DESTDIR}$(PREFIX)/var ]; then install -d -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 755 ${DESTDIR}$(PREFIX)/var; fi
 	# create tmp dir
-	if [ ! -d $(PREFIX)/tmp ]; then install -d -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 755 $(PREFIX)/tmp; fi
+	if [ ! -d ${DESTDIR}$(PREFIX)/tmp ]; then install -d -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 755 ${DESTDIR}$(PREFIX)/tmp; fi
 	# create contrib dir
 	if [ ! -d contrib ]; then install -d -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 755 contrib; fi
 	
@@ -81,19 +81,19 @@ install:
 		# $PREFIX
 			# LConfExport.pl
 				cat src/LConfExport.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" > src/LConfExport.pl
-				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/LConfExport.pl $(PREFIX)/
+				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/LConfExport.pl ${DESTDIR}$(PREFIX)/
 			
 			# LConfImport.pl
 				cat src/LConfImport.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" > src/LConfImport.pl
-				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/LConfImport.pl $(PREFIX)/
+				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/LConfImport.pl ${DESTDIR}$(PREFIX)/
 			
 			# LConfSlaveExport.pl
 				cat src/LConfSlaveExport.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" > src/LConfSlaveExport.pl
-				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/LConfSlaveExport.pl $(PREFIX)/
+				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/LConfSlaveExport.pl ${DESTDIR}$(PREFIX)/
 			
 			# LConfSlaveSync.pl
 				cat src/LConfSlaveSync.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" > src/LConfSlaveSync.pl
-				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/LConfSlaveSync.pl $(PREFIX)/
+				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/LConfSlaveSync.pl ${DESTDIR}$(PREFIX)/
 				
 		# $PREFIX/etc
 			# config.pm
@@ -104,24 +104,24 @@ install:
 				cat src/config.pm.4 | sed -e "s/@LDAP_BIND_PASSWORD@/$(LDAP_BIND_PASSWORD)/g" > src/config.pm.5
 				cat src/config.pm.5 | sed -e "s/@LCONF_CLI_USER@/$(LCONF_CLI_USER)/g" > src/config.pm.6
 				cat src/config.pm.6 | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" > src/config.pm
-				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/config.pm $(PREFIX)/etc/
+				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/config.pm ${DESTDIR}$(PREFIX)/etc/
 				
 			# default-templates.cfg.in
 				cat src/default-templates.cfg.in > src/default-templates.cfg
-				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/default-templates.cfg $(PREFIX)/etc/
+				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/default-templates.cfg ${DESTDIR}$(PREFIX)/etc/
 			
 		# $PREFIX/lib
 			# misc.pm
 				cat src/misc.pm.in > src/misc.pm
-				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/misc.pm $(PREFIX)/lib/
+				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/misc.pm ${DESTDIR}$(PREFIX)/lib/
 			
 			# ldap.pm
 				cat src/ldap.pm.in > src/ldap.pm
-				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/ldap.pm $(PREFIX)/lib/
+				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/ldap.pm ${DESTDIR}$(PREFIX)/lib/
 			
 			# generate.pm
 				cat src/generate.pm.in > src/generate.pm
-				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/generate.pm $(PREFIX)/lib/
+				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/generate.pm ${DESTDIR}$(PREFIX)/lib/
 				
 		# $PREFIX/contrib
 			# create_lconf-web-dn-mid.pl
