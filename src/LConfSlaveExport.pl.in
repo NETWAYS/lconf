@@ -202,7 +202,7 @@ foreach my $host (@hosts) {
 	# delete useless items from $CLIENTS
 	foreach my $client (keys %{$CLIENTS}) {
 		my $delete = 1;
-		foreach(@export) { if ($client =~ /,$_/) { $delete = 0; } }
+		foreach(@export) { if ($client =~ /$_/) { $delete = 0; } }
 		delete $CLIENTS->{$client} if $delete == 1;
 	}
 
