@@ -177,7 +177,7 @@ sub TreeBuilder {
 						$forward{'HOSTDEPENDENCY'}{$CONFIG->{$searchDN}->{"$cfg->{ldap}->{prefix}hostdependency"}}->{$val1} = $CONFIG->{$searchDN}->{$val1};
 					}
 				} elsif ($val1 =~ /$cfg->{ldap}->{prefix}servicedependency/) {
-					if(defined $CONFIG->{$service}->{"$cfg->{ldap}->{prefix}servicedependency"}) {
+					if(defined $CONFIG->{$searchDN}->{"$cfg->{ldap}->{prefix}servicedependency"}) {
 						$forward{'SERVICEDEPENDENCY'}{$CONFIG->{$searchDN}->{"$cfg->{ldap}->{prefix}servicedependency"}}->{$val1} = $CONFIG->{$searchDN}->{$val1};
 					}
 				} else {
