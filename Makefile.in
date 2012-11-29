@@ -67,15 +67,15 @@ all:
 			# generate.pm
 			cat src/generate.pm.in > src/generate.pm
 
-		# $PREFIX/contrib
+		# local/contrib
 			# create_lconf-web-dn-mid.pl
-			cat src/create_lconf-web-dn-mid.pl.in | sed -e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" > src/create_lconf-web-dn-mid.pl
+			cat contrib/create_lconf-web-dn-mid.pl.in | sed -e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" > contrib/create_lconf-web-dn-mid.pl
 					
 			# lconf-slavesync
-			cat src/lconf-slavesync.in > src/lconf-slavesync
+			cat contrib/lconf-slavesync.in > contrib/lconf-slavesync
 					
 			# lconf_deploy.sh
-			cat src/lconf_deploy.sh.in > src/lconf_deploy.sh
+			cat contrib/lconf_deploy.sh.in > contrib/lconf_deploy.sh
 			
 		# LDAP schema and base.ldif
 			# netways.schema
@@ -128,8 +128,6 @@ install:
 	if [ ! -d ${DESTDIR}$(PREFIX)/var ]; then install -d -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 755 ${DESTDIR}$(PREFIX)/var; fi
 	# create tmp dir
 	if [ ! -d ${DESTDIR}$(PREFIX)/tmp ]; then install -d -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 755 ${DESTDIR}$(PREFIX)/tmp; fi
-	# create contrib dir
-	if [ ! -d contrib ]; then install -d -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 755 contrib; fi
 	
 	# install files
 			# LConfExport.pl
@@ -159,15 +157,6 @@ install:
 			# generate.pm
 			install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/generate.pm ${DESTDIR}$(PREFIX)/lib/
 				
-			# create_lconf-web-dn-mid.pl
-			install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/create_lconf-web-dn-mid.pl contrib/
-				
-			# lconf-slavesync
-			install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/lconf-slavesync contrib/
-				
-			# lconf_deploy.sh
-			install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/lconf_deploy.sh contrib/
-						
 		# FINISHING OUTPUT
 		@echo ""
 		@echo ""
