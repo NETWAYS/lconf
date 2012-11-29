@@ -2,7 +2,7 @@
 
 # COPYRIGHT:
 #
-# This software is Copyright (c) 2011 NETWAYS GmbH
+# This software is Copyright (c) 2010 - 2012 NETWAYS GmbH
 #                                <support@netways.de>
 #
 # (Except where explicitly superseded by other copyright notices)
@@ -91,24 +91,27 @@ print plugin version
 
 =cut
 
-# set libs
-use lib '@PREFIX@';
-
-# includes
+# basic perl includes
 use strict;
 use Getopt::Long qw(:config no_ignore_case bundling);
 use Pod::Usage;
+use File::Basename;
 use Net::LDAP;
+
+# set lib path
+use lib dirname(__FILE__);
+
+# lconf includes
 use etc::config;
 use lib::ldap;
 use lib::generate;
 use lib::misc;
 
 # version string
-my $version = '1.2';
+my $version = '1.3rc';
 
 # define states
-our @state = ('OK', 'WARNING', 'ERROR');
+our @state = ('OK', 'WARNING', 'ERROR', 'UNKNOWN');
 
 # get command-line parameters
 our $opt;
@@ -118,7 +121,7 @@ GetOptions(
 	"t|target=s"		=> \$opt->{target},
 	"v|verbose:s"		=> \$opt->{verbose},
 	"h|help"			=> \$opt->{help},
-	"V|version"			=> \$opt->{version}
+	"V|version"		=> \$opt->{version}
 );
 
 
@@ -140,6 +143,7 @@ if ($opt->{help} || !$opt->{target}) { pod2usage(1); }
 # define vars
 use vars qw($cfg);
 $cfg->{ldap}->{baseDN} = 'ou='.$cfg->{export}->{startingpoint}.',ou=LConf,'.$cfg->{ldap}->{dn};
+$cfg->{ldap}->{rootDN} = 'ou=LConf,'.$cfg->{ldap}->{dn};
 our $CLIENTS;
 my @export;
 my @hosts;
@@ -155,7 +159,7 @@ LeaveScript(2, "Variable '\$cfg->{export}->{user}' not set in config.pm'") if !$
 LeaveScript(2, "You're not user '$cfg->{export}->{user}'!") if $ENV{USER} ne $cfg->{export}->{user};
 
 # hashdump exists?
-LeaveScript(2, "Hashdump from LConfExport.pl does not exist!") if !-f $cfg->{epxort}->{hashdump};
+LeaveScript(2, "Hashdump from LConfExport.pl does not exist!") if !-f $cfg->{export}->{hashdump};
 
 #
 # NOW, WE'RE READY TO RUN :)
@@ -163,12 +167,17 @@ LeaveScript(2, "Hashdump from LConfExport.pl does not exist!") if !-f $cfg->{epx
 
 # import hashdump
 my $data; my $VAR1;
-open FILE, "<$cfg->{epxort}->{hashdump}" or die $!; while(<FILE>) { $data .= $_; } close FILE;
+open FILE, "<$cfg->{export}->{hashdump}" or die $!; while(<FILE>) { $data .= $_; } close FILE;
 eval($data);
 $CLIENTS = $VAR1;
 
 # connect to LDAP server
-our $ldap = LDAPconnect();
+our $ldap;
+if ($cfg->{ldap}->{binddn} && $cfg->{ldap}->{bindpw}) {
+	$ldap = LDAPconnect('auth');	
+} else {
+	$ldap = LDAPconnect();
+}
 
 # define target hosts / host is set?
 if (!defined $opt->{host}) {
@@ -182,6 +191,9 @@ if (!defined $opt->{host}) {
 } else {
 	push(@hosts, $opt->{host});
 }
+
+# get the whole config from ldap
+my $CONFIG = LDAPsearch($ldap, $cfg->{ldap}->{rootDN}, "sub", "objectclass=*");
 
 # proceed config for each host
 foreach my $host (@hosts) {
@@ -237,11 +249,11 @@ foreach my $host (@hosts) {
 			}
 		}
 	}
-
+	
 	# create tmp target
-	$opt->{outputDir} = $cfg->{epxort}->{tmpdir}.'/'.$opt->{host}.'/';
+	$opt->{outputDir} = $cfg->{export}->{tmpdir}.'/'.$opt->{host}.'/';
 	mkdir("$opt->{outputDir}") if !-d $opt->{outputDir};
-
+	
 	# clean tmp target
 	qx(rm -r $opt->{outputDir}/*) if -f "$opt->{outputDir}/lconf.identify";
 
@@ -250,22 +262,21 @@ foreach my $host (@hosts) {
 	
 	 # copy defaults localy
  	beVerbose("LOCAL COPY", "cp @PREFIX@/etc/default-templates.cfg $opt->{outputDir}/");
- 	qx(cp @PREFIX@/etc/default-templates.cfg $opt->{outputDir}/);
+ 	qx(cp /opt/LConf/current/etc/default-templates.cfg $opt->{outputDir}/);
 
 	# create dirs and write config
 	createDirs($cfg->{ldap}->{baseDN}, $opt->{outputDir});
 	mkdir("$opt->{outputDir}/hostgroups/");
 	mkdir("$opt->{outputDir}/servicegroups/");
 	foreach(@export) {
-		genTimeperiods($_);
-		genCommands($_);
-		genContacts($_);
-		genContactgroups($_);
-		genHostgroups($_);
-		HostgroupServiceMapping($_);
-		genServicegroups($_);
+		genTimeperiods($CONFIG, $_);
+		genCommands($CONFIG, $_);
+		genContacts($CONFIG, $_);
+		genContactgroups($CONFIG, $_);
+		genHostgroups($CONFIG, $CLIENTS, $_);
+		genServicegroups($CONFIG, $CLIENTS, $_);
 	}
-	genHostConfig();
+	genHostConfig($CLIENTS);
 
 	# disconnect from LDAP Server
 	$ldap->unbind();
@@ -293,9 +304,9 @@ foreach my $host (@hosts) {
 	} else {
 		$cmd = "ssh $opt->{host} '/etc/init.d/icinga reload'";
 	}
-	beVerbose("RELOAD", $cmd);
-	my $result = qx($cmd);
-	print $result;
+	#beVerbose("RELOAD", $cmd);
+	#my $result = qx($cmd);
+	#print $result;
 }
 
 # exit

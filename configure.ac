@@ -1,5 +1,5 @@
 # info and default prefix
-AC_INIT(LConf, 1.2, support@netways.de)
+AC_INIT(LConf, 1.3rc, support@netways.de)
 AC_PREFIX_DEFAULT(/usr/local/LConf)
 
 

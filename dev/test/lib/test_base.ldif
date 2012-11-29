@@ -1,0 +1,195 @@
+# IcingaConfig, LConf, netways.org
+dn: ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+ou: IcingaConfig
+objectClass: lconfStructuralObject
+
+# Templates, LConf, netways.org
+dn: ou=Templates,ou=LConf,dc=netways,dc=org
+ou: Templates
+objectClass: lconfStructuralObject
+
+# Examples, LConf, netways.org
+dn: ou=Examples,ou=LConf,dc=netways,dc=org
+ou: Examples
+objectClass: lconfStructuralObject
+
+# example-timeperiod, Examples, LConf, netways.org
+dn: cn=example-timeperiod,ou=Examples,ou=LConf,dc=netways,dc=org
+cn: example-timeperiod
+lconfAlias: 24 Hours A Day, 7 Days A Week
+description: 24x7
+lconfTimeperiodValue: sunday 00:00-24:00
+lconfTimeperiodValue: monday 00:00-24:00
+lconfTimeperiodValue: tuesday 00:00-24:00
+lconfTimeperiodValue: wednesday 00:00-24:00
+lconfTimeperiodValue: thursday 00:00-24:00
+lconfTimeperiodValue: friday 00:00-24:00
+lconfTimeperiodValue: saturday 00:00-24:00
+objectClass: lconfTimeperiod
+
+# example-command, Examples, LConf, netways.org
+dn: cn=example-command,ou=Examples,ou=LConf,dc=netways,dc=org
+cn: example-command
+lconfCommandline: $USER1$/check_users -w 50 -c 100
+objectClass: lconfCommand
+
+# example-contact, Examples, LConf, netways.org
+dn: cn=example-contact,ou=Examples,ou=LConf,dc=netways,dc=org
+cn: example-contact
+lconfAlias: example-contact
+lconfEmail: user@example.net
+lconfPager: +491701234567
+objectClass: lconfContact
+
+# example-contactgroup, Examples, LConf, netways.org
+dn: cn=example-contactgroup,ou=Examples,ou=LConf,dc=netways,dc=org
+cn: example-contactgroup
+lconfAlias: example-contactgroup
+lconfMembers: example-contact
+objectClass: lconfContactgroup
+
+# example-host, Examples, LConf, netways.org
+dn: cn=example-host,ou=Examples,ou=LConf,dc=netways,dc=org
+cn: example-host
+lconfAddress: 127.0.0.1
+lconfAlias: example-host
+objectClass: lconfHost
+
+# example-hostgroup, Examples, LConf, netways.org
+dn: cn=example-hostgroup,ou=Examples,ou=LConf,dc=netways,dc=org
+cn: example-hostgroup
+lconfAlias: example-hostgroup
+lconfMembers: example-host
+objectClass: lconfHostgroup
+
+# example-service, Examples, LConf, netways.org
+dn: cn=example-service,ou=Examples,ou=LConf,dc=netways,dc=org
+cn: example-service
+lconfCheckcommand: example-command
+objectClass: lconfService
+
+# example-structural-object, Examples, LConf, netways.org
+dn: ou=example-structural-object,ou=Examples,ou=LConf,dc=netways,dc=org
+ou: example-structural-object
+objectClass: lconfStructuralObject
+
+# example-alias, Examples, LConf, netways.org
+dn: ou=example-alias,ou=Examples,ou=LConf,dc=netways,dc=org
+objectClass: top
+objectClass: alias
+objectClass: extensibleObject
+ou: example-alias
+aliasedObjectName: ou=example-target
+
+# global, IcingaConfig, LConf, netways.org
+dn: ou=global,ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+ou: global
+objectClass: lconfStructuralObject
+
+# main, IcingaConfig, LConf, netways.org
+dn: ou=main,ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+ou: main
+objectClass: lconfStructuralObject
+
+# commands, global, IcingaConfig, LConf, netways.org
+dn: ou=commands,ou=global,ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+ou: commands
+objectClass: lconfStructuralObject
+
+# notifications, commands, global, IcingaConfig, LConf, netways.org
+dn: ou=notifications,ou=commands,ou=global,ou=IcingaConfig,ou=LConf,dc=netways
+ ,dc=org
+ou: notifications
+objectClass: lconfStructuralObject
+
+# notify-host-by-email, notifications, commands, global, IcingaConfig, LConf,
+  netways.org
+dn: cn=notify-host-by-email,ou=notifications,ou=commands,ou=global,ou=IcingaCo
+ nfig,ou=LConf,dc=netways,dc=org
+cn: notify-host-by-email
+lconfCommandline: /usr/bin/printf "%b" "***** Icinga *****\n\nNotification Typ
+ e: $NOTIFICATIONTYPE$\nHost: $HOSTNAME$\nState: $HOSTSTATE$\nAddress: $HOSTAD
+ DRESS$\nInfo: $HOSTOUTPUT$\n\nDate/Time: $LONGDATETIME$\n" | /usr/bin/mail -s
+  "** $NOTIFICATIONTYPE$ Host Alert: $HOSTNAME$ is $HOSTSTATE$ **" $CONTACTEMA
+ IL$
+objectClass: lconfCommand
+
+# notify-service-by-email, notifications, commands, global, IcingaConfig, LCo
+ nf, netways.org
+dn: cn=notify-service-by-email,ou=notifications,ou=commands,ou=global,ou=Icing
+ aConfig,ou=LConf,dc=netways,dc=org
+cn: notify-service-by-email
+lconfCommandline: /usr/bin/printf "%b" "***** Icinga *****\n\nNotification Typ
+ e: $NOTIFICATIONTYPE$\n\nService: $SERVICEDESC$\nHost: $HOSTALIAS$\nAddress: 
+ $HOSTADDRESS$\nState: $SERVICESTATE$\n\nDate/Time: $LONGDATETIME$\n\nAddition
+ al Info:\n\n$SERVICEOUTPUT$\n" | /usr/bin/mail -s "** $NOTIFICATIONTYPE$ Serv
+ ice Alert: $HOSTALIAS$/$SERVICEDESC$ is $SERVICESTATE$ **" $CONTACTEMAIL$
+objectClass: lconfCommand
+
+# check-host-alive, commands, global, IcingaConfig, LConf, netways.org
+dn: cn=check-host-alive,ou=commands,ou=global,ou=IcingaConfig,ou=LConf,dc=netw
+ ays,dc=org
+cn: check-host-alive
+lconfCommandline: $USER1$/check_ping -H $HOSTADDRESS$ -w 3000.0,80% -c 5000.0,
+ 100% -p 5
+objectClass: lconfCommand
+
+# check_ping, commands, global, IcingaConfig, LConf, netways.org
+dn: cn=check_ping,ou=commands,ou=global,ou=IcingaConfig,ou=LConf,dc=netways,dc
+ =org
+cn: check_ping
+lconfCommandline: $USER1$/check_ping -H $HOSTADDRESS$ -w $ARG1$ -c $ARG2$ -p 5
+objectClass: lconfCommand
+
+# contactgroups, global, IcingaConfig, LConf, netways.org
+dn: ou=contactgroups,ou=global,ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+ou: contactgroups
+objectClass: lconfStructuralObject
+
+# contacts, global, IcingaConfig, LConf, netways.org
+dn: ou=contacts,ou=global,ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+ou: contacts
+objectClass: lconfStructuralObject
+
+# icingaadmin, contacts, global, IcingaConfig, LConf, netways.org
+dn: cn=icingaadmin,ou=contacts,ou=global,ou=IcingaConfig,ou=LConf,dc=netways,d
+ c=org
+cn: icingaadmin
+lconfAlias: Icinga Admin
+lconfEmail: icinga@localhost
+objectClass: lconfContact
+
+# admins, contactgroups, global, IcingaConfig, LConf, netways.org
+dn: cn=admins,ou=contactgroups,ou=global,ou=IcingaConfig,ou=LConf,dc=netways,d
+ c=org
+cn: admins
+lconfAlias: Icinga Administrators
+lconfMembers: icingaadmin
+objectClass: lconfContactgroup
+
+# timeperiods, global, IcingaConfig, LConf, netways.org
+dn: ou=timeperiods,ou=global,ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+ou: timeperiods
+objectClass: lconfStructuralObject
+
+# 24x7, timeperiods, global, IcingaConfig, LConf, netways.org
+dn: cn=24x7,ou=timeperiods,ou=global,ou=IcingaConfig,ou=LConf,dc=netways,dc=or
+ g
+cn: 24x7
+lconfAlias: 24 Hours A Day, 7 Days A Week
+description: 24x7
+lconfTimeperiodValue: sunday 00:00-24:00
+lconfTimeperiodValue: monday 00:00-24:00
+lconfTimeperiodValue: tuesday 00:00-24:00
+lconfTimeperiodValue: wednesday 00:00-24:00
+lconfTimeperiodValue: thursday 00:00-24:00
+lconfTimeperiodValue: friday 00:00-24:00
+lconfTimeperiodValue: saturday 00:00-24:00
+objectClass: lconfTimeperiod
+
+# search result
+search: 2
+result: 0 Success
+
+# numResponses: 28
+# numEntries: 27

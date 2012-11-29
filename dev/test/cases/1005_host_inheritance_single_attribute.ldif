@@ -1,0 +1,13 @@
+# test-struct-1, main, IcingaConfig, LConf, netways.org
+dn: ou=test-struct-1,ou=main,ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+ou: test-struct-1
+objectClass: lconfStructuralObject
+lconfHostContacts: icingaadmin
+
+# example-host, test-struct-1, main, IcingaConfig, LConf, netways.org
+dn: cn=example-host,ou=test-struct-1,ou=main,ou=IcingaConfig,ou=LConf,dc=netwa
+ ys,dc=org
+cn: example-host
+lconfAddress: 127.0.0.1
+lconfAlias: example-host
+objectClass: lconfHost

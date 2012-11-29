@@ -1,0 +1,43 @@
+
+# kunden, main, IcingaConfig, LConf, netways.org
+dn: ou=kunden,ou=main,ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+ou: kunden
+objectClass: lconfStructuralObject
+
+# customer-1, kunden, main, IcingaConfig, LConf, netways.org
+dn: ou=customer-1,ou=kunden,ou=main,ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+ou: customer-1
+objectClass: lconfStructuralObject
+lconfServiceCustomvar: _CV1 value1
+lconfServiceContacts: icingaadmin
+
+# loadbalancer, customer-1, kunden, main, IcingaConfig, LConf, netways.org
+dn: ou=loadbalancer,ou=customer-1,ou=kunden,ou=main,ou=IcingaConfig,ou=LConf,dc=n
+ etways,dc=org
+ou: loadbalancer
+objectClass: lconfStructuralObject
+
+# example-host, loadbalancer, customer-1, kunden, main, IcingaConfig, LConf, netw
+ ays.org
+dn: cn=example-host,ou=loadbalancer,ou=customer-1,ou=kunden,ou=main,ou=IcingaConfi
+ g,ou=LConf,dc=netways,dc=org
+cn: example-host
+lconfAddress: 1.1.1.1
+lconfAlias: example-host
+objectClass: lconfHost
+
+# urgent issues - customer-1 only, example-host, loadbalancer, customer-1, kunden, m
+ ain, IcingaConfig, LConf, netways.org
+dn: ou=urgent issues - customer-1 only,cn=example-host,ou=loadbalancer,ou=customer-1,
+ ou=kunden,ou=main,ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+description: Notifications to customer-1-live
+ou: urgent issues - customer-1 only
+objectClass: lconfStructuralObject
+
+# urgent, urgent issues - customer-1 only, example-host, loadbalancer, customer-1, k
+ unden, main, IcingaConfig, LConf, netways.org
+dn: cn=example-service,ou=urgent issues - customer-1 only,cn=example-host,ou=loadbalancer,o
+ u=customer-1,ou=kunden,ou=main,ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+objectClass: lconfService
+cn: example-service
+lconfServiceCheckcommand: check_jk_status!0

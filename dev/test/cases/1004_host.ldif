@@ -1,0 +1,6 @@
+# example-host, main, IcingaConfig, LConf, netways.org
+dn: cn=example-host,ou=main,ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+cn: example-host
+lconfAddress: 127.0.0.1
+lconfAlias: example-host
+objectClass: lconfHost

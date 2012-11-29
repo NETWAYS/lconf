@@ -35,11 +35,12 @@ sub beVerbose {
 }
 
 sub DebugOutput {
+	my $type = shift;
 	my $text = shift;
 
 	if (defined $opt->{debug}) {
 		# generate message
-		my $message = localtime(time)." | Debug: $text\n";
+		my $message = localtime(time)." | Debug: $type: $text\n";
 
 		# should write log to file or STDOUT?
 		if ($opt->{debug} ne "") {
@@ -70,6 +71,37 @@ sub createDirs {
 
 		createDirs($_, $folder);
 	}
+}
+
+sub BuildFilepath {
+	my $filedn = shift;
+	my $filepath = shift;
+	$filepath .= '/';
+	
+	# build file path
+	my $path = $filedn;
+	$path =~ s/,$cfg->{ldap}->{baseDN}//;
+	my @path = split(",", $path);
+	@path = reverse(@path);
+	foreach my $items (@path) {
+		# file or folder?
+		if ($items =~ /cn=/) {
+			my $val = (split(/\=/, $items))[1];
+			$filepath .= $val.'.cfg';
+		} else {
+			my $val = (split(/\=/, $items))[1];
+			$filepath .= $val.'/';
+		}
+	}
+	
+	return $filepath;
+}
+
+sub copyGeneric {
+	my $source = shift;
+ 	my $target = shift;
+  
+ 	qx(cp $source $target/);
 }
 
 sub checkRemoteDir {
@@ -126,31 +158,5 @@ sub checkRemoteFile {
 	
 	return 'exists';
 }
-
-sub uniqueAttribute {
-	my $attribute = shift;
-	my $tmpHashref;
-	my $return;
-
-	# unique
-	my @elements = split(/\,/, $attribute);
-	foreach(@elements) { $tmpHashref->{$_} = $_; }
-	foreach(keys %{$tmpHashref}) { $return .= "$_,"; }
-
-	# delete leading and ending ,
-	$return =~ s/^,//;
-	$return =~ s/,$//;
-        
-	# return
-	return $return;
-}
-
-sub copyGeneric {
-	my $source = shift;
- 	my $target = shift;
-  
- 	qx(cp $source $target/);
- }
-
 
 1;

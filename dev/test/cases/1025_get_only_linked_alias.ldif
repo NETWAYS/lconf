@@ -1,0 +1,94 @@
+# extended LDIF
+#
+# LDAPv3
+# base <ou=LConf,dc=netways,dc=org> with scope subtree
+# filter: (objectclass=*)
+# requesting: ALL
+#
+
+# kunden, main, IcingaConfig, LConf, netways.org
+dn: ou=kunden,ou=main,ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+ou: kunden
+objectClass: lconfStructuralObject
+lconfHostContactgroups: +test
+
+# customer-1, kunden, main, IcingaConfig, LConf, netways.org
+dn: ou=customer-1,ou=kunden,ou=main,ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+ou: customer-1
+objectClass: lconfStructuralObject
+
+# server, customer-1, kunden, main, IcingaConfig, LConf, netways.org
+dn: ou=server,ou=customer-1,ou=kunden,ou=main,ou=IcingaConfig,ou=LConf,dc=netways
+ ,dc=org
+ou: server
+objectClass: lconfStructuralObject
+
+# linux, server, customer-1, kunden, main, IcingaConfig, LConf, netways.org
+dn: ou=linux,ou=server,ou=customer-1,ou=kunden,ou=main,ou=IcingaConfig,ou=LConf,d
+ c=netways,dc=org
+ou: linux
+objectClass: lconfStructuralObject
+
+# database, linux, server, customer-1, kunden, main, IcingaConfig, LConf, netway
+ s.org
+dn: ou=database,ou=linux,ou=server,ou=customer-1,ou=kunden,ou=main,ou=IcingaConfi
+ g,ou=LConf,dc=netways,dc=org
+description: database server
+ou: database
+objectClass: lconfStructuralObject
+
+# example-host, database, linux, server, customer-1, kunden, main, IcingaCo
+ nfig, LConf, netways.org
+dn: cn=example-host,ou=database,ou=linux,ou=server,ou=customer-1,ou=kunden,o
+ u=main,ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+cn: example-host
+lconfAddress: 10.10.10.10
+lconfAlias: example-host
+objectClass: lconfHost
+
+# example-service, example-host, database, linux, server, branda
+ d, kunden, main, IcingaConfig, LConf, netways.org
+dn: ou=example-service,cn=example-host,ou=database,ou=linux,ou=se
+ rver,ou=customer-1,ou=kunden,ou=main,ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+objectClass: extensibleObject
+objectClass: alias
+aliasedObjectName: cn=example-service,ou=linux-database-diskio-lvm,ou=
+ templates,ou=customer-1,ou=kunden,ou=main,ou=IcingaConfig,ou=LConf,dc=netways,dc
+ =org
+ou: example-service
+
+# lx-swap, database, linux, server, customer-1, kunden, main, IcingaConfig, LCon
+ f, netways.org
+dn: cn=lx-swap,ou=database,ou=linux,ou=server,ou=customer-1,ou=kunden,ou=main,ou=
+ IcingaConfig,ou=LConf,dc=netways,dc=org
+objectClass: lconfService
+cn: lx-swap
+lconfServiceCheckcommand: Blaa!15%!5%
+
+# templates, customer-1, kunden, main, IcingaConfig, LConf, netways.org
+dn: ou=templates,ou=customer-1,ou=kunden,ou=main,ou=IcingaConfig,ou=LConf,dc=netw
+ ays,dc=org
+ou: templates
+objectClass: lconfStructuralObject
+
+# linux-database-diskio-lvm, templates, customer-1, kunden, main, IcingaConfig, 
+ LConf, netways.org
+dn: ou=linux-database-diskio-lvm,ou=templates,ou=customer-1,ou=kunden,ou=main,ou=
+ IcingaConfig,ou=LConf,dc=netways,dc=org
+ou: linux-database-diskio-lvm
+objectClass: lconfStructuralObject
+lconfServiceContactgroups: +test
+
+# example-service, linux-database-diskio-lvm, templates, customer-1, kun
+ den, main, IcingaConfig, LConf, netways.org
+dn: cn=example-service,ou=linux-database-diskio-lvm,ou=templates,ou=customer-1,ou=kunden,ou=main,ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+objectClass: lconfService
+cn: example-service
+lconfServiceCheckcommand: test1
+
+# example-service-2, linux-database-diskio-lvm, templates, customer-1, kun
+ den, main, IcingaConfig, LConf, netways.org
+dn: cn=example-service-2,ou=linux-database-diskio-lvm,ou=templates,ou=customer-1,ou=kunden,ou=main,ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+objectClass: lconfService
+cn: example-service-2
+lconfServiceCheckcommand: test2

@@ -2,7 +2,7 @@
 
 # COPYRIGHT:
 #
-# This software is Copyright (c) 2011 NETWAYS GmbH
+# This software is Copyright (c) 2010 - 2012 NETWAYS GmbH
 #                                <support@netways.de>
 #
 # (Except where explicitly superseded by other copyright notices)
@@ -91,36 +91,41 @@ print plugin version
 
 =cut
 
-# set lib path
-use lib '@PREFIX@';
-
-# includes
+# basic perl includes
 use strict;
 use Getopt::Long qw(:config no_ignore_case bundling);
 use Pod::Usage;
+use File::Basename;
 use Net::LDAP;
 use Data::Dumper;
 use Fcntl qw(:flock);
+use Storable qw(dclone);
+use Scalar::Util qw/reftype/;
+
+# set lib path
+use lib dirname(__FILE__);
+
+# lconf includes
 use etc::config;
 use lib::ldap;
 use lib::generate;
 use lib::misc;
 
 # version string
-my $version = '1.2';
+my $version = '1.3rc';
 
 # define states
-our @state = ('OK', 'WARNING', 'ERROR');
+our @state = ('OK', 'WARNING', 'ERROR', 'UNKNOWN');
 
 # get command-line parameters
 our $opt;
 GetOptions(
 	"o|output=s"	=> \$opt->{outputDir},
 	"v|verbose:s"	=> \$opt->{verbose},
-	"d|debug:s"		=> \$opt->{debug},
+	"d|debug:s"	=> \$opt->{debug},
 	"f|filter=s"	=> \$opt->{filter},
 	"h|help"		=> \$opt->{help},
-	"V|version"		=> \$opt->{version}
+	"V|version"	=> \$opt->{version}
 );
 
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
@@ -140,16 +145,15 @@ if ($opt->{help} || !$opt->{outputDir}) { pod2usage(1); }
 
 # define vars
 use vars qw($cfg %itemMap);
-our $CLIENTS;
-our $INHERIT;
-
 our $exit; $exit->{code} = 0; $exit->{message} = 'No errors';
 $cfg->{ldap}->{baseDN} = 'ou='.$cfg->{export}->{startingpoint}.',ou=LConf,'.$cfg->{ldap}->{dn};
+$cfg->{ldap}->{rootDN} = 'ou=LConf,'.$cfg->{ldap}->{dn};
 
 # fist of all... check if we're ready to run
-LeaveScript(2, "Variable '\$cfg->{ldap}->{server}' not set in config.pm'")	 	if !$cfg->{ldap}->{server};
-LeaveScript(2, "Variable '\$cfg->{ldap}->{dn}' not set in config.pm'")			if !$cfg->{ldap}->{dn};
-LeaveScript(2, "Variable '\$cfg->{export}->{user}' not set in config.pm'")		if !$cfg->{export}->{user};
+LeaveScript(2, "Variable '\$cfg->{ldap}->{server}' not set in config.pm'") 	if !$cfg->{ldap}->{server};
+LeaveScript(2, "Variable '\$cfg->{ldap}->{dn}' not set in config.pm'") 	if !$cfg->{ldap}->{dn};
+LeaveScript(2, "Variable '\$cfg->{export}->{user}' not set in config.pm'")	if !$cfg->{export}->{user};
+LeaveScript(2, "Variable '\$cfg->{export}->{treerewrite}' not set in config.pm'")	if !$cfg->{export}->{treerewrite};
 
 # export with right user?
 LeaveScript(2, "You're not user '$cfg->{export}->{user}'!") if $ENV{USER} ne $cfg->{export}->{user};
@@ -162,187 +166,97 @@ flock(LOCK, LOCK_EX|LOCK_NB) or LeaveScript(2, "LConfExport locked! Someone is a
 LeaveScript('2', "'$opt->{outputDir}' is not a directory") if !-d $opt->{outputDir};
 LeaveScript('2', "'$opt->{outputDir}' is not writeable")   if !-w $opt->{outputDir};
 
-# lock exporter
-#open (FH, ">$cfg->{export}->{lock}"); close(FH);
-
 # clean old output dir
-DebugOutput("start - removing content of $opt->{outputDir}");
-qx(rm -r $opt->{outputDir}/* 2>/dev/null);
-DebugOutput("finished - removing content of $opt->{outputDir}");
+	DebugOutput('REMOVE OLD CONFIG', "start - folder: $opt->{outputDir}");
+	
+	# check if output dir is already labeled?
+	if (!-f "$opt->{outputDir}/lconf.identify") {
+		print "It looks like you generate a config into '$opt->{outputDir}' for the first time.\n";
+		print "May lconf delete the folder content?\n\n";
+		print "execute 'rm -r $opt->{outputDir}/*' (y/n) ";
+		my $result = <STDIN>;
+		print "\n";
+		LeaveScript('3', "Directory cleanup canceled...") if $result =~ /^n/i;
+	}
+	
+	qx(rm -r $opt->{outputDir}/* 2>/dev/null);
+	DebugOutput('REMOVE OLD CONFIG', "finished - folder: $opt->{outputDir}");
 
 #
 # NOW, WE'RE READY TO RUN :)
 #
 
 # connect to LDAP server
-our $ldap = LDAPconnect();
-
-# get all clients to monitor
-if (defined $opt->{filter}) {
-	$CLIENTS = LDAPsearch($ldap, $cfg->{ldap}->{baseDN}, "sub", "cn=$opt->{filter}");
+our $ldap;
+if ($cfg->{ldap}->{binddn} && $cfg->{ldap}->{bindpw}) {
+	$ldap = LDAPconnect('auth');	
 } else {
-	$CLIENTS = LDAPsearch($ldap, $cfg->{ldap}->{baseDN}, "sub", "objectclass=$cfg->{ldap}->{prefix}Host");
+	$ldap = LDAPconnect();
 }
 
+# get the whole config from ldap
+my $CONFIG = LDAPsearch($ldap, $cfg->{ldap}->{rootDN}, "sub", "objectclass=*");
+
+# get all clients to monitor
+my $CLIENTS = HashGrep($CONFIG, 'objectclass', $cfg->{ldap}->{prefix}.'Host$');
+if (defined $opt->{filter}) { my $tmp_hash = HashGrep($CLIENTS, 'cn', $opt->{filter}); $CLIENTS = $tmp_hash; }
+
+# drop all hosts obove baseDN (eg. examples)
+foreach my $client (keys %{$CLIENTS}) {
+	delete $CLIENTS->{$client} if $client !~ /$cfg->{ldap}->{baseDN}$/;
+}
+	
 # run custom script (pre)
-if (-f 'custom/pre.pl') {
+if (-f '@PREFIX@/custom/pre.pl') {
 	require '@PREFIX@/custom/pre.pl';
 	$CLIENTS = CustomPre($CLIENTS);
 }
 
-# delete all 'description'-fields of all hosts (otherwise it will give some problems with LCONF->... functions)
-foreach my $client (keys %{$CLIENTS}) { delete $CLIENTS->{$client}->{description}; }
-
-# inherited host and service configuration
+# build configuration
 foreach my $client (keys %{$CLIENTS}) {
-	# remove basedn from dn
-	$client =~ s/,$cfg->{ldap}->{baseDN}//;
+	beVerbose("CFG BUILD", "Host $client");
 	
-	# split and reverse the DN
-	my @search = split(",", $client);
-	@search = reverse(@search);
+	my %TREE = ();
+	%TREE = TreeBuilder($client, $CONFIG, \%TREE);
 	
-	# debug output
-	DebugOutput("CREATE HOSTOBJECT $client");
-	DebugOutput("BUILD HOSTATTRIBUTES for $client");
-	
-	# search aliases for host
-		# search at base
-		my $searchDN = $cfg->{ldap}->{baseDN};
-		my $result = LDAPsearch($ldap, $searchDN, "single", "objectclass=alias");
-		foreach(keys %{$result}) {
-			DebugOutput("Link ou=$result->{$_}->{ou} found on $searchDN");
-			my $result = LDAPsearch($ldap, $result->{$_}->{aliasedobjectname}, "base", "objectclass=*");
-			$CLIENTS = addHostAttributes($result, $client, $CLIENTS);
-		}
-		
-		# and search rest of the three
-		foreach(@search) {
-			$searchDN = $_.",".$searchDN;
-			my $result = LDAPsearch($ldap, $searchDN, "single", "objectclass=alias");
-			foreach(keys %{$result}) {
-				DebugOutput("Link ou=$result->{$_}->{ou} found on $searchDN");
-				my $result = LDAPsearch($ldap, $result->{$_}->{aliasedobjectname}, "base", "objectclass=*");
-				$CLIENTS = addHostAttributes($result, $client, $CLIENTS);
-			}
-		}
-		
-	# search main for host
-		# search at base
-		$searchDN = $cfg->{ldap}->{baseDN};
-		$result = LDAPsearch($ldap, $searchDN, "base", "objectclass=*");
-		$CLIENTS = addHostAttributes($result, $client, $CLIENTS);
-
-		# and search rest of the tree
-		foreach(@search) {
-			$searchDN = $_.",".$searchDN;
-			my $result = LDAPsearch($ldap, $searchDN, "base", "objectclass=*");
-			$CLIENTS = addHostAttributes($result, $client, $CLIENTS);
-		}
-
-		DebugOutput("BUILD SERVICEATTRIBUTES for $client");
-		
-		# search aliases for services
-			# reset search base
-			$searchDN = $cfg->{ldap}->{baseDN};
-			$result = LDAPsearch($ldap, $searchDN, "single", "objectclass=alias");
-			foreach(keys %{$result}) {
-				DebugOutput("Link ou=$result->{$_}->{ou} found on $searchDN");
-				$CLIENTS = addAlias($result, $client, $CLIENTS);
-			}
-
-			# and search rest of the tree (from top to item)
-			foreach(@search) {
-				$searchDN = $_.",".$searchDN;
-				$result = LDAPsearch($ldap, $searchDN, "single", "objectclass=alias");
-				foreach(keys %{$result}) {
-					DebugOutput("Link ou=$result->{$_}->{ou} found on $searchDN");
-					$CLIENTS = addAlias($result, $client, $CLIENTS);
-				}
-			}
-
-		# search main for services
-			# reset search base
-			$searchDN = $cfg->{ldap}->{baseDN};
-			$result = LDAPsearch($ldap, $searchDN, "single", "objectclass=$cfg->{ldap}->{prefix}Service");
-			$CLIENTS = addServices($result, $client, $CLIENTS, $cfg->{ldap}->{baseDN});
-
-			# and search rest of the tree (from top to item)
-			foreach(@search) {
-				$searchDN = $_.",".$searchDN;
-				$result = LDAPsearch($ldap, $searchDN, "single", "objectclass=$cfg->{ldap}->{prefix}Service");
-				$CLIENTS = addServices($result, $client, $CLIENTS, $cfg->{ldap}->{baseDN});
-			}
-
-			# (from item to bottom)
-			$result = LDAPsearch($ldap, $searchDN, "sub", "objectclass=$cfg->{ldap}->{prefix}Service");
-			$CLIENTS = addServices($result, $client, $CLIENTS, $cfg->{ldap}->{baseDN});
-			
-		# search main for host escalations
-			# reset search base
-			$searchDN = $cfg->{ldap}->{baseDN};
-			$result = LDAPsearch($ldap, $searchDN, "single", "objectclass=$cfg->{ldap}->{prefix}HostEscalation");
-			$CLIENTS = addHostEscalation($result, $client, $CLIENTS, $cfg->{ldap}->{baseDN});
-
-			# and search rest of the tree (from top to item)
-			foreach(@search) {
-				$searchDN = $_.",".$searchDN;
-				$result = LDAPsearch($ldap, $searchDN, "single", "objectclass=$cfg->{ldap}->{prefix}HostEscalation");
-				$CLIENTS = addHostEscalation($result, $client, $CLIENTS, $cfg->{ldap}->{baseDN});
-			}
-		
-		 # search main for service escalations
-    		# reset search base
-    		$searchDN = $cfg->{ldap}->{baseDN};
-    		$result = LDAPsearch($ldap, $searchDN, "single", "objectclass=$cfg->{ldap}->{prefix}ServiceEscalation");
-    		$CLIENTS = addServiceEscalation($result, $client, $CLIENTS, $cfg->{ldap}->{baseDN});
-    		
-    		# and search rest of the tree (from top to item)
-    		foreach(@search) {
-    			$searchDN = $_.",".$searchDN;
-    			$result = LDAPsearch($ldap, $searchDN, "single", "objectclass=$cfg->{ldap}->{prefix}ServiceEscalation");
-    			$CLIENTS = addServiceEscalation($result, $client, $CLIENTS, $cfg->{ldap}->{baseDN});
-    		}
-    		
-    		# (from item to bottom)
-    		$result = LDAPsearch($ldap, $searchDN, "sub", "objectclass=$cfg->{ldap}->{prefix}ServiceEscalation");
-    		$CLIENTS = addServiceEscalation($result, $client, $CLIENTS, $cfg->{ldap}->{baseDN});
+	$CLIENTS = BuildHostConfig($client, $CLIENTS, \%TREE);
 }
 
 # run custom script (mid)
 if (-f '@PREFIX@/custom/mid.pl') {
-	require 'custom/mid.pl';
+	require '@PREFIX@/custom/mid.pl';
 	$CLIENTS = CustomMid($CLIENTS);
 }
 
-# build dir structure and copy generic templates
-createDirs($cfg->{ldap}->{baseDN}, $opt->{outputDir});
+# create output dirs and generate config
+createDirs($cfg->{ldap}->{baseDN}, $opt->{outputDir});  # TODO: Umbauen damit er ohne LDAPsearch funktioniert??
 mkdir("$opt->{outputDir}/hostgroups/");
 mkdir("$opt->{outputDir}/servicegroups/");
-copyGeneric('@PREFIX@/etc/default-templates.cfg', $opt->{outputDir});
-
-# write config
-genTimeperiods();
-genCommands();
-genContacts();
-genContactgroups();
-genHostgroups();
-HostgroupServiceMapping();
-genServicegroups();
-genHostConfig();
+copyGeneric(dirname(__FILE__)."/etc/default-templates.cfg", $opt->{outputDir});
+genTimeperiods($CONFIG);
+genCommands($CONFIG);
+genContacts($CONFIG);
+genContactgroups($CONFIG);
+genHostgroups($CONFIG, $CLIENTS);
+genServicegroups($CONFIG, $CLIENTS);
+genHostConfig($CLIENTS);
 
 # run custom script (post)
 if (-f '@PREFIX@/custom/post.pl') {
-	require 'custom/post.pl';
+	require '@PREFIX@/custom/post.pl';
 	$CLIENTS = CustomPost($CLIENTS);
 }
 
-# dump data to filesystem
-my $data = Dumper($CLIENTS); open FILE, ">$cfg->{epxort}->{hashdump}" or die $!; print FILE $data; close FILE;
+# create identifier
+open(FH, ">$opt->{outputDir}/lconf.identify") || die "Can't write data: $opt->{outputDir}/lconf.identify $!\n"; close(FH);
 
-
-# disconnect from LDAP
+# disconnect from LDAP Server
+beVerbose("LDAP DISCONNECT", "disconnected from ldap host");
 $ldap->unbind();
 
+# dump data to filesystem
+my $data = Dumper($CLIENTS); open FILE, ">$cfg->{export}->{hashdump}" or die $!; print FILE $data; close FILE;
+
 # exit
+EXIT:
 LeaveScript($exit->{code}, $exit->{message});

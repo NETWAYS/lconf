@@ -3,40 +3,47 @@
 #
 # LDAP connection
 #
-$cfg->{ldap}->{server}            = '@LDAP_SERVER@';
-$cfg->{ldap}->{dn}                = '@LDAP_DN@';
-$cfg->{ldap}->{prefix}            = '@LDAP_PREFIX@';
-$cfg->{ldap}->{binddn}		  = '@LDAP_BIND_DN@';
-$cfg->{ldap}->{bindpw}		  = '@LDAP_BIND_PASSWORD@';
-
+$cfg->{ldap}->{server}				= '@LDAP_SERVER@';
+$cfg->{ldap}->{dn}				= '@LDAP_DN@';
+$cfg->{ldap}->{prefix}				= '@LDAP_PREFIX@';
+$cfg->{ldap}->{binddn}				= '@LDAP_BIND_DN@';
+$cfg->{ldap}->{bindpw}				= '@LDAP_BIND_PASSWORD@';
 
 #
 # LConfExport.pl
 #
-$cfg->{export}->{user}            = '@LCONF_CLI_USER@';
-$cfg->{export}->{lock}            = '@PREFIX@/var/LConfExport.lock';
-$cfg->{export}->{startingpoint}   = 'IcingaConfig';
-$cfg->{epxort}->{hashdump}        = '@PREFIX@/var/LConfExport.hashdump';
-$cfg->{epxort}->{tmpdir}          = '@PREFIX@/tmp';
+$cfg->{export}->{user}				= '@LCONF_CLI_USER@';
+$cfg->{export}->{startingpoint}			= 'IcingaConfig';
+$cfg->{export}->{lock}				= '@PREFIX@/var/LConfExport.lock';
+$cfg->{export}->{hashdump}			= '@PREFIX@/var/LConfExport.hashdump';
+$cfg->{export}->{tmpdir}			= '@PREFIX@/tmp';
 
+$cfg->{export}->{treerewrite}			= 'None';
+#$cfg->{export}->{treerewrite}			= 'MainOverLink';
 
 #
 # LConfSlaveSync.pl
 #
-$cfg->{slavesync}->{HOSTS}        = 'host1, host2, host3';
-$cfg->{slavesync}->{localDir}     = '/usr/local/icinga/var/perfdata-local';
-$cfg->{slavesync}->{remoteDir}    = '/usr/local/icinga/var/perfdata-remote';
-$cfg->{slavesync}->{spoolDir}     = '/usr/local/icinga/var/spool/checkresults';
-$cfg->{slavesync}->{ExtCMD}       = '/usr/local/icinga/var/rw/icinga.cmd';
-$cfg->{slavesync}->{getInterval}  = '60';
-$cfg->{slavesync}->{pushInterval} = '30';
-$cfg->{slavesync}->{directIO}     = '0';
-$cfg->{slavesync}->{pidFile}      = '@PREFIX@/var/LConfSlaveSync.pid';
-$cfg->{slavesync}->{debugLog}     = '@PREFIX@/var/LConfSlaveSync.debug';
-$cfg->{slavesync}->{debug}        = '0';
+$cfg->{slavesync}->{HOSTS}			= 'host1, host2, host3';
+$cfg->{slavesync}->{localDir}			= '/usr/local/icinga/var/perfdata-local';
+$cfg->{slavesync}->{remoteDir}			= '/usr/local/icinga/var/perfdata-remote';
+$cfg->{slavesync}->{spoolDir}			= '/usr/local/icinga/var/spool/checkresults';
+$cfg->{slavesync}->{ExtCMD}			= '/usr/local/icinga/var/rw/icinga.cmd';
+$cfg->{slavesync}->{getInterval}		= '60';
+$cfg->{slavesync}->{pushInterval}		= '30';
+$cfg->{slavesync}->{directIO}			= '0';
+$cfg->{slavesync}->{pidFile}			= '@PREFIX@/var/LConfSlaveSync.pid';
+$cfg->{slavesync}->{debugLog}			= '@PREFIX@/var/LConfSlaveSync.debug';
+$cfg->{slavesync}->{debug}			= '0';
 
+#
+# LConfTest.pl
+#
+$cfg->{test}->{output}				= "/tmp/lconf-test-out";
 
+#
 # WARNING! DO NOT CHANGE THIS!!
+#
 %itemMap = (
 	# .2.1 | lconf attributes (generally)
 	@LDAP_PREFIX@alias                                        => 'alias',
@@ -124,7 +131,7 @@ $cfg->{slavesync}->{debug}        = '0';
 	# .2.5 | lconf attributes (host escalations)
 	@LDAP_PREFIX@hostescalationfirstnotification              => 'first_notification',
 	@LDAP_PREFIX@hostescalationlastnotification               => 'last_notification',
-	@LDAP_PREFIX@hostescalationnotificationInterval           => 'notification_interval',
+	@LDAP_PREFIX@hostescalationnotificationinterval           => 'notification_interval',
 	@LDAP_PREFIX@hostescalationcontacts                       => 'contacts',
 	@LDAP_PREFIX@hostescalationcontactgroups                  => 'contact_groups',
 	@LDAP_PREFIX@hostescalationperiod                         => 'escalation_period',
@@ -133,7 +140,7 @@ $cfg->{slavesync}->{debug}        = '0';
 	# .2.6 | lconf attributes (service escalations)
 	@LDAP_PREFIX@serviceescalationfirstnotification           => 'first_notification',
 	@LDAP_PREFIX@serviceescalationlastnotification            => 'last_notification',
-	@LDAP_PREFIX@serviceescalationnotificationInterval        => 'notification_interval',
+	@LDAP_PREFIX@serviceescalationnotificationinterval        => 'notification_interval',
 	@LDAP_PREFIX@serviceescalationcontacts                    => 'contacts',
 	@LDAP_PREFIX@serviceescalationcontactgroups               => 'contact_groups',
 	@LDAP_PREFIX@serviceescalationperiod                      => 'escalation_period',

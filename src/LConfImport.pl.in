@@ -2,7 +2,7 @@
 
 # COPYRIGHT:
 #
-# This software is Copyright (c) 2011 NETWAYS GmbH
+# This software is Copyright (c) 2010 - 2012 NETWAYS GmbH
 #                                <support@netways.de>
 #
 # (Except where explicitly superseded by other copyright notices)
@@ -100,10 +100,10 @@ use lib::ldap;
 use lib::misc;
 
 # version string
-my $version = '1.2';
+my $version = '1.3rc';
 
 # define states
-our @state = ('OK', 'WARNING', 'ERROR');
+our @state = ('OK', 'WARNING', 'ERROR', 'UNKNOWN');
 
 # get command-line parameters
 our $opt;
@@ -222,7 +222,7 @@ if ($opt->{objectsCache}) {
 									if (grep { /$_/ } values %{$newItemMap->{$_}}) {
 										$entry->add(values %{$newItemMap->{$_}} => "$TIMEPERIODS->{$timeperiod}->{$_}");
 									} else {
-										$entry->add("lconfTimeperiodValue" => "$_ $TIMEPERIODS->{$timeperiod}->{$_}");
+										$entry->add("$cfg->{ldap}->{prefix}TimeperiodValue" => "$_ $TIMEPERIODS->{$timeperiod}->{$_}");
 									}
 								}
 
@@ -428,9 +428,6 @@ if ($opt->{objectsCache}) {
 		
 		# service attributes
 		compareAttributes($compare_group, "$cfg->{ldap}->{prefix}Service");
-		
-		# services
-		#compareServices($compare_group); 
 	}
 } else {
 	pod2usage(1);
@@ -608,108 +605,3 @@ sub compareAttributes {
 		}
 	}
 }
-
-sub compareServices {
-	my $searchDN    = shift;
-	my $objectClass = "$cfg->{ldap}->{prefix}Service";
-	my $COMPARE;
-	
-	#my $ITEMS = LDAPsearch($ldap, $searchDN, 'sub', "objectclass=lconfHost");
-	#my $countItems = keys %{$ITEMS};
-	
-	my $ITEMS = LDAPsearch($ldap, $searchDN, 'sub', "objectclass=$objectClass");
-	foreach my $service (keys %{$ITEMS}) {
-		$service =~ /cn=([-_\d\w\s]*),(.*)/;
-		my $val = $1;
-		
-		if (!defined $COMPARE->{$val}) {
-			$COMPARE->{$val}->{count} = 1;
-			$COMPARE->{$val}->{longnames}->{$service} = $service;
-		} else {
-			$COMPARE->{$val}->{count}++;
-			$COMPARE->{$val}->{longnames}->{$service} = $service;
-		}
-	}
-	
-#	foreach my $val1 (keys %{$COMPARE}) {
-#		print "$val1 => $COMPARE->{$val1}->{count}\n";
-#		
-#		if ($COMPARE->{$val1} >= $countItems) {
-#			my $counter = 0;
-#			my $result;
-#		
-#			foreach my $val2 (keys %{$COMPARE->{$val1}->{longnames}}) {
-#				if ($counter == 0) {
-#					$result = $ldap->moddn($val2,
-#											newrdn => "cn=$val1",
-#											deleteoldrdn => '1',
-#											newsuperior => 'ou=finanzpark,ou=Import,ou=vbox-lconf-master,ou=NagiosConfig,ou=LConf,dc=netways,dc=org'
-#											);
-#					$counter++;
-#				} else {
-#					my $result = $ldap->delete($val2);
-#				}
-#				
-#				if ($result->code != 0) {
-#					beVerbose("LDAP MOVE", "ERROR - CODE: ".$result->code." - ".$result->error);
-#					$exit->{code} = 2; $exit->{message} = $result->error;
-#					goto EXIT;
-#				}
-#			}
-#		}
-#	}
-	
-	print "\n\n\n ============================ \n\n";
-}
-
-#sub compareAttributes {
-#	my $searchDN    = shift;
-#	my $objectClass = shift;
-#	my $COMPARE;
-#
-#	# get all elements in $searchDN for comparing
-#	my $ITEMS = LDAPsearch($ldap, $searchDN, 'sub', "objectclass=$objectClass");
-#	foreach my $item (keys %{$ITEMS}) {
-#		foreach(keys %{$ITEMS->{$item}}) {
-#			# exclude 'cn', 'dn' and 'objectclass'; leave them untouched
-#			if ($_ ne 'cn' && $_ ne 'dn' && $_ ne 'objectclass') {
-#				if (!defined $COMPARE->{$_}->{$ITEMS->{$item}->{$_}}) {
-#					$COMPARE->{$_}->{$ITEMS->{$item}->{$_}} = 1;
-#				} else {
-#					$COMPARE->{$_}->{$ITEMS->{$item}->{$_}}++;
-#				}
-#			}
-#		}
-#	}
-#
-#	# calc threshold
-#	my $countItems = keys %{$ITEMS};
-#	my $countThreshold = ceil($countItems/2);
-#
-#	# compare and create inheritance
-#	foreach my $val1 (keys %{$COMPARE}) {
-#		foreach my $val2 (keys %{$COMPARE->{$val1}}) {
-#			if ($COMPARE->{$val1}->{$val2} >= $countThreshold) {
-#				# search stuff to delete
-#				my $to_delete = LDAPsearch($ldap, $searchDN, "sub", "$val1=$val2");
-#				foreach(keys %{$to_delete}) {
-#					# delete old entries
-#					my $result = $ldap->modify($_, delete => { $val1 => $val2 });
-#					if ($result->code != 0) {
-#						beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error);
-#						$exit->{code} = 2; $exit->{message} = $result->error;
-#						goto EXIT;
-#					}
-#				}
-#
-#				# add entry on hirarchical top entry
-#				my $result = $ldap->modify($searchDN, add => { $val1 => $val2 } );
-#				if ($result->code != 0) {
-#					beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error);
-#					$exit->{code} = 2; $exit->{message} = $result->error;
-#					goto EXIT;
-#				}
-#			}
-#		}
-#	}
-#}

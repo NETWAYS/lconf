@@ -3,7 +3,7 @@
 #
 
 # version info
-VERSION=1.2
+VERSION=1.3rc
 
 # path settings
 PREFIX=@prefix@
@@ -29,7 +29,66 @@ else
 endif
 
 
-all: info
+all:
+	# generate files
+		# PREFIX
+			# LConfExport.pl
+			cat src/LConfExport.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" > src/LConfExport.pl
+			
+			# LConfImport.pl
+			cat src/LConfImport.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" > src/LConfImport.pl
+			
+			# LConfSlaveExport.pl
+			cat src/LConfSlaveExport.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" > src/LConfSlaveExport.pl
+			
+			# LConfSlaveSync.pl
+			cat src/LConfSlaveSync.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" > src/LConfSlaveSync.pl
+			
+		# $PREFIX/etc
+			# config.pm
+			cat src/config.pm.in | sed -e "s/@LDAP_SERVER@/$(LDAP_SERVER)/g" > src/config.pm.1
+			cat src/config.pm.1 | sed -e "s/@LDAP_DN@/$(LDAP_DN)/g" > src/config.pm.2
+			cat src/config.pm.2 | sed -e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" > src/config.pm.3
+			cat src/config.pm.3 | sed -e "s/@LDAP_BIND_DN@/$(LDAP_BIND_DN)/g" > src/config.pm.4
+			cat src/config.pm.4 | sed -e "s/@LDAP_BIND_PASSWORD@/$(LDAP_BIND_PASSWORD)/g" > src/config.pm.5
+			cat src/config.pm.5 | sed -e "s/@LCONF_CLI_USER@/$(LCONF_CLI_USER)/g" > src/config.pm.6
+			cat src/config.pm.6 | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" > src/config.pm
+			
+			# default-templates.cfg.in
+			cat src/default-templates.cfg.in > src/default-templates.cfg
+			
+		# $PREFIX/lib
+			# misc.pm
+			cat src/misc.pm.in > src/misc.pm
+						
+			# ldap.pm
+			cat src/ldap.pm.in > src/ldap.pm
+						
+			# generate.pm
+			cat src/generate.pm.in > src/generate.pm
+
+		# $PREFIX/contrib
+			# create_lconf-web-dn-mid.pl
+			cat src/create_lconf-web-dn-mid.pl.in | sed -e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" > src/create_lconf-web-dn-mid.pl
+					
+			# lconf-slavesync
+			cat src/lconf-slavesync.in > src/lconf-slavesync
+					
+			# lconf_deploy.sh
+			cat src/lconf_deploy.sh.in > src/lconf_deploy.sh
+			
+		# LDAP schema and base.ldif
+			# netways.schema
+			cat src/netways.schema.in | sed -e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" > src/netways.schema
+				
+			# netways.schema.ldif
+			cat src/netways.schema.ldif.in | sed -e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" > src/netways.schema.ldif
+				
+			# base.ldif
+			cat src/base.ldif.in | sed -e "s/@LDAP_DN@/$(LDAP_DN)/g" > src/base.ldif.1
+			cat src/base.ldif.1 | sed -e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" > src/base.ldif
+
+	make info
 
 info:
 	@echo ""
@@ -37,8 +96,9 @@ info:
 	@echo ""
 	@echo "targets:"
 	@echo ""
-	@echo "   install - Install LConf"
-	@echo "   clean   - Clean up generated tmp files"
+	@echo "   all     - translate LConf"
+	@echo "   install - install LConf"
+	@echo "   clean   - clean up generated tmp files"
 	@echo ""
 	@echo ""
 	@echo " * * * Current Settings * * *"
@@ -77,81 +137,43 @@ install:
 	# create contrib dir
 	if [ ! -d contrib ]; then install -d -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 755 contrib; fi
 	
-	# generate and install files
-		# $PREFIX
+	# install files
 			# LConfExport.pl
-				cat src/LConfExport.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" > src/LConfExport.pl
-				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/LConfExport.pl ${DESTDIR}$(PREFIX)/
+			install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/LConfExport.pl ${DESTDIR}$(PREFIX)/
 			
 			# LConfImport.pl
-				cat src/LConfImport.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" > src/LConfImport.pl
-				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/LConfImport.pl ${DESTDIR}$(PREFIX)/
+			install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/LConfImport.pl ${DESTDIR}$(PREFIX)/
 			
 			# LConfSlaveExport.pl
-				cat src/LConfSlaveExport.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" > src/LConfSlaveExport.pl
-				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/LConfSlaveExport.pl ${DESTDIR}$(PREFIX)/
+			install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/LConfSlaveExport.pl ${DESTDIR}$(PREFIX)/
 			
 			# LConfSlaveSync.pl
-				cat src/LConfSlaveSync.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" > src/LConfSlaveSync.pl
-				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/LConfSlaveSync.pl ${DESTDIR}$(PREFIX)/
+			install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/LConfSlaveSync.pl ${DESTDIR}$(PREFIX)/
 				
-		# $PREFIX/etc
 			# config.pm
-				cat src/config.pm.in | sed -e "s/@LDAP_SERVER@/$(LDAP_SERVER)/g" > src/config.pm.1
-				cat src/config.pm.1 | sed -e "s/@LDAP_DN@/$(LDAP_DN)/g" > src/config.pm.2
-				cat src/config.pm.2 | sed -e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" > src/config.pm.3
-				cat src/config.pm.3 | sed -e "s/@LDAP_BIND_DN@/$(LDAP_BIND_DN)/g" > src/config.pm.4
-				cat src/config.pm.4 | sed -e "s/@LDAP_BIND_PASSWORD@/$(LDAP_BIND_PASSWORD)/g" > src/config.pm.5
-				cat src/config.pm.5 | sed -e "s/@LCONF_CLI_USER@/$(LCONF_CLI_USER)/g" > src/config.pm.6
-				cat src/config.pm.6 | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" > src/config.pm
-				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/config.pm ${DESTDIR}$(PREFIX)/etc/
+			install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/config.pm ${DESTDIR}$(PREFIX)/etc/
 				
 			# default-templates.cfg.in
-				cat src/default-templates.cfg.in > src/default-templates.cfg
-				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/default-templates.cfg ${DESTDIR}$(PREFIX)/etc/
+			install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/default-templates.cfg ${DESTDIR}$(PREFIX)/etc/
 			
-		# $PREFIX/lib
 			# misc.pm
-				cat src/misc.pm.in > src/misc.pm
-				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/misc.pm ${DESTDIR}$(PREFIX)/lib/
+			install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/misc.pm ${DESTDIR}$(PREFIX)/lib/
 			
 			# ldap.pm
-				cat src/ldap.pm.in > src/ldap.pm
-				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/ldap.pm ${DESTDIR}$(PREFIX)/lib/
+			install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/ldap.pm ${DESTDIR}$(PREFIX)/lib/
 			
 			# generate.pm
-				cat src/generate.pm.in > src/generate.pm
-				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/generate.pm ${DESTDIR}$(PREFIX)/lib/
+			install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/generate.pm ${DESTDIR}$(PREFIX)/lib/
 				
-		# $PREFIX/contrib
 			# create_lconf-web-dn-mid.pl
-				cat src/create_lconf-web-dn-mid.pl.in | sed -e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" > src/create_lconf-web-dn-mid.pl
-				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/create_lconf-web-dn-mid.pl contrib/
+			install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/create_lconf-web-dn-mid.pl contrib/
 				
 			# lconf-slavesync
-				cat src/lconf-slavesync.in > src/lconf-slavesync
-				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/lconf-slavesync contrib/
+			install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/lconf-slavesync contrib/
 				
 			# lconf_deploy.sh
-				cat src/lconf_deploy.sh.in > src/lconf_deploy.sh
-				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/lconf_deploy.sh contrib/
-				
-		# $PREFIX/dev/test
-			# test.pl
-				cat src/test.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" > src/test.pl
-				install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/test.pl dev/test/
-				
-		# LDAP schema and base.ldif
-			# netways.schema
-				cat src/netways.schema.in | sed -e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" > src/netways.schema
-				
-			# netways.schema.ldif
-				cat src/netways.schema.ldif.in | sed -e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" > src/netways.schema.ldif
-				
-			# base.ldif
-				cat src/base.ldif.in | sed -e "s/@LDAP_DN@/$(LDAP_DN)/g" > src/base.ldif.1
-				cat src/base.ldif.1 | sed -e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" > src/base.ldif
-				
+			install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/lconf_deploy.sh contrib/
+						
 		# FINISHING OUTPUT
 		@echo ""
 		@echo ""
@@ -190,4 +212,3 @@ clean:
 	rm -f src/netways.schema.ldif
 	rm -f src/base.ldif src/base.ldif.[0-9]
 	rm -f src/default-templates.cfg src/default-templates.cfg.[0-9]
-	rm -f src/test.pl src/test.pl.[0-9]

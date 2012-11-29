@@ -1,0 +1,114 @@
+
+# kunden, main, IcingaConfig, LConf, netways.org
+dn: ou=kunden,ou=main,ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+ou: kunden
+objectClass: lconfStructuralObject
+
+# customer-1, kunden, main, IcingaConfig, LConf, netways.org
+dn: ou=customer-1,ou=kunden,ou=main,ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+ou: customer-1
+objectClass: lconfStructuralObject
+lconfServiceContacts: icingaadmin
+
+# server, customer-1, kunden, main, IcingaConfig, LConf, netways.org
+dn: ou=server,ou=customer-1,ou=kunden,ou=main,ou=IcingaConfig,ou=LConf,dc=netways
+ ,dc=org
+ou: server
+objectClass: lconfStructuralObject
+
+# linux, server, customer-1, kunden, main, IcingaConfig, LConf, netways.org
+dn: ou=linux,ou=server,ou=customer-1,ou=kunden,ou=main,ou=IcingaConfig,ou=LConf,d
+ c=netways,dc=org
+ou: linux
+objectClass: lconfStructuralObject
+
+# server, linux, server, customer-1, kunden, main, IcingaConfig, LConf, netways.
+ org
+dn: ou=server,ou=linux,ou=server,ou=customer-1,ou=kunden,ou=main,ou=IcingaConfig,
+ ou=LConf,dc=netways,dc=org
+ou: server
+objectClass: lconfStructuralObject
+
+# templates, linux, server, customer-1, kunden, main, IcingaConfig, LConf, netwa
+ ys.org
+dn: ou=templates,ou=linux,ou=server,ou=customer-1,ou=kunden,ou=main,ou=IcingaConf
+ ig,ou=LConf,dc=netways,dc=org
+ou: templates
+objectClass: lconfStructuralObject
+
+# linux, server, linux, server, customer-1, kunden, main, IcingaConfig, LConf, n
+ etways.org
+dn: ou=linux,ou=server,ou=linux,ou=server,ou=customer-1,ou=kunden,ou=main,ou=Icin
+ gaConfig,ou=LConf,dc=netways,dc=org
+ou: linux
+objectClass: lconfStructuralObject
+
+# so-1, templates, linux, server, customer-1, kunden, main, IcingaCo
+ nfig, LConf, netways.org
+dn: ou=so-1,ou=templates,ou=linux,ou=server,ou=customer-1,ou=kunden,o
+ u=main,ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+ou: so-1
+objectClass: lconfStructuralObject
+lconfServiceCheckRetryInterval: 2
+lconfServiceCheckInterval: 3
+
+# so-2, so-1, templates, linux, server, customer-1, kund
+ en, main, IcingaConfig, LConf, netways.org
+dn: ou=so-2,ou=so-1,ou=templates,ou=linux,ou=server,ou
+ =customer-1,ou=kunden,ou=main,ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+ou: so-2
+objectClass: lconfStructuralObject
+lconfServiceCustomvar: _CV1 value1
+
+# example-service-2, so-2, so-1, templates, lin
+ ux, server, customer-1, kunden, main, IcingaConfig, LConf, netways.org
+dn: cn=example-service-2,ou=so-2,ou=so-1,ou=temp
+ lates,ou=linux,ou=server,ou=customer-1,ou=kunden,ou=main,ou=IcingaConfig,ou=LCon
+ f,dc=netways,dc=org
+lconfCheckcommand: test1
+cn: example-service-2
+objectClass: lconfService
+
+# example-service-1, so-2, so-1, templates, linux
+ , server, customer-1, kunden, main, IcingaConfig, LConf, netways.org
+dn: cn=example-service-1,ou=so-2,ou=so-1,ou=templa
+ tes,ou=linux,ou=server,ou=customer-1,ou=kunden,ou=main,ou=IcingaConfig,ou=LConf,
+ dc=netways,dc=org
+lconfCheckcommand: check_ssh_customer-1_jmx!memory!-w 90 -c 95
+cn: example-service-1
+objectClass: lconfService
+
+# example-service-3, so-2, so-1, templates, linu
+ x, server, customer-1, kunden, main, IcingaConfig, LConf, netways.org
+dn: cn=example-service-3,ou=so-2,ou=so-1,ou=templ
+ ates,ou=linux,ou=server,ou=customer-1,ou=kunden,ou=main,ou=IcingaConfig,ou=LConf
+ ,dc=netways,dc=org
+lconfCheckcommand: check_ssh_customer-1_jmx!threads
+cn: example-service-3
+objectClass: lconfService
+
+# application, linux, server, linux, server, customer-1, kunden, main, IcingaCon
+ fig, LConf, netways.org
+dn: ou=application,ou=linux,ou=server,ou=linux,ou=server,ou=customer-1,ou=kunden,
+ ou=main,ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+ou: application
+objectClass: lconfStructuralObject
+
+# example-host, application, linux, server, linux, server, customer-1, kun
+ den, main, IcingaConfig, LConf, netways.org
+dn: cn=example-host,ou=application,ou=linux,ou=server,ou=linux,ou=server
+ ,ou=customer-1,ou=kunden,ou=main,ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+cn: example-host
+lconfAddress: 10.10.10.10
+lconfAlias: example-host
+objectClass: lconfHost
+lconfHostCustomvar: _CV2 value2
+
+# so-1, application, linux, server, linux, server, customer-1, kunde
+ n, main, IcingaConfig, LConf, netways.org
+dn: ou=so-1,ou=application,ou=linux,ou=server,ou=linux,ou=server,o
+ u=customer-1,ou=kunden,ou=main,ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+objectClass: extensibleObject
+objectClass: alias
+aliasedObjectName: ou=so-1,ou=templates,ou=linux,ou=server,ou=customer-1,ou=kunden,ou=main,ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+ou: so-1

@@ -10,7 +10,7 @@
 
 SATELLITS=""
 for SH_ARG in $@; do
-SATELLIT="$SATELLITS $SH_ARG"
+SATELLITS="$SATELLITS $SH_ARG"
 done
 # Define where your icinga binary lies
 ICINGABIN="/usr/local/icinga/bin/icinga"
@@ -71,7 +71,7 @@ if ( $ICINGABIN -v $ICINGATMPCONFIG ) then
 # generate config for satellites
 # this process may alter the original config
 # (disable checks of satellite components on the master...)
-for HOST in $SATELLIT ; do
+for HOST in $SATELLITS ; do
 echo deploy config on $HOST
 (cd $LCONFBINPATH ; \
 $SUDOCOMMAND \
