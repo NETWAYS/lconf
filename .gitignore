@@ -1,0 +1,25 @@
+config.*
+Makefile
+*.swp
+*.swo
+
+# built stuff
+contrib/create_lconf-web-dn-mid.pl
+contrib/lconf-slavesync
+contrib/lconf_deploy.sh
+
+src/LConfExport.pl
+src/LConfImport.pl
+src/LConfSlaveExport.pl
+src/LConfSlaveSync.pl
+src/base.ldif
+src/base.ldif.[0-9]
+src/config.pm
+src/config.pm.[0-9]
+src/default-templates.cfg
+src/generate.pm
+src/ldap.pm
+src/misc.pm
+src/netways.schema
+src/netways.schema.ldif
+
