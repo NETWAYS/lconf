@@ -118,12 +118,6 @@ info:
 	@echo ""
 	
 install:
-	if [ `id -u` != 0 ]; then \
-		echo ""; \
-		echo "You're not root! Please run installer as root..."; \
-		exit 1; \
-	fi
-	
 	# create prefix dir
 	if [ ! -d ${DESTDIR}$(PREFIX) ]; then install -d -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 755 ${DESTDIR}$(PREFIX); fi
 	# create lib dir
