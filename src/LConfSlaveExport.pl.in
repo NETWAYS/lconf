@@ -262,7 +262,7 @@ foreach my $host (@hosts) {
 	
 	 # copy defaults localy
  	beVerbose("LOCAL COPY", "cp @PREFIX@/etc/default-templates.cfg $opt->{outputDir}/");
- 	qx(cp /opt/LConf/current/etc/default-templates.cfg $opt->{outputDir}/);
+ 	qx(cp @PREFIX@/etc/default-templates.cfg $opt->{outputDir}/);
 
 	# create dirs and write config
 	createDirs($cfg->{ldap}->{baseDN}, $opt->{outputDir});
