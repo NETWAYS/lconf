@@ -173,9 +173,13 @@ sub TreeBuilder {
 				# an other special handling for hostdependencies...
 				} elsif ($val1 =~ /$cfg->{ldap}->{prefix}hostdependency/) {
 					# map it to a dedicated level
-					$forward{'HOSTDEPENDENCY'}{$CONFIG->{$searchDN}->{"$cfg->{ldap}->{prefix}hostdependency"}}->{$val1} = $CONFIG->{$searchDN}->{$val1};
+					if(defined $CONFIG->{$searchDN}->{"$cfg->{ldap}->{prefix}hostdependency"}) {
+						$forward{'HOSTDEPENDENCY'}{$CONFIG->{$searchDN}->{"$cfg->{ldap}->{prefix}hostdependency"}}->{$val1} = $CONFIG->{$searchDN}->{$val1};
+					}
 				} elsif ($val1 =~ /$cfg->{ldap}->{prefix}servicedependency/) {
-					$forward{'SERVICEDEPENDENCY'}{$CONFIG->{$searchDN}->{"$cfg->{ldap}->{prefix}servicedependency"}}->{$val1} = $CONFIG->{$searchDN}->{$val1};
+					if(defined $CONFIG->{$service}->{"$cfg->{ldap}->{prefix}servicedependency"}) {
+						$forward{'SERVICEDEPENDENCY'}{$CONFIG->{$searchDN}->{"$cfg->{ldap}->{prefix}servicedependency"}}->{$val1} = $CONFIG->{$searchDN}->{$val1};
+					}
 				} else {
 					DebugOutput('TREE BUILDER', "Found attribute '$val1' with value '$CONFIG->{$searchDN}->{$val1}' => store!");
 					# additive inheritance?
@@ -239,7 +243,9 @@ sub TreeBuilder {
 						my $tmp_var = $CONFIG->{$service}->{$val1}; $tmp_var =~ s/\+//;
 						$forward{'SERVICES'}{$CONFIG->{$service}->{cn}}{$val1} .= ','.$tmp_var;
 					} elsif ($val1 =~ /$cfg->{ldap}->{prefix}servicedependency/) {
-						$forward{'SERVICES'}{$CONFIG->{$service}->{cn}}{SERVICEDEPENDENCY}->{$CONFIG->{$service}->{"$cfg->{ldap}->{prefix}servicedependency"}}->{$val1} = $CONFIG->{$service}->{$val1};
+						if(defined $CONFIG->{$service}->{"$cfg->{ldap}->{prefix}servicedependency"}) {
+							$forward{'SERVICES'}{$CONFIG->{$service}->{cn}}{SERVICEDEPENDENCY}->{$CONFIG->{$service}->{"$cfg->{ldap}->{prefix}servicedependency"}}->{$val1} = $CONFIG->{$service}->{$val1};
+						}
 					} else {
 						$forward{'SERVICES'}{$CONFIG->{$service}->{cn}}{$val1} = $CONFIG->{$service}->{$val1};
 					}
