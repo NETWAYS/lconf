@@ -13,23 +13,23 @@ sub testInitializeLDAP {
 
 	if ($confirm eq 'YES' || $confirm eq 'yes') {
 		# need to clear ldap tree?
-		$result = LDAPsearch($ldap, $cfg->{ldap}->{dn}, "sub", "ou=LConf");
-		if (defined $result->{'ou=LConf,'.$cfg->{ldap}->{dn}}) {
-			beVerbose('CLEANUP', "ou=LConf,$cfg->{ldap}->{dn}");
-			qx(ldapdelete -h $cfg->{ldap}->{server} -x -D $cfg->{ldap}->{binddn} -w $cfg->{ldap}->{bindpw} -r ou=LConf,$cfg->{ldap}->{dn});
+		$result = LDAPsearch($ldap, $cfg->{ldap}->{rootDN}, "base", "ou=*");
+		if (defined $result->{$cfg->{ldap}->{rootDN}}) {
+			beVerbose('CLEANUP', $cfg->{ldap}->{rootDN});
+			qx(ldapdelete -h $cfg->{ldap}->{server} -x -D $cfg->{ldap}->{binddn} -w $cfg->{ldap}->{bindpw} -r $cfg->{ldap}->{rootDN});
 		}
 		
 		# check dir structure
-		$result = LDAPsearch($ldap, $cfg->{ldap}->{dn}, "sub", "ou=LConf");
+		$result = LDAPsearch($ldap, $cfg->{ldap}->{rootDN}, "base", "ou=*");
 		if (!defined($result)) {
-			beVerbose("LDAP STRUCTURE", "ou=LConf,$cfg->{ldap}->{dn} not available; will create it...");
+			beVerbose("LDAP STRUCTURE", $cfg->{ldap}->{rootDN}." not available; will create it...");
 
 			my $entry = Net::LDAP::Entry->new;
-			$entry->dn("ou=LConf,$cfg->{ldap}->{dn}");
+			$entry->dn($cfg->{ldap}->{rootDN});
 			$entry->add(objectClass => "top");
 			$entry->add(objectClass => "organizationalUnit");
 			$entry->add(description => "init by LConfTest.pl");
-			$entry->add(ou => "LConf");
+			$entry->add(ou => $cfg->{ldap}->{rootNode});
 			my $val = $entry->update($ldap);
 			if ($val->code != 0) {
 				beVerbose("LDAP ADD", "ERROR - CODE: ".$val->code." - ".$val->error);
@@ -53,9 +53,9 @@ sub testCheckServer {
 	# verbose info
 	beVerbose('LDAP CHECK', 'Check initialization of ldap server');
 	
-	$result = LDAPsearch($ldap, $cfg->{ldap}->{dn}, "single", "ou=LConf");
-	if ($result->{'ou=LConf,'.$cfg->{ldap}->{dn}}->{'description'}) {
-		foreach(keys %{$result->{'ou=LConf,'.$cfg->{ldap}->{dn}}->{'description'}}) {
+	$result = LDAPsearch($ldap, $cfg->{ldap}->{rootDN}, "base", "ou=*");
+	if ($result->{$cfg->{ldap}->{rootDN}}->{'description'}) {
+		foreach(keys %{$result->{$cfg->{ldap}->{rootDN}}->{'description'}}) {
 			if ("$_" eq 'init by LConfTest.pl') {
 				$result->{code} = 0;
 				$result->{message} = 'LDAP server is already initialized.';
@@ -95,7 +95,7 @@ sub testAddLdif {
 sub testCleanLDAP {
 	$ldap = shift;
 	
-	$result = LDAPsearch($ldap, 'ou=LConf,'.$cfg->{ldap}->{dn}, "single", "objectclass=*");
+	$result = LDAPsearch($ldap, $cfg->{ldap}->{rootDN}, "single", "objectclass=*");
 	foreach my $val (keys %{$result}) {
 		beVerbose('CLEANUP', $val);
 		qx(ldapdelete -h $cfg->{ldap}->{server} -x -D $cfg->{ldap}->{binddn} -w $cfg->{ldap}->{bindpw} -r $val);

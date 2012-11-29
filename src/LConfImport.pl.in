@@ -145,8 +145,8 @@ LeaveScript(2, "Variable '\$cfg->{ldap}->{server}' not set in config.pm'") if !$
 LeaveScript(2, "Variable '\$cfg->{ldap}->{dn} not set in config.pm'")      if !$cfg->{ldap}->{dn};
 
 # set up dn's
-$cfg->{ldap}->{importDN} = 'ou=Import,'.$cfg->{ldap}->{dn};                                # import DN
-$cfg->{ldap}->{workDN}   = 'ou='.$cfg->{export}->{startingpoint}.',ou=LConf,'.$cfg->{ldap}->{dn};   # work DN (where the config lives)
+$cfg->{ldap}->{importDN} = 'ou=Import,'.$cfg->{ldap}->{rootDN}                    # import DN
+$cfg->{ldap}->{workDN}   = $cfg->{export}->{exportDN}.','.$cfg->{ldap}->{rootDN};   # work DN (where the config lives)
 my $targetDN = $cfg->{ldap}->{workDN};                                          # for later use
 
 # reorganize %itemMap

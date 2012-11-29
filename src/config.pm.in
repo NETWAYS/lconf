@@ -4,16 +4,17 @@
 # LDAP connection
 #
 $cfg->{ldap}->{server}				= '@LDAP_SERVER@';
-$cfg->{ldap}->{dn}				= '@LDAP_DN@';
 $cfg->{ldap}->{prefix}				= '@LDAP_PREFIX@';
 $cfg->{ldap}->{binddn}				= '@LDAP_BIND_DN@';
 $cfg->{ldap}->{bindpw}				= '@LDAP_BIND_PASSWORD@';
+$cfg->{ldap}->{rootNode}			= 'LConf';
+$cfg->{ldap}->{rootDN}				= 'ou='.$cfg->{ldap}->{rootNode}.',@LDAP_DN@';
 
 #
 # LConfExport.pl
 #
 $cfg->{export}->{user}				= '@LCONF_CLI_USER@';
-$cfg->{export}->{startingpoint}			= 'IcingaConfig';
+$cfg->{export}->{exportDN}			= 'ou=IcingaConfig'; # below rootDN
 $cfg->{export}->{lock}				= '@PREFIX@/var/LConfExport.lock';
 $cfg->{export}->{hashdump}			= '@PREFIX@/var/LConfExport.hashdump';
 $cfg->{export}->{tmpdir}			= '@PREFIX@/tmp';
