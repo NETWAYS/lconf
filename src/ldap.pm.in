@@ -147,6 +147,11 @@ sub TreeBuilder {
 					foreach my $val1 (keys %{$tmp_forward{SERVICES}{$service}}) {
 						#$forward{'SERVICES'}{$service}{$val1} = $tmp_forward{SERVICES}{$service}{$val1};
 						
+						# ist das link ziel da?
+						if(!defined $CONFIG->{$ALIASES->{$alias}->{aliasedobjectname}}->{objectclass}) {
+							die "alias broken: $ALIASES->{$alias}->{dn}!";
+						}
+
 						# link ist direkt auf service
 					 	if ($CONFIG->{$ALIASES->{$alias}->{aliasedobjectname}}->{objectclass} eq $cfg->{ldap}->{prefix}.'Service') {
 							if ($tmp_forward{SERVICES}{$service}->{cn} eq $ALIASES->{$alias}->{ou}) {
@@ -281,7 +286,7 @@ sub TreeBuilder {
     
 		# if main target is a Host or searchDN ends with target (that means, only if
 		# i'm at least down at the target) TreeBuilder is called.
-		if ($CONFIG->{$searchDN}->{objectclass} eq $cfg->{ldap}->{prefix}.'Host' || ($searchDN =~ m/$target.$cfg->{ldap}->{rootDN}$/)) {
+		if (defined $CONFIG->{$searchDN} && $CONFIG->{$searchDN}->{objectclass} eq $cfg->{ldap}->{prefix}.'Host' || ($searchDN =~ m/$target.$cfg->{ldap}->{rootDN}$/)) {
 			# Find structuralObjects
 			$result = HashGrep($CONFIG, 'dn', '^[\w]+=[._\w\/\d\s:-]+,'.$searchDN);
 			my $structuralObject = HashGrep($result, 'objectclass', $cfg->{ldap}->{prefix}.'StructuralObject');
