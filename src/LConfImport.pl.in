@@ -524,7 +524,8 @@ sub checkDN {
 	my $dn = shift;
 	my $to_return;
 
-	my $result = LDAPsearch($ldap, $dn, "base", "objectclass=*");
+	my @path = split(/,/,$dn,2);
+	my $result = LDAPsearch($ldap, $path[1], "one", $path[0]);
 
 	if (!defined $result) {
 		# get ou attribute
