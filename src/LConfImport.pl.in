@@ -142,10 +142,10 @@ our $exit; $exit->{code} = 0; $exit->{message} = 'No errors';
 
 # fist of all... check if we're ready to run
 LeaveScript(2, "Variable '\$cfg->{ldap}->{server}' not set in config.pm'") if !$cfg->{ldap}->{server};
-LeaveScript(2, "Variable '\$cfg->{ldap}->{dn} not set in config.pm'")      if !$cfg->{ldap}->{dn};
+LeaveScript(2, "Variable '\$cfg->{ldap}->{rootDN} not set in config.pm'")      if !$cfg->{ldap}->{rootDN};
 
 # set up dn's
-$cfg->{ldap}->{importDN} = 'ou=Import,'.$cfg->{ldap}->{rootDN}                    # import DN
+$cfg->{ldap}->{importDN} = 'ou=Import,'.$cfg->{ldap}->{rootDN};                    # import DN
 $cfg->{ldap}->{workDN}   = $cfg->{export}->{exportDN}.','.$cfg->{ldap}->{rootDN};   # work DN (where the config lives)
 my $targetDN = $cfg->{ldap}->{workDN};                                          # for later use
 
