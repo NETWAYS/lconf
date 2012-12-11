@@ -205,6 +205,28 @@ sub genHostgroups {
 				}
 			}
 		}
+
+    # Search for escalations below of a hostgroupgroup
+    my $he_result = HashGrep($CONFIG, 'dn', '^[\w]+=[._\w\/\d\s:-]+,'.$hostgroup);
+    my $HOSTESCALATIONS = HashGrep($he_result, 'objectclass', $cfg->{ldap}->{prefix}.'hostescalation$');
+    foreach my $escalation (keys %{$HOSTESCALATIONS}) {
+      my $writeFile = $outputDir."/hostescalations/$he_result->{$escalation}->{cn}.cfg";
+
+      # open target file
+      open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
+      print FH "define hostescalation {\n";
+
+      foreach my $val1 (sort keys %{$he_result->{$escalation}}) {
+        if ($val1 =~ /$cfg->{ldap}->{prefix}hostescalation/) {
+          print FH "\t$itemMap{$val1}\t$he_result->{$escalation}->{$val1}\n";
+        }
+      }
+      print FH "}\n\n";
+
+      # close target file
+      close(FH);
+    }
+
 	}
 	
 	# get all hostgroups defined by hostobject
@@ -284,7 +306,29 @@ sub genServicegroups {
 				$counter = $counter+2;
 			}
 		}
-	}
+
+    # Search for escalations below of a servicegroup
+    my $se_result = HashGrep($CONFIG, 'dn', '^[\w]+=[._\w\/\d\s:-]+,'.$servicegroup);
+    my $SERVICEESCALATIONS = HashGrep($se_result, 'objectclass', $cfg->{ldap}->{prefix}.'serviceescalation$');
+
+    foreach my $escalation (keys %{$SERVICEESCALATIONS}) {
+      my $writeFile = $outputDir."/serviceescalations/$se_result->{$escalation}->{cn}.cfg";
+
+      # open target file
+      open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
+      print FH "define serviceescalation {\n";
+
+      foreach my $val1 (sort keys %{$se_result->{$escalation}}) {
+        if ($val1 =~ /$cfg->{ldap}->{prefix}serviceescalation/) {
+          print FH "\t$itemMap{$val1}\t$se_result->{$escalation}->{$val1}\n";
+        }
+      }
+      print FH "}\n\n";
+
+      # close target file
+      close(FH);
+    }
+  }
 	
 	# get all servicegroups defined by serviceobject
 	foreach my $client (keys %{$CLIENTS}) {
