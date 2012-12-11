@@ -15,13 +15,14 @@ $cfg->{ldap}->{rootDN}				= 'ou='.$cfg->{ldap}->{rootNode}.',@LDAP_DN@';
 #
 $cfg->{export}->{user}				= '@LCONF_CLI_USER@';
 $cfg->{export}->{exportDN}			= 'ou=IcingaConfig'; # below rootDN
-$cfg->{export}->{lock}				= '@PREFIX@/var/LConfExport.lock';
-$cfg->{export}->{hashdump}			= '@PREFIX@/var/LConfExport.hashdump';
 $cfg->{export}->{tmpdir}			= '@PREFIX@/tmp';
 $cfg->{export}->{timestamp}			= '@PREFIX@/var/LConfExport.timestamp';
 $cfg->{export}->{onlydiffs}			= 0;
 $cfg->{export}->{childs}        = 2;
 
+# lock and hashdump moved to output dir!
+#$cfg->{export}->{lock}				= '@PREFIX@/var/LConfExport.lock';
+#$cfg->{export}->{hashdump}			= '@PREFIX@/var/LConfExport.hashdump';
 
 $cfg->{export}->{treerewrite}			= 'None';
 #$cfg->{export}->{treerewrite}			= 'MainOverLink';

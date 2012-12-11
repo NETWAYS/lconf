@@ -171,13 +171,19 @@ LeaveScript(2, "Variable '\$cfg->{export}->{treerewrite}' not set in config.pm'"
 # export with right user?
 LeaveScript(2, "You're not user '$cfg->{export}->{user}'!") if $ENV{USER} ne $cfg->{export}->{user};
 
-# export already running?
-open(LOCK, ">$cfg->{export}->{lock}") or LeaveScript(2, "Cannot open $cfg->{export}->{lock}");
-flock(LOCK, LOCK_EX|LOCK_NB) or LeaveScript(2, "LConfExport locked! Someone is already using it!");
-
 # check output dir
 LeaveScript('2', "'$opt->{outputDir}' is not a directory") if !-d $opt->{outputDir};
 LeaveScript('2', "'$opt->{outputDir}' is not writeable")   if !-w $opt->{outputDir};
+
+# set lockfile
+$cfg->{export}->{lock} = $opt->{outputDir}.'/LConfExport.lock';
+
+# set hashdump file
+$cfg->{export}->{hashdump} = $opt->{outputDir}.'/LConfExport.hashdump';
+
+# export already running?
+open(LOCK, ">$cfg->{export}->{lock}") or LeaveScript(2, "Cannot open $cfg->{export}->{lock}");
+flock(LOCK, LOCK_EX|LOCK_NB) or LeaveScript(2, "LConfExport locked! Someone is already using it!");
 
 # clean old output dir
 	DebugOutput('REMOVE OLD CONFIG', "start - folder: $opt->{outputDir}");

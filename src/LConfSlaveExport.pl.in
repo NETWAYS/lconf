@@ -118,6 +118,7 @@ our $opt;
 GetOptions(
 	"H|host=s"			=> \$opt->{host},
 	"p|port=s"			=> \$opt->{port},
+	"D|hashdump=s"		=> \$opt->{hashdump},
 	"t|target=s"		=> \$opt->{target},
 	"v|verbose:s"		=> \$opt->{verbose},
 	"h|help"			=> \$opt->{help},
@@ -158,7 +159,8 @@ LeaveScript(2, "Variable '\$cfg->{export}->{user}' not set in config.pm'") if !$
 LeaveScript(2, "You're not user '$cfg->{export}->{user}'!") if $ENV{USER} ne $cfg->{export}->{user};
 
 # hashdump exists?
-LeaveScript(2, "Hashdump from LConfExport.pl does not exist!") if !-f $cfg->{export}->{hashdump};
+LeaveScript(2, "please specify Hashdump with --hashdump or -D") if ! $opt->{hashdump};
+LeaveScript(2, "Hashdump from '$opt->{hashdump}' does not exist!") if !-f $opt->{hashdump};
 
 #
 # NOW, WE'RE READY TO RUN :)
@@ -166,7 +168,7 @@ LeaveScript(2, "Hashdump from LConfExport.pl does not exist!") if !-f $cfg->{exp
 
 # import hashdump
 my $data; my $VAR1;
-open FILE, "<$cfg->{export}->{hashdump}" or die $!; while(<FILE>) { $data .= $_; } close FILE;
+open FILE, "<$opt->{hashdump}" or die $!; while(<FILE>) { $data .= $_; } close FILE;
 eval($data);
 $CLIENTS = $VAR1;
 
