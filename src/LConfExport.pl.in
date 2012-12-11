@@ -71,6 +71,10 @@ Export a Nagios / Icinga config from LConf
 
 Output dir for config
 
+=item -e|--exportdn <dn path below LConf>
+
+The DN where to start the export, this overrides the config option exportDN
+
 =item -v|--verbose [<path to logfile>]
 
 Verbose mode. If no logfile specified, verbose output will be printed to STDOUT
@@ -133,6 +137,7 @@ our @state = ('OK', 'WARNING', 'ERROR', 'UNKNOWN');
 our $opt;
 GetOptions(
 	"o|output=s"	=> \$opt->{outputDir},
+	"e|exportdn=s"	=> \$opt->{exportDN},
 	"v|verbose:s"	=> \$opt->{verbose},
 	"d|debug:s"	=> \$opt->{debug},
 	"full-export:s"	=> \$opt->{fullExport},
@@ -159,6 +164,11 @@ if ($opt->{help} || !$opt->{outputDir}) { pod2usage(1); }
 # define vars
 use vars qw($cfg %itemMap);
 our $exit; $exit->{code} = 0; $exit->{message} = 'No errors';
+
+# override exportDN when set via commandline
+if(defined $opt->{exportDN}) {
+    $cfg->{export}->{exportDN} = $opt->{exportDN};
+}
 $cfg->{ldap}->{baseDN} = $cfg->{export}->{exportDN}.','.$cfg->{ldap}->{rootDN};
 
 # fist of all... check if we're ready to run
