@@ -262,7 +262,7 @@ sub TreeBuilder {
 		}
 		
 		# process main targets services
-		$result = HashGrep($CONFIG, 'dn', '^[\w]+=[._\w\/\d\s:-]+,'.$searchDN);
+		$result = HashGrep($CONFIG, 'dn', '^[\w]+=[\$._\w\/\d\s:-]+,'.$searchDN);
 		my $SERVICES = HashGrep($result, 'objectclass', $cfg->{ldap}->{prefix}.'Service$');
     foreach my $service (keys %{$SERVICES}) {
       DebugOutput('TREE BUILDER', "\nFound service\t $service");
@@ -305,6 +305,47 @@ sub TreeBuilder {
 					}
 				}
 			}
+
+            # service-/customvar re-write
+            # allow usage of customvars in the CN of a service
+            # e.g. http_$_SERVICEAPACHEPORT$
+            if ($CONFIG->{$service}->{cn} =~ /\$_/) {
+                # get customvar's name and value
+                if($CONFIG->{$service}->{cn} =~ m/(\$_.+\$)/) {
+                    my $customvar = $1;
+                    my $customvar_attribute = $customvar;
+                    $customvar_attribute =~ s/^\$_SERVICE(.*)\$$/_$1/;
+
+                    # prepare a regexp safe search
+                    my $search = $customvar;
+                    $search =~ s/\$/\\\$/g;
+
+                    # look for the customvar
+                    my $customvar_value = $forward{'SERVICES'}{$CONFIG->{$service}->{cn}}{'lconfservicecustomvar'}{$customvar_attribute};
+                    if(defined $customvar_value) {
+                        # new service name
+                        my $name = $CONFIG->{$service}->{cn};
+                        $name =~ s/$search/$customvar_value/g;
+
+                        # store the new object
+                        $forward{'SERVICES'}{$name} = $forward{'SERVICES'}{$CONFIG->{$service}->{cn}};
+                        # set the new name
+                        $forward{'SERVICES'}{$name}{'cn'} = $name;
+                        # replace in checkcommand as well
+                        $forward{'SERVICES'}{$name}{'lconfcheckcommand'} =~ s/$search/$customvar_value/g;
+                    }
+                    else {
+                        $exit->{code} = 2;
+                        $exit->{message} = "no customvar '$customvar' found for service: $service!";
+                        goto EXIT;
+                    }
+                }
+                else {
+                    $exit->{code} = 2;
+                    $exit->{message} = "CN of service looks wrong: $service";
+                    goto EXIT;
+                }
+            }
 		}
 		
 		# process host escalations
@@ -403,6 +444,10 @@ sub BuildHostConfig {
 			if ($val1 =~ /$cfg->{ldap}->{prefix}service/ || $val1 eq "$cfg->{ldap}->{prefix}checkcommand" || $val1 eq 'description' || $val1 eq 'cn' || $val1 =~ /objectclass/i) {
 				$CLIENTS->{$client}->{SERVICES}->{$service}->{$val1} = $TREE->{SERVICES}->{$service}->{$val1};
         DebugOutput('CONFIG BUILDER', "Added service attribute: $client $service $val1");
+
+				# service-/customvar re-write
+                # replace HOSTNAME in servicedescription with the name of the assigned host
+				$CLIENTS->{$client}->{SERVICES}->{$service}->{$val1} =~ s/\$HOSTNAME\$/$CLIENTS->{$client}->{cn}/g;
 			}
 		}
 		
