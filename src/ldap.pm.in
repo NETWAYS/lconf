@@ -230,13 +230,26 @@ sub TreeBuilder {
 		# process main targets services
 		$result = HashGrep($CONFIG, 'dn', '^[\w]+=[._\w\/\d\s:-]+,'.$searchDN);
 		my $SERVICES = HashGrep($result, 'objectclass', $cfg->{ldap}->{prefix}.'Service$');
-		foreach my $service (keys %{$SERVICES}) {
+    foreach my $service (keys %{$SERVICES}) {
+
+      # First search for  service escalations below the service target
+      # Ugly but necessary
+      my $se_result = HashGrep($CONFIG, 'dn', '^[\w]+=[._\w\/\d\s:-]+,'.$service);
+      my $SERVICEESCALATIONS = HashGrep($se_result, 'objectclass', $cfg->{ldap}->{prefix}.'serviceescalation$');
+      foreach my $escalation (keys %{$SERVICEESCALATIONS}) {
+        foreach my $val1 (keys %{$SERVICEESCALATIONS->{$escalation}}) {
+          if ($val1 =~ /$cfg->{ldap}->{prefix}serviceescalation/) {
+            $forward{'SERVICEESCALATION'}{$escalation}{$val1} = $SERVICEESCALATIONS->{$escalation}->{$val1};
+          }
+        }
+      }
+
 			# create service and push every parent attribute to the service
 			foreach my $val1 (keys %{forward}) {
           if (ref($forward{$val1}) eq "HASH") {
 					$forward{'SERVICES'}{$CONFIG->{$service}->{cn}}{$val1} = {%{$forward{$val1}}};
 				} else {
-				         $forward{'SERVICES'}{$CONFIG->{$service}->{cn}}{$val1} = $forward{$val1};
+          $forward{'SERVICES'}{$CONFIG->{$service}->{cn}}{$val1} = $forward{$val1};
 				}
 			}
 			
@@ -281,7 +294,7 @@ sub TreeBuilder {
 		
 		# the following code allows to organize services below hosts and below
 		# aliases, e.g. sorting services with structuralObjects.
-		# if main target is a host, add everything structuralObject below
+		# if main target is a host, add every structuralObject below and
 		# if target is not a host add structuralObjects below 
     
 		# if main target is a Host or searchDN ends with target (that means, only if

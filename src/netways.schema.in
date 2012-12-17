@@ -544,10 +544,16 @@ attributetype ( 1.3.6.1.4.1.26840.144.2.5.506 NAME '@LDAP_PREFIX@HostEscalationO
 	EQUALITY caseIgnoreMatch
 	SUBSTR caseIgnoreSubstringsMatch
 	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.5.507 NAME '@LDAP_PREFIX@HostEscalationHostGroups'
+	DESC 'Nagios / Icinga Host Escalation attribute (escalation_HostGroups <host_group/s>)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
 	
 	
 #
-# .2.6   | @LDAP_PREFIX@ attributes (host escalations)
+# .2.6   | @LDAP_PREFIX@ attributes (service escalations)
 #
 
 attributetype ( 1.3.6.1.4.1.26840.144.2.6.500 NAME '@LDAP_PREFIX@ServiceEscalationFirstNotification'
@@ -591,6 +597,18 @@ attributetype ( 1.3.6.1.4.1.26840.144.2.6.506 NAME '@LDAP_PREFIX@ServiceEscalati
 	EQUALITY caseIgnoreMatch
 	SUBSTR caseIgnoreSubstringsMatch
 	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.6.507 NAME '@LDAP_PREFIX@ServiceEscalationHostGroups'
+	DESC 'Nagios / Icinga Service Escalation attribute (escalation_HostGroups <host_group/s>)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.6.508 NAME '@LDAP_PREFIX@ServiceEscalationServiceGroups'
+	DESC 'Nagios / Icinga Service Escalation attribute (escalation_ServiceGroups <service_group/s>)'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
 
 
 #
@@ -716,12 +734,12 @@ objectclass ( 1.3.6.1.4.1.26840.144.5.9 NAME '@LDAP_PREFIX@HostEscalation'
 	DESC 'Nagios / Icinga Host Escalation'
 	SUP top
 	MUST ( cn $ @LDAP_PREFIX@HostEscalationFirstNotification $ @LDAP_PREFIX@HostEscalationLastNotification $ @LDAP_PREFIX@HostEscalationNotificationInterval )
-	MAY ( @LDAP_PREFIX@HostEscalationContacts $ @LDAP_PREFIX@HostEscalationContactgroups $ @LDAP_PREFIX@HostEscalationPeriod $ @LDAP_PREFIX@HostEscalationOptions ) )
+	MAY ( @LDAP_PREFIX@HostEscalationContacts $ @LDAP_PREFIX@HostEscalationContactgroups $ @LDAP_PREFIX@HostEscalationPeriod $ @LDAP_PREFIX@HostEscalationOptions $ @LDAP_PREFIX@HostEscalationHostGroups ) )
 	
 objectclass ( 1.3.6.1.4.1.26840.144.5.10 NAME '@LDAP_PREFIX@ServiceEscalation'
 	DESC 'Nagios / Icinga Service Escalation'
 	SUP top
 	MUST ( cn $ @LDAP_PREFIX@ServiceEscalationFirstNotification $ @LDAP_PREFIX@ServiceEscalationLastNotification $ @LDAP_PREFIX@ServiceEscalationNotificationInterval )
-	MAY ( @LDAP_PREFIX@ServiceEscalationContacts $ @LDAP_PREFIX@ServiceEscalationContactgroups $ @LDAP_PREFIX@ServiceEscalationPeriod $ @LDAP_PREFIX@ServiceEscalationOptions ) )
+	MAY ( @LDAP_PREFIX@ServiceEscalationContacts $ @LDAP_PREFIX@ServiceEscalationContactgroups $ @LDAP_PREFIX@ServiceEscalationPeriod $ @LDAP_PREFIX@ServiceEscalationOptions $ @LDAP_PREFIX@ServiceEscalationServiceGroups $ @LDAP_PREFIX@ServiceEscalationHostGroups) )
 	
 	

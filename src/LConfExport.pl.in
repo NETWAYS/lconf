@@ -301,6 +301,8 @@ if (-f '@PREFIX@/custom/mid.pl') {
 createDirs($cfg->{ldap}->{baseDN}, $opt->{outputDir});  # TODO: Umbauen damit er ohne LDAPsearch funktioniert??
 mkdir("$opt->{outputDir}/hostgroups/");
 mkdir("$opt->{outputDir}/servicegroups/");
+mkdir("$opt->{outputDir}/serviceescalations/");
+mkdir("$opt->{outputDir}/hostescalations/");
 copyGeneric(dirname(__FILE__)."/etc/default-templates.cfg", $opt->{outputDir});
 genTimeperiods($CONFIG);
 genCommands($CONFIG);

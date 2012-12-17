@@ -67,7 +67,7 @@ $cfg->{test}->{output}				= "/tmp/lconf-test-out";
 	@LDAP_PREFIX@contactservicenotificationsenabled           => 'service_notifications_enabled',
 	@LDAP_PREFIX@contacthostnotificationsenabled              => 'host_notifications_enabled',
 	@LDAP_PREFIX@contactcansubmitcommands                     => 'can_submit_commands',
-	@LDAP_PREFIX@contactgroups				  => 'contactgroups',
+  @LDAP_PREFIX@contactgroups			                          => 'contactgroups',
 	
 	# .2.3 | lconf attributes (host)
 	@LDAP_PREFIX@address                                      => 'address',
@@ -140,6 +140,7 @@ $cfg->{test}->{output}				= "/tmp/lconf-test-out";
 	@LDAP_PREFIX@hostescalationcontactgroups                  => 'contact_groups',
 	@LDAP_PREFIX@hostescalationperiod                         => 'escalation_period',
 	@LDAP_PREFIX@hostescalationoptions                        => 'escalation_options',
+	@LDAP_PREFIX@hostescalationhostgroups                     => 'hostgroup_name',
 	
 	# .2.6 | lconf attributes (service escalations)
 	@LDAP_PREFIX@serviceescalationfirstnotification           => 'first_notification',
@@ -149,6 +150,8 @@ $cfg->{test}->{output}				= "/tmp/lconf-test-out";
 	@LDAP_PREFIX@serviceescalationcontactgroups               => 'contact_groups',
 	@LDAP_PREFIX@serviceescalationperiod                      => 'escalation_period',
 	@LDAP_PREFIX@serviceescalationoptions                     => 'escalation_options',
+  @LDAP_PREFIX@serviceescalationservicegroups               => 'servicegroup_name',
+	@LDAP_PREFIX@serviceescalationhostgroups                  => 'hostgroup_name',
 
 	# special stuff ;-)
 	cn                                                => 'PLACEHOLDER'
