@@ -215,6 +215,7 @@ sub genHostgroups {
       # open target file
       open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
       print FH "define hostescalation {\n";
+      print FH "\t$itemMap{lconfhostescalationhostgroups}\t$CONFIG->{$hostgroup}->{cn}\n";
 
       foreach my $val1 (sort keys %{$he_result->{$escalation}}) {
         if ($val1 =~ /$cfg->{ldap}->{prefix}hostescalation/) {
@@ -317,6 +318,7 @@ sub genServicegroups {
       # open target file
       open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
       print FH "define serviceescalation {\n";
+      print FH "\t$itemMap{lconfserviceescalationservicegroups}\t$CONFIG->{$servicegroup}->{cn}\n";
 
       foreach my $val1 (sort keys %{$se_result->{$escalation}}) {
         if ($val1 =~ /$cfg->{ldap}->{prefix}serviceescalation/) {
