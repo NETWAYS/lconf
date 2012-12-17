@@ -98,6 +98,7 @@ use Pod::Usage;
 use File::Basename;
 use Net::LDAP;
 use Data::Dumper;
+use POSIX qw/strftime/;
 use Fcntl qw(:flock);
 use Storable qw(dclone);
 use Scalar::Util qw/reftype/;
@@ -194,12 +195,80 @@ if ($cfg->{ldap}->{binddn} && $cfg->{ldap}->{bindpw}) {
 	$ldap = LDAPconnect();
 }
 
+# get last timestamp
+my $timestamp;
+if (-f $cfg->{export}->{timestamp}) {
+	open(FH, "<$cfg->{export}->{timestamp}") || die "Can't read data: $cfg->{export}->{timestamp}$!\n";
+	$timestamp = <FH>;
+	chomp($timestamp);
+	close(FH);
+}
+
+# set timestamp
+open(FH, "+>$cfg->{export}->{timestamp}") || die "Can't write data: $cfg->{export}->{timestamp}$!\n";
+print FH strftime('%Y%m%d%H%M%SZ',localtime(time-3600));
+close(FH);
+
 # get the whole config from ldap
 my $CONFIG = LDAPsearch($ldap, $cfg->{ldap}->{rootDN}, "sub", "objectclass=*");
 
+# search last modified items
+my $DIFF_EXPORT = ();
+if (defined $cfg->{export}->{onlydiffs} && $cfg->{export}->{onlydiffs} == 1) {
+	my $LASTMODIFIED = LDAPsearch($ldap, $cfg->{ldap}->{rootDN}, "sub", "(|(modifyTimestamp>=$timestamp)(createTimestamp>=$timestamp))");
+	foreach my $val1 (keys %{$LASTMODIFIED}) {
+		my $QUEUE;
+
+		if ($LASTMODIFIED->{$val1}->{objectclass} =~ /$cfg->{ldap}->{prefix}Host/i) {
+			$DIFF_EXPORT->{$LASTMODIFIED->{$val1}->{dn}} = $LASTMODIFIED->{$val1}->{dn};
+		} else {
+			# search for links
+			# split and reverse the DN
+			my $searchDN = $val1;
+			$searchDN =~ s/,$cfg->{ldap}->{rootDN}//;
+			my @search = split(",", $searchDN);
+			@search = reverse(@search);
+
+			# search at rootDN...
+			$searchDN = $cfg->{ldap}->{rootDN};
+			my $LINKED = LDAPsearch($ldap, $cfg->{ldap}->{rootDN}, "sub", "aliasedobjectname=$searchDN");
+			foreach my $link (keys %{$LINKED}) { $link =~ s/^ou=//; $QUEUE->{$link} = $link; }
+
+			# ...and search rest of the three
+			foreach (@search) {
+				$searchDN = $_.",".$searchDN;
+				my $LINKED = LDAPsearch($ldap, $cfg->{ldap}->{rootDN}, "sub", "aliasedobjectname=$searchDN");
+				foreach my $link (keys %{$LINKED}) { $link =~ s/^ou=//;  $QUEUE->{$link} = $link; }
+			}
+
+			if ($LASTMODIFIED->{$val1}->{objectclass} =~ /alias/i || $LASTMODIFIED->{$val1}->{objectclass} =~ /extensibleObject/i) { $val1 =~ s/^ou=//; }
+
+			$QUEUE->{$val1} = $val1;
+
+			foreach my $do (keys %{$QUEUE}) {
+				my @splitted = split('ou=', $do, 2);
+				if ($#splitted == 1) { $do = 'ou='.$splitted[1]; } else { $do = 'ou='.$splitted[0]; }
+
+				my $TMP_HOSTS = LDAPsearch($ldap, $do, "sub", "objectclass=$cfg->{ldap}->{prefix}Host");
+				foreach (keys %{$TMP_HOSTS}) {
+				        $DIFF_EXPORT->{$_} = $_;
+				}
+			}
+		}
+	}
+}
+
 # get all clients to monitor
 my $CLIENTS = HashGrep($CONFIG, 'objectclass', $cfg->{ldap}->{prefix}.'Host$');
-if (defined $opt->{filter}) { my $tmp_hash = HashGrep($CLIENTS, 'cn', $opt->{filter}); $CLIENTS = $tmp_hash; }
+	# modify $CLIENTS if $cfg->{export}->{onlydiffs} was set
+	if ($cfg->{export}->{onlydiffs}) {
+		foreach my $client (keys %{$CLIENTS}) {
+			delete $CLIENTS->{$client} if !defined $DIFF_EXPORT->{$client};
+		}
+	}
+
+	# modify $CLIENTS if a filter was set
+	if (defined $opt->{filter}) { my $tmp_hash = HashGrep($CLIENTS, 'cn', $opt->{filter}); $CLIENTS = $tmp_hash; }
 
 # drop all hosts obove baseDN (eg. examples)
 foreach my $client (keys %{$CLIENTS}) {
@@ -254,8 +323,22 @@ open(FH, ">$opt->{outputDir}/lconf.identify") || die "Can't write data: $opt->{o
 beVerbose("LDAP DISCONNECT", "disconnected from ldap host");
 $ldap->unbind();
 
+# just modify the hashdump, if $CLIENTS if $cfg->{export}->{onlydiffs} was set
+if ($cfg->{export}->{onlydiffs} && $cfg->{export}->{onlydiffs} == 1) {
+	# import hashdump
+	my $data; my $VAR1;
+	open FILE, "<$cfg->{export}->{hashdump}" or die $!; while(<FILE>) { $data .= $_; } close FILE;
+	eval($data);
+
+	# merge hashdumps
+	foreach (keys %{$CLIENTS}) {
+		$VAR1->{$_} = $CLIENTS->{$_};
+	}
+	$CLIENTS = $VAR1;
+}
+
 # dump data to filesystem
-my $data = Dumper($CLIENTS); open FILE, ">$cfg->{export}->{hashdump}" or die $!; print FILE $data; close FILE;
+my $data = Dumper($CLIENTS); open FILE, "+>$cfg->{export}->{hashdump}" or die $!; print FILE $data; close FILE;
 
 # exit
 EXIT:
