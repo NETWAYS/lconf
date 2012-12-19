@@ -1,0 +1,382 @@
+#!/usr/bin/perl -w
+
+=head1 NAME
+
+LConfSlaveExportRules.pl - export an Nagios / Icinga config from LConf to a slave cluster by ruleset
+
+=head1 SYNOPSIS
+
+LConfSlaveExport.pl  -v
+                     -h
+                     -V
+
+Export an Nagios / Icinga config from LConf to a slave cluster by ruleset
+
+=head1 OPTIONS
+
+=over
+
+=item -v|--verbose <path to logfile>
+
+Verbose mode. If no logfile is specified, verbose output will be printend to STDOUT
+
+=item -h|--help
+
+print help page
+
+=item -V|--version
+
+print plugin version
+
+=cut
+
+# basic perl includes
+use strict;
+use Getopt::Long qw(:config no_ignore_case bundling);
+use Pod::Usage;
+use File::Basename;
+use Net::LDAP;
+
+# set lib path
+use lib dirname(__FILE__);
+
+# lconf includes
+use lib "/etc/LConf";
+use config;
+use lib "/usr/lib/LConf";
+use ldap;
+use generate;
+use misc;
+
+# version string
+my $version = '1.3rc';
+
+# define states
+our @state = ('OK', 'WARNING', 'ERROR', 'UNKNOWN');
+
+# get command-line parameters
+our $opt;
+GetOptions(
+	"H|host=s"			=> \$opt->{host},
+	"p|port=s"			=> \$opt->{port},
+	"t|target=s"		=> \$opt->{target},
+	"v|verbose:s"		=> \$opt->{verbose},
+	"h|help"			=> \$opt->{help},
+	"V|version"		=> \$opt->{version}
+);
+
+
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
+# help and version page
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
+
+# should print version?
+if (defined $opt->{version}) { print $version."\n"; exit 0; }
+
+# should print help?
+if ($opt->{help}) { pod2usage(1); }
+
+
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
+# let's go!
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
+
+# define vars
+use vars qw($cfg);
+$cfg->{ldap}->{baseDN} = 'ou='.$cfg->{export}->{startingpoint}.',ou=LConf,'.$cfg->{ldap}->{dn};
+$cfg->{ldap}->{rootDN} = 'ou=LConf,'.$cfg->{ldap}->{dn};
+our $CLIENTS;
+my @export;
+my @hosts;
+
+our $exit; $exit->{code} = 0; $exit->{message} = 'No errors';
+
+# fist of all... check if we're ready to run
+LeaveScript(2, "Variable '\$cfg->{ldap}->{server}' not set in config.pm'") if !$cfg->{ldap}->{server};
+LeaveScript(2, "Variable '\$cfg->{ldap}->{dn}' not set in config.pm'")     if !$cfg->{ldap}->{dn};
+LeaveScript(2, "Variable '\$cfg->{export}->{user}' not set in config.pm'") if !$cfg->{export}->{user};
+
+# export with right user?
+LeaveScript(2, "You're not user '$cfg->{export}->{user}'!") if $ENV{USER} ne $cfg->{export}->{user};
+
+# hashdump exists?
+LeaveScript(2, "Hashdump from LConfExport.pl does not exist!") if !-f $cfg->{export}->{hashdump};
+
+#
+# NOW, WE'RE READY TO RUN :)
+#
+
+# import hashdump
+my $data; my $VAR1;
+open FILE, "<$cfg->{export}->{hashdump}" or die $!; while(<FILE>) { $data .= $_; } close FILE;
+eval($data);
+$CLIENTS = $VAR1;
+
+# connect to LDAP server
+our $ldap = LDAPconnect();
+
+# get the whole config from ldap
+my $CONFIG = LDAPsearch($ldap, $cfg->{ldap}->{rootDN}, "sub", "objectclass=*");
+
+# make a backup of $CLIENTS
+my $CLIENTS_backup = $CLIENTS;
+
+# process ruleset per target
+foreach my $target (sort keys %{$cfg->{slaveexportrules}->{targets}}) {
+	print "\n===================\n";
+	print "slave: $target\n";
+	print "rulemap: $cfg->{slaveexportrules}->{targets}->{$target}->{rulemap}\n";
+	
+	# define and set vars
+	my $CLIENTS_slave;
+	$CLIENTS = $CLIENTS_backup;
+	$opt->{host}      = $target;
+	$opt->{tmpDir}    = $cfg->{export}->{tmpdir}.'/'.$opt->{host}.'/';
+	$opt->{outputDir} = $cfg->{slaveexportrules}->{targets}->{$target}->{targetDir};
+	
+print "fump: host: $opt->{host}\n";
+print "fump: tmpDir: $opt->{tmpDir}\n";
+print "fump: outputDir: $opt->{outputDir}\n";
+		
+	
+	# split rulemap
+	my @rules = split(/,\s*/, $cfg->{slaveexportrules}->{targets}->{$target}->{rulemap});
+	
+	# process rules
+	foreach my $rule (@rules) {
+		print "\n";
+		print "\t--> rule-nr: $rule\n";
+		print "\tobject: $cfg->{slaveexportrules}->{rules}->{$rule}->{object}\n";
+		print "\tpattern: $cfg->{slaveexportrules}->{rules}->{$rule}->{pattern}\n";
+		print "\tattribute: $cfg->{slaveexportrules}->{rules}->{$rule}->{attribute}\n";
+		print "\n";
+		
+		my $filtered_objects;
+		if ($cfg->{slaveexportrules}->{rules}->{$rule}->{object} =~ /Host/i) {
+			$filtered_objects = HashGrep($CLIENTS, 'objectclass', $cfg->{slaveexportrules}->{rules}->{$rule}->{object});
+			$filtered_objects = HashGrep($filtered_objects, $cfg->{slaveexportrules}->{rules}->{$rule}->{attribute}, $cfg->{slaveexportrules}->{rules}->{$rule}->{pattern});
+			
+			foreach my $object (keys %{$filtered_objects}) {
+				$CLIENTS_slave->{$object} = $filtered_objects->{$object};
+			}
+		}
+		
+		if ($cfg->{slaveexportrules}->{rules}->{$rule}->{object} =~ /Service/i) {
+			foreach my $client (keys %{$CLIENTS}) {
+				foreach my $service (keys %{$CLIENTS->{$client}->{SERVICES}}) {
+					if ($CLIENTS->{$client}->{SERVICES}->{$service}->{$cfg->{slaveexportrules}->{rules}->{$rule}->{attribute}} =~ /$cfg->{slaveexportrules}->{rules}->{$rule}->{pattern}/i) {
+						$CLIENTS_slave->{$client}->{SERVICES}->{$service} = $CLIENTS->{$client}->{SERVICES}->{$service};
+					}
+				}
+			}
+			
+			# re-fill each hosts attributes
+			foreach my $client (keys %{$CLIENTS_slave}) {
+				foreach my $val1 (keys %{$CLIENTS->{$client}}) {
+					$CLIENTS_slave->{$client}->{$val1} = $CLIENTS->{$client}->{$val1} if $val1 !~ /SERVICES/;
+				}
+			}
+		}
+	}
+	
+	# re-map and export
+	$CLIENTS = $CLIENTS_slave;
+
+        # modifications?
+        foreach my $client (keys %{$CLIENTS}) {
+                # delete excluded hosts
+                if (defined $CLIENTS->{$client}->{description}) {
+                        foreach my $desc (keys %{$CLIENTS->{$client}->{description}}) {
+                                # modify hostattribute if LCONF->EXPORT->MODIFY->HOST is set
+                                if ($desc =~ /^LCONF->EXPORT->MODIFY->HOST/) {
+                                        $desc =~ m/^LCONF->EXPORT->MODIFY->HOST\s+([a-zA-Z]+)\s+(.*)/;
+                                        $CLIENTS->{$client}->{$1} = $2;
+                                }
+
+                                # delete host if LCONF->EXPORT->EXCLUDE is set
+                                delete $CLIENTS->{$client} if $desc eq 'LCONF->EXPORT->EXCLUDE';
+                        }
+                }
+
+                foreach my $service (keys %{$CLIENTS->{$client}->{SERVICES}}) {
+                        if (defined $CLIENTS->{$client}->{SERVICES}->{$service}->{description}) {
+                                foreach my $desc (keys %{$CLIENTS->{$client}->{SERVICES}->{$service}->{description}}) {
+                                        # modify serviceattribute if LCONF->EXPORT->MODIFY->HOST is set
+                                        if ($desc =~ /^LCONF->EXPORT->MODIFY->SERVICE/) {
+                                                $desc =~ m/^LCONF->EXPORT->MODIFY->SERVICE\s+([a-zA-Z]+)\s+(.*)/;
+                                                $CLIENTS->{$client}->{SERVICES}->{$service}->{$1} = $2;
+                                        }
+
+                                        # delete service if LCONF->EXPORT->EXCLUDE is set
+                                        delete $CLIENTS->{$client}->{SERVICES}->{$service} if $desc eq 'LCONF->EXPORT->EXCLUDE';
+                                }
+                        }
+                }
+        }
+
+	
+#	print "-----\n";
+#	foreach my $val1 (keys %{$CLIENTS}) {
+#		print $val1."\n";
+#		foreach my $val2 (keys %{$CLIENTS->{$val1}}) {
+#			print "\t$val2 => $CLIENTS->{$val1}->{$val2}\n";
+#			if ($CLIENTS->{$val1}->{$val2} =~ /HASH/) {
+#				foreach my $val3 (keys %{$CLIENTS->{$val1}->{$val2}}) {
+#					print "\t\t$val3 => $CLIENTS->{$val1}->{$val2}->{$val3}\n";
+#					if ($CLIENTS->{$val1}->{$val2}->{$val3} =~ /HASH/) {
+#						foreach my $val4 (keys %{$CLIENTS->{$val1}->{$val2}->{$val3}}) {
+#							print "\t\t\t$val4 => $CLIENTS->{$val1}->{$val2}->{$val3}->{$val4}\n";
+#							if ($CLIENTS->{$val1}->{$val2}->{$val3}->{$val4} =~ /HASH/) {
+#								foreach my $val5 (keys %{$CLIENTS->{$val1}->{$val2}->{$val3}->{$val4}}) {
+#									print "\t\t\t\t$val5 => $CLIENTS->{$val1}->{$val2}->{$val3}->{$val4}->{$val5}\n";
+#								}
+#							}
+#						}
+#					}
+#				}
+#			}
+#		}
+#	}
+#	
+#	exit;
+	
+	# create tmp target
+	mkdir("$opt->{tmpDir}") if !-d $opt->{tmpDir};
+	
+	# clean tmp target
+	qx(rm -r $opt->{tmpDir}/*) if -f "$opt->{tmpDir}/lconf.identify";
+
+	# create identifier
+	open(FH, ">$opt->{tmpDir}/lconf.identify") || die "Can't write data: $opt->{tmpDir}/lconf.identify $!\n"; close(FH);
+	
+	# copy defaults localy
+	beVerbose("LOCAL COPY", "cp /etc/LConf/default-templates.cfg $opt->{tmpDir}/");
+	qx(cp /etc/LConf/default-templates.cfg $opt->{tmpDir}/);
+	
+	# create dirs and write config
+	createDirs($cfg->{ldap}->{baseDN}, $opt->{tmpDir});
+	mkdir("$opt->{tmpDir}/hostgroups/");
+	mkdir("$opt->{tmpDir}/servicegroups/");
+	genTimeperiods($CONFIG, '', $opt->{tmpDir});
+	genCommands($CONFIG, '', $opt->{tmpDir});
+	genContacts($CONFIG, '', $opt->{tmpDir});
+	genContactgroups($CONFIG, '', $opt->{tmpDir});
+	genHostgroups($CONFIG, $CLIENTS, '', $opt->{tmpDir});
+	genHostConfig($CLIENTS, $opt->{tmpDir});
+	
+	#
+	# NOW, START WORKING ON TARGET SERVER's REMOTE DIR
+	#
+
+	# remote dir exists?
+	checkRemoteDir($opt->{host}, $opt->{outputDir}, $opt->{port});
+	
+	# copy config to client
+	my $cmd;
+	if (defined $opt->{port}) {
+		$cmd = "rsync -zai -e 'ssh -p $opt->{port}' --stats --checksum --omit-dir-times --delay-updates --delete-after $opt->{tmpDir}/* $opt->{host}:$opt->{outputDir}";
+	} else {
+		$cmd = "rsync -zai -e ssh --stats --checksum --omit-dir-times --delay-updates --delete-after $opt->{tmpDir}/* $opt->{host}:$opt->{outputDir}";
+	}
+	beVerbose("COPY", $cmd);
+	qx($cmd);
+	
+#	# reload Nagios / Icinga on slave
+#	if (defined $opt->{port}) {
+#		$cmd = "ssh -p $opt->{port} $opt->{host} '/etc/init.d/icinga reload'";
+#	} else {
+#		$cmd = "ssh $opt->{host} '/etc/init.d/icinga reload'";
+#	}
+#	#beVerbose("RELOAD", $cmd);
+#	#my $result = qx($cmd);
+#	#print $result;
+}
+
+
+# proceed config for each host
+#foreach my $host (@hosts) {
+#	# re-map var
+#	$opt->{host} = $host;
+#	
+#	# get global tree's
+#	my $exportGLOBAL = LDAPsearch($ldap, $cfg->{ldap}->{baseDN}, "sub", "description=LCONF->EXPORT->GLOBAL");
+#	@export = addPaths($exportGLOBAL, @export) if defined $exportGLOBAL;
+#	
+#	# create tmp target
+#	$opt->{outputDir} = $cfg->{epxort}->{tmpdir}.'/'.$opt->{host}.'/';
+#	mkdir("$opt->{outputDir}") if !-d $opt->{outputDir};
+#	
+#	# clean tmp target
+#	qx(rm -r $opt->{outputDir}/*) if -f "$opt->{outputDir}/lconf.identify";
+#
+#	# create identifier
+#	open(FH, ">$opt->{outputDir}/lconf.identify") || die "Can't write data: $opt->{outputDir}/lconf.identify $!\n"; close(FH);
+#	
+#	 # copy defaults localy
+# 	beVerbose("LOCAL COPY", "cp /usr/local/LConf-1.3-dev.4/etc/default-templates.cfg $opt->{outputDir}/");
+# 	qx(cp /usr/local/LConf-1.3-dev.4/etc/default-templates.cfg $opt->{outputDir}/);
+#
+#	# create dirs and write config
+#	createDirs($cfg->{ldap}->{baseDN}, $opt->{outputDir});
+#	mkdir("$opt->{outputDir}/hostgroups/");
+#	mkdir("$opt->{outputDir}/servicegroups/");
+#	foreach(@export) {
+#		genTimeperiods($CONFIG, $_);
+#		genCommands($CONFIG, $_);
+#		genContacts($CONFIG, $_);
+#		genContactgroups($CONFIG, $_);
+#	}
+#	genHostConfig($CLIENTS);
+#
+#	
+#	# disconnect from LDAP Server
+#	$ldap->unbind();
+#	
+#exit;
+#
+#	#
+#	# NOW, START WORKING ON TARGET SERVER's REMOTE DIR
+#	#
+#
+#	# remote dir exists?
+#	checkRemoteDir($opt->{host}, $opt->{target}, $opt->{port});
+#
+#	# copy config to client
+#	my $cmd;
+#	if (defined $opt->{port}) {
+#		$cmd = "rsync -zai -e 'ssh -p $opt->{port}' --stats --checksum --omit-dir-times --delay-updates --delete-after $opt->{outputDir}/* $opt->{host}:$opt->{target}";
+#	} else {
+#		$cmd = "rsync -zai -e ssh --stats --checksum --omit-dir-times --delay-updates --delete-after $opt->{outputDir}/* $opt->{host}:$opt->{target}";
+#	}
+#	beVerbose("COPY", $cmd);
+#	qx($cmd);
+#	
+#	# reload Nagios / Icinga on slave
+#	if (defined $opt->{port}) {
+#		$cmd = "ssh -p $opt->{port} $opt->{host} '/etc/init.d/icinga reload'";
+#	} else {
+#		$cmd = "ssh $opt->{host} '/etc/init.d/icinga reload'";
+#	}
+#	#beVerbose("RELOAD", $cmd);
+#	#my $result = qx($cmd);
+#	#print $result;
+#}
+
+# exit
+EXIT:
+LeaveScript($exit->{code}, $exit->{message});
+
+
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
+# functions
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
+
+sub addPaths {
+	my $result = shift;
+	my @to_return = @_;
+	
+	foreach(keys %{$result}) { push(@to_return, $_); }
+	
+	return @to_return;
+}
+
