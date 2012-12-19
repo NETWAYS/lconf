@@ -309,6 +309,7 @@ foreach my $host (@hosts) {
 }
 
 # exit
+EXIT:
 LeaveScript($exit->{code}, $exit->{message});
 
 
