@@ -164,10 +164,28 @@ print "fump: outputDir: $opt->{outputDir}\n";
 		if ($cfg->{slaveexportrules}->{rules}->{$rule}->{object} =~ /Service/i) {
 			foreach my $client (keys %{$CLIENTS}) {
 				foreach my $service (keys %{$CLIENTS->{$client}->{SERVICES}}) {
-					if ($CLIENTS->{$client}->{SERVICES}->{$service}->{$cfg->{slaveexportrules}->{rules}->{$rule}->{attribute}} =~ /$cfg->{slaveexportrules}->{rules}->{$rule}->{pattern}/i) {
-						$CLIENTS_slave->{$client}->{SERVICES}->{$service} = $CLIENTS->{$client}->{SERVICES}->{$service};
+					my $serviceattribute = $cfg->{slaveexportrules}->{rules}->{$rule}->{attribute};
+					my $servicepattern = $cfg->{slaveexportrules}->{rules}->{$rule}->{pattern};
+					# this could be optional, so check availibility first (e.g. lconfservicecustomvar)
+					if (defined($CLIENTS->{$client}->{SERVICES}->{$service}->{$serviceattribute})) {
+
+						# customvar is an assoc array, different handling
+						if ($serviceattribute =~ /customvar/i) {
+							foreach my $customvarname (keys %{$CLIENTS->{$client}->{SERVICES}->{$service}->{$serviceattribute}}) {
+								my $customvarvalue = $CLIENTS->{$client}->{SERVICES}->{$service}->{$serviceattribute}->{$customvarname};
+								#print "attribute: $serviceattribute customvarvalue: $customvarvalue pattern: $servicepattern\n";
+								if ($customvarvalue =~ /$servicepattern/i) {
+									$CLIENTS_slave->{$client}->{SERVICES}->{$service} = $CLIENTS->{$client}->{SERVICES}->{$service};
+								}
+							}
+						} else {
+							print "attribute: $CLIENTS->{$client}->{SERVICES}->{$service}->{$serviceattribute}} pattern: $servicepattern\n";
+							if ($CLIENTS->{$client}->{SERVICES}->{$service}->{$serviceattribute} =~ /$servicepattern/i) {
+								$CLIENTS_slave->{$client}->{SERVICES}->{$service} = $CLIENTS->{$client}->{SERVICES}->{$service};
+							}
+						}
 					}
-				}
+				}	
 			}
 			
 			# re-fill each hosts attributes
