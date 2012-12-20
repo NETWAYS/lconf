@@ -7,6 +7,7 @@ Makefile
 contrib/create_lconf-web-dn-mid.pl
 contrib/lconf-slavesync
 contrib/lconf_deploy.sh
+contrib/LConfSlaveExportRules.pl
 
 src/LConfExport.pl
 src/LConfImport.pl

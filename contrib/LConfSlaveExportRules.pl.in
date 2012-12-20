@@ -41,12 +41,10 @@ use Net::LDAP;
 use lib dirname(__FILE__);
 
 # lconf includes
-use lib "/etc/LConf";
-use config;
-use lib "/usr/lib/LConf";
-use ldap;
-use generate;
-use misc;
+use etc::config;
+use lib::ldap;
+use lib::generate;
+use lib::misc;
 
 # version string
 my $version = '1.3rc';
@@ -275,9 +273,9 @@ print "fump: outputDir: $opt->{outputDir}\n";
 	open(FH, ">$opt->{tmpDir}/lconf.identify") || die "Can't write data: $opt->{tmpDir}/lconf.identify $!\n"; close(FH);
 	
 	# copy defaults localy
-	beVerbose("LOCAL COPY", "cp /etc/LConf/default-templates.cfg $opt->{tmpDir}/");
-	qx(cp /etc/LConf/default-templates.cfg $opt->{tmpDir}/);
-	
+        beVerbose("LOCAL COPY", "cp @PREFIX@/etc/default-templates.cfg $opt->{outputDir}/");
+	qx(cp @PREFIX@/etc/default-templates.cfg $opt->{outputDir}/);
+
 	# create dirs and write config
 	createDirs($cfg->{ldap}->{baseDN}, $opt->{tmpDir});
 	mkdir("$opt->{tmpDir}/hostgroups/");

@@ -74,6 +74,9 @@ all:
 			# lconf_deploy.sh
 			cat contrib/lconf_deploy.sh.in > contrib/lconf_deploy.sh
 			chmod 755 contrib/lconf_deploy.sh
+			# LConfSlaveExportRules.pl
+			cat contrib/LConfSlaveExportRules.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" > contrib/LConfSlaveExportRules.pl
+			chmod 755 contrib/LConfSlaveExportRules.pl
 		# LDAP schema and base.ldif
 			# netways.schema
 			cat src/netways.schema.in | sed -e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" > src/netways.schema
