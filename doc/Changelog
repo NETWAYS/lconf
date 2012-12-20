@@ -30,6 +30,7 @@ ENHANCEMENTS
 * add startTLS support #1916
 * add tools for converting old to new ldap config format #2028
 * add a note about the template tree to docs #2072
+* add initscript for LConfSlaveSync to contrib/ #2076
 
 FIXES
 * Inheritance of disable values #589
