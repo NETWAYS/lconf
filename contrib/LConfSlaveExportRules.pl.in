@@ -133,6 +133,7 @@ foreach my $target (sort keys %{$cfg->{slaveexportrules}->{targets}}) {
 	$opt->{host}      = $target;
 	$opt->{tmpDir}    = $cfg->{export}->{tmpdir}.'/'.$opt->{host}.'/';
 	$opt->{outputDir} = $cfg->{slaveexportrules}->{targets}->{$target}->{targetDir};
+	$opt->{slaveexportparents} = $cfg->{slaveexportrules}->{'settings'}->{slaveexportparents};
 	
 print "fump: host: $opt->{host}\n";
 print "fump: tmpDir: $opt->{tmpDir}\n";
@@ -185,6 +186,7 @@ print "fump: outputDir: $opt->{outputDir}\n";
 							}
 						}
 					}
+
 				}	
 			}
 			
@@ -192,6 +194,11 @@ print "fump: outputDir: $opt->{outputDir}\n";
 			foreach my $client (keys %{$CLIENTS_slave}) {
 				foreach my $val1 (keys %{$CLIENTS->{$client}}) {
 					$CLIENTS_slave->{$client}->{$val1} = $CLIENTS->{$client}->{$val1} if $val1 !~ /SERVICES/;
+					# this is ugly but parents functionality on slaves is tricky and buggy
+					if ($opt->{slaveexportparents} == 0) {
+						delete($CLIENTS_slave->{$client}->{lconfparent});
+					}
+				#
 				}
 			}
 		}

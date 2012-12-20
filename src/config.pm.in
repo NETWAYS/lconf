@@ -40,6 +40,30 @@ $cfg->{slavesync}->{pidFile}			= '@PREFIX@/var/LConfSlaveSync.pid';
 $cfg->{slavesync}->{debugLog}			= '@PREFIX@/var/LConfSlaveSync.debug';
 $cfg->{slavesync}->{debug}			= '0';
 
+
+#
+# LConfSlaveExportRules.pl
+#
+#$cfg->{slaveexportrules} = {
+#	'rules' => {
+#		'service-rule1' => {
+#		'object' => 'lconfservice',
+#		'attribute' => 'lconfservicecustomvar',
+#		'pattern' => 'Nuernberg'
+#		},
+#},
+#	'targets' => {
+#		'satelite1.icinga' => {
+#		'targetDir' => '/etc/icinga/lconf',
+#		'rulemap' => 'service-rule1'
+#		},
+#	},
+#	'settings' => {
+#		'slaveexportparents' => 0,
+#	},
+#};
+
+
 #
 # LConfTest.pl
 #
