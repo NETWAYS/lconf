@@ -1,0 +1,12 @@
+README for RHEL packages
+========================
+
+Locations:
+
+/etc/LConf		- config.pm and default-templates.cfg
+/usr/lib/LConf		- Perl Libraries for LConf
+/usr/lib/LConf/custom	- put custom {pre,mid,post}.pl scripts here
+/var/Lconf		- spool dir
+/usr/bin/LConf*.pl	- Scripts
+
+
