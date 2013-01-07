@@ -1,0 +1,20 @@
+--------------------------------------------------------
+
+LConf
+
+NETWAYS LConf is a LDAP based configuration tool for Icinga
+and Nagios. All configuration elements are stored on a LDAP
+server and exported to text-based configuration files.
+Icinga / Nagios uses only these config files and will work
+independent from the LDAP during runtime.
+
+For detailed information about installation, legal and all
+other, please take a look into ./doc
+
+Visit the LConf homepage at http://www.netways.org for online
+documentation, new releases, bug reports, etc.
+
+http://www.netways.org
+
+--------------------------------------------------------
+

@@ -103,17 +103,17 @@ use Fcntl qw(:flock);
 use Storable qw(dclone);
 use Scalar::Util qw/reftype/;
 
-# set lib path
-use lib dirname(__FILE__);
-
 # lconf includes
-use etc::config;
-use lib::ldap;
-use lib::generate;
-use lib::misc;
+use lib '@SYSCONF_DIR@';
+use config;
+
+use lib '@LIB_DIR@';
+use ldap;
+use generate;
+use misc;
 
 # version string
-my $version = '1.3rc';
+my $version = '@VERSION@';
 
 # define states
 our @state = ('OK', 'WARNING', 'ERROR', 'UNKNOWN');
@@ -276,8 +276,8 @@ foreach my $client (keys %{$CLIENTS}) {
 }
 	
 # run custom script (pre)
-if (-f '@PREFIX@/custom/pre.pl') {
-	require '@PREFIX@/custom/pre.pl';
+if (-f '@EXPORT_SCRIPT_DIR@/pre.pl') {
+	require '@EXPORT_SCRIPT_DIR@/pre.pl';
 	$CLIENTS = CustomPre($CLIENTS);
 }
 
@@ -292,8 +292,8 @@ foreach my $client (keys %{$CLIENTS}) {
 }
 
 # run custom script (mid)
-if (-f '@PREFIX@/custom/mid.pl') {
-	require '@PREFIX@/custom/mid.pl';
+if (-f '@EXPORT_SCRIPT_DIR@/mid.pl') {
+	require '@EXPORT_SCRIPT_DIR@/mid.pl';
 	$CLIENTS = CustomMid($CLIENTS);
 }
 
@@ -313,8 +313,8 @@ genServicegroups($CONFIG, $CLIENTS);
 genHostConfig($CLIENTS);
 
 # run custom script (post)
-if (-f '@PREFIX@/custom/post.pl') {
-	require '@PREFIX@/custom/post.pl';
+if (-f '@EXPORT_SCRIPT_DIR@/post.pl') {
+	require '@EXPORT_SCRIPT_DIR@/post.pl';
 	$CLIENTS = CustomPost($CLIENTS);
 }
 

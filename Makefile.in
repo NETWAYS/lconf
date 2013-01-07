@@ -3,12 +3,34 @@
 #
 
 # version info
-VERSION=1.3rc
+VERSION=@PKG_VERSION@
 
 # path settings
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+
+EXEC_DIR=@exec_dir@
 PREFIX=@prefix@
 PREFIX_QUOTED=`echo $(PREFIX) | sed s/\\\\//\\\\\\\\\\\\//g`
-EXEC_DIR=@exec_dir@
+
+SYSCONF_DIR=@sysconfdir@
+SYSCONF_DIR_QUOTED=`echo $(SYSCONF_DIR) | sed s/\\\\//\\\\\\\\\\\\//g`
+
+LIB_DIR=@libdir@
+LIB_DIR_QUOTED=`echo $(LIB_DIR) | sed s/\\\\//\\\\\\\\\\\\//g`
+
+BIN_DIR=@bindir@
+BIN_DIR_QUOTED=`echo $(BIN_DIR) | sed s/\\\\//\\\\\\\\\\\\//g`
+
+LOCALSTATE_DIR=@localstatedir@
+LOCALSTATE_DIR_QUOTED=`echo $(LOCALSTATE_DIR) | sed s/\\\\//\\\\\\\\\\\\//g`
+
+TMP_DIR=@TMPDIR@
+TMP_DIR_QUOTED=`echo $(TMP_DIR) | sed s/\\\\//\\\\\\\\\\\\//g`
+
+
+EXPORT_SCRIPT_DIR=@EXPORTSCRIPTDIR@
+EXPORT_SCRIPT_DIR_QUOTED=`echo $(EXPORT_SCRIPT_DIR) | sed s/\\\\//\\\\\\\\\\\\//g`
 
 # lconf settings
 LCONF_CLI_USER=@lconf_cli_user@
@@ -19,6 +41,9 @@ LDAP_BIND_DN=@ldap_bind_dn@
 LDAP_BIND_PASSWORD=@ldap_bind_password@
 LDAP_PREFIX=@ldap_prefix@
 LDAP_CONFIG_STYLE=@ldap_config_style@
+
+INSTALL=@INSTALL@
+INSTALL_OPTS=-o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP)
 
 ifeq ($(LDAP_CONFIG_STYLE),old)
 	LDAP_CONFIG_STYLE="old (with slapd.conf)"
@@ -31,20 +56,44 @@ endif
 
 all:
 	# generate files
-		# $PREFIX
+		# BIN
 			# LConfExport.pl
-			cat src/LConfExport.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" > src/LConfExport.pl
+			cat src/LConfExport.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" \
+				-e "s/@EXPORT_SCRIPT_DIR@/$(EXPORT_SCRIPT_DIR_QUOTED)/g" \
+				-e "s/@SYSCONF_DIR@/$(SYSCONF_DIR_QUOTED)/g" \
+				-e "s/@BIN_DIR@/$(BIN_DIR_QUOTED)/g" \
+				-e "s/@LIB_DIR@/$(LIB_DIR_QUOTED)/g" \
+				-e "s/@VERSION@/$(VERSION)/g" \
+				> src/LConfExport.pl
 			chmod 755 src/LConfExport.pl
 			# LConfImport.pl
-			cat src/LConfImport.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" > src/LConfImport.pl
+			cat src/LConfImport.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" \
+				-e "s/@EXPORT_SCRIPT_DIR@/$(EXPORT_SCRIPT_DIR_QUOTED)/g" \
+				-e "s/@SYSCONF_DIR@/$(SYSCONF_DIR_QUOTED)/g" \
+				-e "s/@BIN_DIR@/$(BIN_DIR_QUOTED)/g" \
+				-e "s/@LIB_DIR@/$(LIB_DIR_QUOTED)/g" \
+				-e "s/@VERSION@/$(VERSION)/g" \
+				> src/LConfImport.pl
 			chmod 755 src/LConfImport.pl
 			# LConfSlaveExport.pl
-			cat src/LConfSlaveExport.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" > src/LConfSlaveExport.pl
+			cat src/LConfSlaveExport.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" \
+				-e "s/@EXPORT_SCRIPT_DIR@/$(EXPORT_SCRIPT_DIR_QUOTED)/g" \
+				-e "s/@SYSCONF_DIR@/$(SYSCONF_DIR_QUOTED)/g" \
+				-e "s/@BIN_DIR@/$(BIN_DIR_QUOTED)/g" \
+				-e "s/@LIB_DIR@/$(LIB_DIR_QUOTED)/g" \
+				-e "s/@VERSION@/$(VERSION)/g" \
+				> src/LConfSlaveExport.pl
 			chmod 755 src/LConfSlaveExport.pl
 			# LConfSlaveSync.pl
-			cat src/LConfSlaveSync.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" > src/LConfSlaveSync.pl
+			cat src/LConfSlaveSync.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" \
+				-e "s/@EXPORT_SCRIPT_DIR@/$(EXPORT_SCRIPT_DIR_QUOTED)/g" \
+				-e "s/@SYSCONF_DIR@/$(SYSCONF_DIR_QUOTED)/g" \
+				-e "s/@BIN_DIR@/$(BIN_DIR_QUOTED)/g" \
+				-e "s/@LIB_DIR@/$(LIB_DIR_QUOTED)/g" \
+				-e "s/@VERSION@/$(VERSION)/g" \
+				> src/LConfSlaveSync.pl
 			chmod 755 src/LConfSlaveSync.pl
-		# $PREFIX/etc
+		# ETC
 			# config.pm
 			cat src/config.pm.in | sed \
 				-e "s/@LDAP_SERVER@/$(LDAP_SERVER)/g" \
@@ -57,27 +106,37 @@ all:
 				> src/config.pm
 			# default-templates.cfg.in
 			cat src/default-templates.cfg.in > src/default-templates.cfg
-		# $PREFIX/lib
+		# LIB
 			# misc.pm
 			cat src/misc.pm.in > src/misc.pm
 			# ldap.pm
 			cat src/ldap.pm.in > src/ldap.pm
 			# generate.pm
 			cat src/generate.pm.in > src/generate.pm
-		# local/contrib
+		# CONTRIB
 			# create_lconf-web-dn-mid.pl
 			cat contrib/create_lconf-web-dn-mid.pl.in | sed -e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" > contrib/create_lconf-web-dn-mid.pl
 			chmod 755 contrib/create_lconf-web-dn-mid.pl
 			# lconf-slavesync
 			cat contrib/lconf-slavesync.in > contrib/lconf-slavesync
 			chmod 755 contrib/lconf-slavesync
-			# lconf_deploy.sh
-			cat contrib/lconf_deploy.sh.in > contrib/lconf_deploy.sh
-			chmod 755 contrib/lconf_deploy.sh
+			# LConfDeploy.sh
+			cat contrib/LConfDeploy.sh.in | sed \
+				-e "s/@SYSCONF_DIR@/$(SYSCONF_DIR_QUOTED)/g" \
+				-e "s/@BIN_DIR@/$(BIN_DIR_QUOTED)/g" \
+				-e "s/@LIB_DIR@/$(LIB_DIR_QUOTED)/g" \
+				-e "s/@VERSION@/$(VERSION)/g" \
+				> contrib/LConfDeploy.sh
+			chmod 755 contrib/LConfDeploy.sh
 			# LConfSlaveExportRules.pl
-			cat contrib/LConfSlaveExportRules.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" > contrib/LConfSlaveExportRules.pl
+			cat contrib/LConfSlaveExportRules.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" \
+				-e "s/@EXPORT_SCRIPT_DIR@/$(EXPORT_SCRIPT_DIR_QUOTED)/g" \
+				-e "s/@SYSCONF_DIR@/$(SYSCONF_DIR_QUOTED)/g" \
+				-e "s/@LIB_DIR@/$(LIB_DIR_QUOTED)/g" \
+				-e "s/@VERSION@/$(VERSION)/g" \
+				> contrib/LConfSlaveExportRules.pl
 			chmod 755 contrib/LConfSlaveExportRules.pl
-		# LDAP schema and base.ldif
+		# LDAP SCHEMA + BASE.LDIF
 			# netways.schema
 			cat src/netways.schema.in | sed -e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" > src/netways.schema
 			# netways.schema.ldif
@@ -87,6 +146,7 @@ all:
 				-e "s/@LDAP_DN@/$(LDAP_DN)/g" \
 				-e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" \
 			> src/base.ldif
+		# SUMMARY
 		make info
 
 info:
@@ -102,7 +162,12 @@ info:
 	@echo ""
 	@echo " * * * Current Settings * * *"
 	@echo ""
-	@echo "   install prefix:       "$(PREFIX)
+	@echo "   config dir:           "$(SYSCONF_DIR)
+	@echo "   lib dir:              "$(LIB_DIR)
+	@echo "   bin dir:              "$(BIN_DIR)
+	@echo "   tmp dir:              "$(TMP_DIR)
+	@echo "   localstate dir:       "$(LOCALSTATE_DIR)
+	@echo "   export script dir:    "$(EXPORT_SCRIPT_DIR)
 	@echo ""
 	@echo "   lconf_cli_user:       "$(LCONF_CLI_USER)
 	@echo "   lconf_cli_group:      "$(LCONF_CLI_GROUP)
@@ -117,35 +182,22 @@ info:
 	@echo ""
 
 install:
-	# create prefix dir
-	if [ ! -d ${DESTDIR}$(PREFIX) ]; then install -d -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 755 ${DESTDIR}$(PREFIX); fi
-	# create lib dir
-	if [ ! -d ${DESTDIR}$(PREFIX)/lib ]; then install -d -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 755 ${DESTDIR}$(PREFIX)/lib; fi
-	# create etc dir
-	if [ ! -d ${DESTDIR}$(PREFIX)/etc ]; then install -d -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 755 ${DESTDIR}$(PREFIX)/etc; fi
-	# create var dir
-	if [ ! -d ${DESTDIR}$(PREFIX)/var ]; then install -d -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 755 ${DESTDIR}$(PREFIX)/var; fi
-	# create tmp dir
-	if [ ! -d ${DESTDIR}$(PREFIX)/tmp ]; then install -d -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 755 ${DESTDIR}$(PREFIX)/tmp; fi
+	$(INSTALL) -m 775 $(INSTALL_OPTS) -d $(DESTDIR)$(SYSCONF_DIR)
+	$(INSTALL) -m 775 $(INSTALL_OPTS) -d $(DESTDIR)$(BIN_DIR)
+	$(INSTALL) -m 775 $(INSTALL_OPTS) -d $(DESTDIR)$(LIB_DIR)
+	$(INSTALL) -m 775 $(INSTALL_OPTS) -d $(DESTDIR)$(LOCALSTATE_DIR)
+	$(INSTALL) -m 775 $(INSTALL_OPTS) -d $(DESTDIR)$(TMP_DIR)
+	
 	# install files
-		# LConfExport.pl
-		install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/LConfExport.pl ${DESTDIR}$(PREFIX)/
-		# LConfImport.pl
-		install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/LConfImport.pl ${DESTDIR}$(PREFIX)/
-		# LConfSlaveExport.pl
-		install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/LConfSlaveExport.pl ${DESTDIR}$(PREFIX)/
-		# LConfSlaveSync.pl
-		install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 750 src/LConfSlaveSync.pl ${DESTDIR}$(PREFIX)/
-		# config.pm
-		install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 640 src/config.pm ${DESTDIR}$(PREFIX)/etc/
-		# default-templates.cfg.in
-		install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 640 src/default-templates.cfg ${DESTDIR}$(PREFIX)/etc/
-		# misc.pm
-		install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 640 src/misc.pm ${DESTDIR}$(PREFIX)/lib/
-		# ldap.pm
-		install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 640 src/ldap.pm ${DESTDIR}$(PREFIX)/lib/
-		# generate.pm
-		install -o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP) -m 640 src/generate.pm ${DESTDIR}$(PREFIX)/lib/
+		$(INSTALL) -m 750 $(INSTALL_OPTS) src/LConfExport.pl ${DESTDIR}$(BIN_DIR)/LConfExport.pl
+		$(INSTALL) -m 750 $(INSTALL_OPTS) src/LConfImport.pl ${DESTDIR}$(BIN_DIR)/LConfImport.pl
+		$(INSTALL) -m 750 $(INSTALL_OPTS) src/LConfSlaveExport.pl ${DESTDIR}$(BIN_DIR)/LConfSlaveExport.pl
+		$(INSTALL) -m 750 $(INSTALL_OPTS) src/LConfSlaveSync.pl ${DESTDIR}$(BIN_DIR)/LConfSlaveSync.pl
+		$(INSTALL) -b -m 640 $(INSTALL_OPTS) src/config.pm ${DESTDIR}$(SYSCONF_DIR)/config.pm
+		$(INSTALL) -b -m 640 $(INSTALL_OPTS) src/default-templates.cfg ${DESTDIR}$(SYSCONF_DIR)/default-templates.cfg
+		$(INSTALL) -m 640 $(INSTALL_OPTS) src/misc.pm ${DESTDIR}$(LIB_DIR)/misc.pm
+		$(INSTALL) -m 640 $(INSTALL_OPTS) src/ldap.pm ${DESTDIR}$(LIB_DIR)/ldap.pm
+		$(INSTALL) -m 640 $(INSTALL_OPTS) src/generate.pm ${DESTDIR}$(LIB_DIR)/generate.pm
 				
 		# FINISHING OUTPUT
 		@echo ""
@@ -166,6 +218,10 @@ install:
 		@echo "  2) /etc/init.d/slapd restart"
 		@echo "  3) ldapadd -h "$(LDAP_SERVER)" -x -D \""$(LDAP_BIND_DN)"\" -W -f src/base.ldif"
 		@echo ""
+
+install-deploy-script:
+	$(INSTALL) -m 755 $(INSTALL_OPTS) contrib/LConfDeploy.sh ${DESTDIR}$(BIN_DIR)/LConfDeploy.sh
+
 			
 clean:
 	cd $(EXEC_DIR)
@@ -184,6 +240,6 @@ clean:
 	rm -f src/default-templates.cfg src/default-templates.cfg.[0-9]
 	rm -f contrib/create_lconf-web-dn-mid.pl
 	rm -f contrib/lconf-slavesync
-	rm -f contrib/lconf_deploy.sh
+	rm -f contrib/LConfDeploy.sh
 
 # vi: ts=4 sw=4 noexpandtab :

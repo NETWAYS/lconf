@@ -79,20 +79,24 @@ print plugin version
 
 =cut
 
-# set libs
-use lib '@PREFIX@';
-
 # includes
 use strict;
 use POSIX qw(setsid);
 use LWP::Simple;
 use Pod::Usage;
 use threads;
-use etc::config;
-use lib::misc;
+
+# lconf includes
+use lib '@SYSCONF_DIR@';
+use config;
+
+use lib '@LIB_DIR@';
+use ldap;
+use generate;
+use misc;
 
 # version string
-my $version = '1.3rc';
+my $version = '@VERSION@';
 
 # define states
 our @state = ('OK', 'WARNING', 'ERROR');

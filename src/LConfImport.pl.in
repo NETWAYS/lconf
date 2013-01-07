@@ -95,12 +95,18 @@ use Pod::Usage;
 use Net::LDAP;
 use Net::LDAP::Entry;
 use POSIX;
-use etc::config;
-use lib::ldap;
-use lib::misc;
+
+# lconf includes
+use lib '@SYSCONF_DIR@';
+use config;
+
+use lib '@LIB_DIR@';
+use ldap;
+use generate;
+use misc;
 
 # version string
-my $version = '1.3rc';
+my $version = '@VERSION@';
 
 # define states
 our @state = ('OK', 'WARNING', 'ERROR', 'UNKNOWN');

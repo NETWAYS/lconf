@@ -1,15 +1,50 @@
+#                                               -*- Autoconf -*-
+# Process this file with autoconf to produce a configure script.
+
+# include some meta
+m4_include([m4/version.m4])
+
+# Which version of AC
+AC_PREREQ(2.61)
+
 # info and default prefix
-AC_INIT(LConf, 1.3rc, support@netways.de)
+AC_INIT(LConf, [LCONF_VERSION], support@netways.de)
+
+PKG_VERSION=LCONF_VERSION
+AC_SUBST(PKG_VERSION)
+
+dnl Figure out how to invoke "install" and what install options to use.
+AC_PROG_INSTALL
+AC_SUBST(INSTALL)
+
 AC_PREFIX_DEFAULT(/usr/local/LConf)
 
+test "$prefix" = "NONE" && prefix='/usr/local/LConf'
+test "$exec_prefix" = "NONE" && exec_prefix='${prefix}'
 
 # set special stuff
 exec_dir=`pwd`;
 comma=,
 
-
 # configure options
 AC_SUBST(exec_dir,[$exec_dir])
+
+dnl Location of export script path
+EXPORTSCRIPTDIR=no
+AC_ARG_WITH(export-script-dir,AC_HELP_STRING([--with-export-script-dir=<path>],[sets path to lconf export script (pre,mid,post.pl)]),EXPORTSCRIPTDIR=$withval,EXPORTSCRIPTDIR=no)
+if test x$EXPORTSCRIPTDIR = xno; then
+        EXPORTSCRIPTDIR="$prefix/custom"
+fi
+AC_SUBST(EXPORTSCRIPTDIR)
+
+dnl Location of temp path
+TMPDIR=no
+AC_ARG_WITH(temp-dir,AC_HELP_STRING([--with-temp-dir=<path>],[sets path to temp directory path]),TMPDIR=$withval,TMPDIR=no)
+if test x$TMPDIR = xno; then
+        TMPDIR="$prefix/tmp"
+fi
+AC_SUBST(TMPDIR)
+
 
 AC_ARG_WITH(lconf_cli_user,AC_HELP_STRING([--with-lconf-cli-user=<user>],[sets user name to run lconf on cli]),lconf_cli_user=$withval,lconf_cli_user=lconf) 
 AC_SUBST(lconf_cli_user)
