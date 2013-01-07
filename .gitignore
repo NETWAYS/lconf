@@ -2,6 +2,7 @@ config.*
 Makefile
 *.swp
 *.swo
+autom4te.cache
 
 # built stuff
 contrib/create_lconf-web-dn-mid.pl
