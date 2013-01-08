@@ -42,7 +42,7 @@ sub LDAPsearch {
 			$exit->{code} = 3;
 			$exit->{message} = "LDAP SEARCH ERROR: ".$result->error;
 		}
-		goto EXIT;
+    LeaveScript($exit->{code}, $exit->{message});
 	}
 
 	# convert result to a hash

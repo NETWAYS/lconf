@@ -2,6 +2,13 @@
 
 sub testInitializeLDAP {
 	my $ldap = shift;
+
+  # Could not search an rootDN because it gets deleted
+  # the new startingpoint is one level above
+  my @startingPoint = split(',', $cfg->{ldap}->{rootDN});
+  shift(@startingPoint);
+  $startingPoint = join(",", @startingPoint);
+  beVerbose("testinitializeLDAP", "Startingpoint: $startingPoint");
 	
 	# should we really initialize?
 	print "Do you really want to initialize the ldap server?\n";
@@ -13,14 +20,15 @@ sub testInitializeLDAP {
 
 	if ($confirm eq 'YES' || $confirm eq 'yes') {
 		# need to clear ldap tree?
-		$result = LDAPsearch($ldap, $cfg->{ldap}->{rootDN}, "base", "ou=*");
+    $result = LDAPsearch($ldap, $startingPoint, "one", "ou=LConf");
+    #$result = LDAPsearch($ldap, $cfg->{ldap}->{dn}, "sub", "ou=LConf");
 		if (defined $result->{$cfg->{ldap}->{rootDN}}) {
 			beVerbose('CLEANUP', $cfg->{ldap}->{rootDN});
 			qx(ldapdelete -h $cfg->{ldap}->{server} -x -D $cfg->{ldap}->{binddn} -w $cfg->{ldap}->{bindpw} -r $cfg->{ldap}->{rootDN});
 		}
 		
 		# check dir structure
-		$result = LDAPsearch($ldap, $cfg->{ldap}->{rootDN}, "base", "ou=*");
+    $result = LDAPsearch($ldap, $startingPoint, "one", "ou=LConf");
 		if (!defined($result)) {
 			beVerbose("LDAP STRUCTURE", $cfg->{ldap}->{rootDN}." not available; will create it...");
 

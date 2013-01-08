@@ -107,9 +107,9 @@ use lib dirname('../../../');
 use lib dirname(__FILE__);
 
 # lconf includes
-use etc::config;
-use lib::misc;
-use lib::ldap;
+use src::config;
+use src::misc;
+use src::ldap;
 use lib::test_ldap;
 use lib::testConfigExport;
 use lib::testConfigReader;

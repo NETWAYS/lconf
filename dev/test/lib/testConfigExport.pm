@@ -12,7 +12,7 @@ sub testConfigExport {
 	my $PREFIX;
 
 	# read file and get install path ($PREFIX)
-	open(IN,"<$filename") || die "Can't open file '$filename': $!";
+	open(IN,"<$filename") || die "Can't open file '$filename': $!\n -> Just do a ./configure; make; make install\n\n";
 	while(<IN>) { if ($_ =~ /^PREFIX\=/) { $_ =~ m/^PREFIX\=(.*)/; $PREFIX = $1; } }
 	close(IN);
 	
