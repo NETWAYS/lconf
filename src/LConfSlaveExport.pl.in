@@ -151,7 +151,7 @@ our $exit; $exit->{code} = 0; $exit->{message} = 'No errors';
 
 # fist of all... check if we're ready to run
 LeaveScript(2, "Variable '\$cfg->{ldap}->{server}' not set in config.pm'") if !$cfg->{ldap}->{server};
-LeaveScript(2, "Variable '\$cfg->{ldap}->{exportDN}' not set in config.pm'")     if !$cfg->{ldap}->{exportDN};
+LeaveScript(2, "Variable '\$cfg->{export}->{exportDN}' not set in config.pm'") if !$cfg->{export}->{exportDN};
 LeaveScript(2, "Variable '\$cfg->{export}->{user}' not set in config.pm'") if !$cfg->{export}->{user};
 
 # export with right user?
