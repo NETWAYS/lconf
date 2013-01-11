@@ -74,6 +74,9 @@ sub LDAPsearch {
 				if ($attrName eq "$cfg->{ldap}->{prefix}hostcustomvar" || $attrName eq "$cfg->{ldap}->{prefix}servicecustomvar") {
 					@$attrVal[$counter] =~ m/([\d\w]*) (.*)/;
 					$return->{$_}->{$attrName}->{$1} = $2;
+          if(!defined($1)) {
+            print("Warning: @$attrVal[$counter] in $_ is empty!\n");
+          } 
 				} elsif ($attrName eq "$cfg->{ldap}->{prefix}timeperiodvalue") {
 					@$attrVal[$counter] =~ m/(.*) +([-\w:]+(\,?)+[-\w:]+)/;
 					$return->{$_}->{$attrName}->{$counter}->{$1} = $2;
@@ -127,7 +130,6 @@ sub TreeBuilder {
 	# process host's tree and store all needed attributes
 	foreach my $level (@search) {
 		$searchDN = $level.",".$searchDN;
-		DebugOutput('TREE BUILDER',"searchDN: $searchDN\n");
 		DebugOutput('TREE BUILDER',"searchDN: $searchDN\n");
 		
 		# get aliases 
@@ -231,6 +233,7 @@ sub TreeBuilder {
 		$result = HashGrep($CONFIG, 'dn', '^[\w]+=[._\w\/\d\s:-]+,'.$searchDN);
 		my $SERVICES = HashGrep($result, 'objectclass', $cfg->{ldap}->{prefix}.'Service$');
     foreach my $service (keys %{$SERVICES}) {
+      DebugOutput('TREE BUILDER', "\nFound service\t $service");
 
       # First search for  service escalations below the service target
       # Ugly but necessary
@@ -250,6 +253,7 @@ sub TreeBuilder {
 					$forward{'SERVICES'}{$CONFIG->{$service}->{cn}}{$val1} = {%{$forward{$val1}}};
 				} else {
           $forward{'SERVICES'}{$CONFIG->{$service}->{cn}}{$val1} = $forward{$val1};
+          DebugOutput('TREE BUILDER', "Added service to forward: $CONFIG->{$service}->{cn}");
 				}
 			}
 			
@@ -336,6 +340,7 @@ sub BuildHostConfig {
 	my $CLIENTS = shift;
 	my $TREE    = shift;
 	
+  DebugOutput('CONFIG BUILDER', "\n\n Build config for: $client");
 	# add host attributes
 	foreach my $val1 (keys %{$TREE}) {
 		if ($val1 =~ /$cfg->{ldap}->{prefix}host/ || $val1 eq "$cfg->{ldap}->{prefix}address" || $val1 eq "$cfg->{ldap}->{prefix}parent" || $val1 eq "$cfg->{ldap}->{prefix}alias" || $val1 eq 'description' || $val1 eq 'cn' || $val1 =~ /objectclass/i) {
@@ -360,9 +365,11 @@ sub BuildHostConfig {
 	
 	# add services
 	foreach my $service (keys %{$TREE->{SERVICES}}) {
+    DebugOutput('CONFIG BUILDER', "Found service: $service");
 		foreach my $val1 (keys %{$TREE->{SERVICES}->{$service}}) {
 			if ($val1 =~ /$cfg->{ldap}->{prefix}service/ || $val1 eq "$cfg->{ldap}->{prefix}checkcommand" || $val1 eq 'description' || $val1 eq 'cn' || $val1 =~ /objectclass/i) {
 				$CLIENTS->{$client}->{SERVICES}->{$service}->{$val1} = $TREE->{SERVICES}->{$service}->{$val1};
+        DebugOutput('CONFIG BUILDER', "Added service attribute: $client $service $val1");
 			}
 		}
 		

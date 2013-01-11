@@ -23,7 +23,7 @@ sub testConfigExport {
 
 	# export
 	beVerbose("INFO", "Export config to directory '$targetDir'");
-	my $result = qx($PREFIX/LConfExport.pl -o $targetDir);
+	my $result = qx($PREFIX/bin/LConfExport.pl -o $targetDir);
 	
 	# errors?
 	if ($result !~ /^OK/) {

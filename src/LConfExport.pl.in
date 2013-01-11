@@ -102,6 +102,7 @@ use POSIX qw/strftime/;
 use Fcntl qw(:flock);
 use Storable qw(dclone);
 use Scalar::Util qw/reftype/;
+use Parallel::ForkManager;
 
 # lconf includes
 use lib '@SYSCONF_DIR@';
@@ -282,35 +283,79 @@ if (-f '@EXPORT_SCRIPT_DIR@/pre.pl') {
 }
 
 # build configuration
-foreach my $client (keys %{$CLIENTS}) {
-	beVerbose("CFG BUILD", "Host $client");
-	
-	my %TREE = ();
-	%TREE = TreeBuilder($client, $CONFIG, \%TREE);
-	
-	$CLIENTS = BuildHostConfig($client, $CLIENTS, \%TREE);
-}
-
-# run custom script (mid)
-if (-f '@EXPORT_SCRIPT_DIR@/mid.pl') {
-	require '@EXPORT_SCRIPT_DIR@/mid.pl';
-	$CLIENTS = CustomMid($CLIENTS);
-}
-
-# create output dirs and generate config
 createDirs($cfg->{ldap}->{baseDN}, $opt->{outputDir});  # TODO: Umbauen damit er ohne LDAPsearch funktioniert??
 mkdir("$opt->{outputDir}/hostgroups/");
 mkdir("$opt->{outputDir}/servicegroups/");
 mkdir("$opt->{outputDir}/serviceescalations/");
 mkdir("$opt->{outputDir}/hostescalations/");
-copyGeneric(dirname(__FILE__)."/etc/default-templates.cfg", $opt->{outputDir});
+copyGeneric(dirname(__FILE__)."/../etc/default-templates.cfg", $opt->{outputDir});
+
+# Fork the TreeBuilder, BuildHostConfig and genHostConfig subs for each client
+my $pm = Parallel::ForkManager->new($cfg->{export}->{childs});
+
+# Callback from the childs
+# stolen from Forkmanager Examples:
+# http://search.cpan.org/~szabgab/Parallel-ForkManager-1.02/lib/Parallel/ForkManager.pm#Data_structure_retrieval
+my %retrieved_responses = ();  # for collecting responses of the childs
+  $pm -> run_on_finish (
+    sub {
+      my ($pid, $exit_code, $ident, $exit_signal, $core_dump, $data_structure_reference) = @_;
+  
+      # see what the child sent us, if anything
+      if (defined($data_structure_reference)) {  # test rather than assume child sent anything
+        if (0) {  # simple on/off switch to display the contents
+          my $reftype = ref($data_structure_reference);
+          print qq|ident "$ident" returned a "$reftype" reference.\n\n|;
+          print &Dumper($data_structure_reference) . qq|end of "$ident" sent structure\n\n|;
+        }
+        
+        # we can also collect retrieved data structures for processing after all children have exited
+        $retrieved_responses{$ident} = $data_structure_reference;
+      } else {
+        print qq|Warning:Child did not send data to parent.\n\n|;  
+      }
+    }
+  );
+
+foreach my $client (keys %{$CLIENTS}) {
+
+  # create new child
+  my $pid = $pm->start($client) and next; 
+
+  beVerbose("$$ CFG BUILD", "Host $client");
+  my %TREE = ();
+  %TREE = TreeBuilder($client, $CONFIG, \%TREE);
+  $CLIENTS = BuildHostConfig($client, $CLIENTS, \%TREE);
+
+  # run custom script (mid)
+  if (-f '/opt/LConf/current/custom/mid.pl') {
+    require 'custom/mid.pl';
+    $CLIENTS = CustomMid($CLIENTS);
+  }
+
+  # create output dirs and generate config
+  genHostConfig($CLIENTS, $client);
+
+  # finish child, give $client back to the parent
+  $pm->finish(0, \%{$CLIENTS->{$client}});
+}
+
+# wait until all childs are finished
+#while(wait() == 0) {sleep(1)};
+$pm->wait_all_children;
+
+# get the data from the child back to $CLIENTS
+for (sort keys %retrieved_responses) {
+  $CLIENTS->{$_} = $retrieved_responses{$_};
+}
+
+# generate the rest of the config.
 genTimeperiods($CONFIG);
 genCommands($CONFIG);
 genContacts($CONFIG);
 genContactgroups($CONFIG);
 genHostgroups($CONFIG, $CLIENTS);
 genServicegroups($CONFIG, $CLIENTS);
-genHostConfig($CLIENTS);
 
 # run custom script (post)
 if (-f '@EXPORT_SCRIPT_DIR@/post.pl') {

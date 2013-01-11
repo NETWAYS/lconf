@@ -20,6 +20,7 @@ $cfg->{export}->{hashdump}			= '@PREFIX@/var/LConfExport.hashdump';
 $cfg->{export}->{tmpdir}			= '@PREFIX@/tmp';
 $cfg->{export}->{timestamp}			= '@PREFIX@/var/LConfExport.timestamp';
 $cfg->{export}->{onlydiffs}			= 0;
+$cfg->{export}->{childs}        = 2;
 
 
 $cfg->{export}->{treerewrite}			= 'None';

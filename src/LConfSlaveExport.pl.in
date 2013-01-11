@@ -275,7 +275,10 @@ foreach my $host (@hosts) {
 		genHostgroups($CONFIG, $CLIENTS, $_);
 		genServicegroups($CONFIG, $CLIENTS, $_);
 	}
-	genHostConfig($CLIENTS);
+
+  foreach my $client (keys %{$CLIENTS}) {
+    genHostConfig($CLIENTS, $client);
+  }
 
 	# disconnect from LDAP Server
 	$ldap->unbind();

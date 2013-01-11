@@ -370,13 +370,14 @@ sub genServicegroups {
 
 sub genHostConfig {
 	my $CLIENTS = shift;
+  my $client = shift;
 	my $dir    = shift;
 	my $outputDir;
 	
 	# set output dir
 	if (defined $dir) { $outputDir = $dir; } else { $outputDir = $opt->{outputDir}; }
 
-	foreach my $client (keys %{$CLIENTS}) {
+    DebugOutput("$$ GENERATE HOSTCONFIG", "Generate config for $client");
 		if (defined $CLIENTS->{$client}->{dn}) {
 			# only gen config if lconfhostdisable is not set
 			if (!defined $CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostdisable"}) {
@@ -417,6 +418,7 @@ sub genHostConfig {
 				# SERVICES
 				#
 				foreach my $service (keys %{$CLIENTS->{$client}->{'SERVICES'}}) {
+          DebugOutput("$$ GENERATE HOSTCONFIG", "Found service $service");
 					# only gen service if lconfservicedisable is not set
 					if (!defined $CLIENTS->{$client}->{'SERVICES'}->{$service}->{"$cfg->{ldap}->{prefix}servicedisable"}) {
 						print FH "define service {\n";
@@ -531,7 +533,6 @@ sub genHostConfig {
 				}
 			}
 		}
-	}
 }
 
 1;
