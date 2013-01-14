@@ -328,8 +328,8 @@ foreach my $client (keys %{$CLIENTS}) {
   $CLIENTS = BuildHostConfig($client, $CLIENTS, \%TREE);
 
   # run custom script (mid)
-  if (-f '/opt/LConf/current/custom/mid.pl') {
-    require 'custom/mid.pl';
+  if (-f '@EXPORT_SCRIPT_DIR@/mid.pl') {
+    require '@EXPORT_SCRIPT_DIR@/mid.pl';
     $CLIENTS = CustomMid($CLIENTS);
   }
 
