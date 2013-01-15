@@ -127,18 +127,19 @@ if ($opt->{help}) { pod2usage(1); }
 
 # define vars
 use vars qw($cfg);
-$cfg->{ldap}->{baseDN} = 'ou='.$cfg->{export}->{startingpoint}.',ou=LConf,'.$cfg->{ldap}->{dn};
-$cfg->{ldap}->{rootDN} = 'ou=LConf,'.$cfg->{ldap}->{dn};
+$cfg->{ldap}->{baseDN} = $cfg->{export}->{exportDN}.','.$cfg->{ldap}->{rootDN};
 our $CLIENTS;
 my @export;
 my @hosts;
 
 our $exit; $exit->{code} = 0; $exit->{message} = 'No errors';
 
-# fist of all... check if we're ready to run
-LeaveScript(2, "Variable '\$cfg->{ldap}->{server}' not set in config.pm'") if !$cfg->{ldap}->{server};
-LeaveScript(2, "Variable '\$cfg->{ldap}->{dn}' not set in config.pm'")     if !$cfg->{ldap}->{dn};
-LeaveScript(2, "Variable '\$cfg->{export}->{user}' not set in config.pm'") if !$cfg->{export}->{user};
+# first of all... check if we're ready to run
+LeaveScript(2, "Variable '\$cfg->{ldap}->{server}' not set in config.pm'")      if !$cfg->{ldap}->{server};
+LeaveScript(2, "Variable '\$cfg->{ldap}->{rootDN}' not set in config.pm'")      if !$cfg->{ldap}->{rootDN};
+LeaveScript(2, "Variable '\$cfg->{export}->{user}' not set in config.pm'")      if !$cfg->{export}->{user};
+LeaveScript(2, "Variable '\$cfg->{export}->{exportDN}' not set in config.pm'")  if !$cfg->{export}->{exportDN};
+LeaveScript(2, "Variable '\$cfg->{export}->{treerewrite}' not set in config.pm'")       if !$cfg->{export}->{treerewrite};
 
 # export with right user?
 LeaveScript(2, "You're not user '$cfg->{export}->{user}'!") if $ENV{USER} ne $cfg->{export}->{user};
@@ -217,7 +218,9 @@ print "fump: outputDir: $opt->{outputDir}\n";
 						# customvar is an assoc array, different handling
 						if ($serviceattribute =~ /customvar/i) {
 							foreach my $customvarname (keys %{$CLIENTS->{$client}->{SERVICES}->{$service}->{$serviceattribute}}) {
+								#print "customvarname: $customvarname\n";
 								my $customvarvalue = $CLIENTS->{$client}->{SERVICES}->{$service}->{$serviceattribute}->{$customvarname};
+								next if(!$customvarvalue);
 								#print "attribute: $serviceattribute customvarvalue: $customvarvalue pattern: $servicepattern\n";
 								if ($customvarvalue =~ /$servicepattern/i) {
 									$CLIENTS_slave->{$client}->{SERVICES}->{$service} = $CLIENTS->{$client}->{SERVICES}->{$service};
@@ -350,15 +353,15 @@ print "fump: outputDir: $opt->{outputDir}\n";
 	beVerbose("COPY", $cmd);
 	qx($cmd);
 	
-#	# reload Nagios / Icinga on slave
-#	if (defined $opt->{port}) {
-#		$cmd = "ssh -p $opt->{port} $opt->{host} '/etc/init.d/icinga reload'";
-#	} else {
-#		$cmd = "ssh $opt->{host} '/etc/init.d/icinga reload'";
-#	}
-#	#beVerbose("RELOAD", $cmd);
-#	#my $result = qx($cmd);
-#	#print $result;
+	# reload Nagios / Icinga on slave (requires passwordless sudo for that command)
+	if (defined $opt->{port}) {
+		$cmd = "ssh -p $opt->{port} $opt->{host} 'sudo /etc/init.d/icinga reload'";
+	} else {
+		$cmd = "ssh $opt->{host} 'sudo /etc/init.d/icinga reload'";
+	}
+	beVerbose("RELOAD", $cmd);
+	my $result = qx($cmd);
+	print $result;
 }
 
 
