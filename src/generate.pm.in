@@ -433,6 +433,7 @@ sub genHostConfig {
 								# customvar or a default item?
 								if ($val1 =~ /customvar/i) {
 									foreach my $val2 (sort keys %{$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}}) {
+										next if (!$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}->{$val2}); # XXX find a better way to handle empty customvars before
 										print FH "\t$val2\t$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}->{$val2}\n";
 									}
 								} else {
