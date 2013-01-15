@@ -3,11 +3,36 @@ Upgrading LConf
 Upgrading from 1.2.x to 1.3.x
 -----------------------------
 
+- perl module Parallel::ForkManager (>= 0.7.6) is needed
+
 - LConf*.pl scripts are moved into $prefix/bin by default
+
 - custom scripts are now located in $prefix/lib/custom/
+	** can be set with configure
+
 - contrib/lconf_deploy.sh is renamed to contrib/LConfDeploy.sh
+
 - inheritance of attributes across main and template trees. 
 This feature is disabled by default. To enable it you simply need to set a config option in config.pm. Please let the feature disabled if you're not sure about it or read section "TreeRewrite" of the documentation for further information.
+
+- new configure options
+	--with-export-script-dir=<path>  sets path to lconf export script (pre,mid,post.pl)
+	--with-temp-dir=<path>  sets path to temp directory path
+
+
+!!! WARNING: Changed/New config.pm options !!!
+
+|=======================================================|=======================================================================|=======================================================================|
+| Old							| New 									| Notes									|
+|=======================================================|=======================================================================|=======================================================================|
+|							| $cfg->{ldap}->{rootNode} = 'LConf';					| newly added to reflect the ldap's root tree better			|
+| 							| $cfg->{export}->{timestamp} = '/var/LConf/LConfExport.timestamp';	| timestamp when LConfExport started					|
+| 							| $cfg->{export}->{onlydiffs} = 0;					| only export Config Diffs (experimental)				|
+| 							| $cfg->{export}->{childs} = 2;						| max Childs in parallel on LConfExport					|
+| $cfg->{ldap}->{dn} = 'dc=local';			| $cfg->{ldap}->{rootDN} = 'ou='.$cfg->{ldap}->{rootNode}.',dc=local';	| renamed for better identification, requires rootNode to be set	|
+| $cfg->{export}->{startingpoint} = 'IcingaConfig';	| $cfg->{export}->{exportDN} = 'ou=IcingaConfig'; # below rootDN	| exportDN as starting point (no more hardcoded ou=)			|
+|=======================================================|=======================================================================|=======================================================================|
+
 
 Upgrading to 1.3.4rc2
 -----------------------------
