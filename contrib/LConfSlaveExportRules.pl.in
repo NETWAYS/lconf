@@ -158,7 +158,12 @@ eval($data);
 $CLIENTS = $VAR1;
 
 # connect to LDAP server
-our $ldap = LDAPconnect();
+our $ldap;
+if ($cfg->{ldap}->{binddn} && $cfg->{ldap}->{bindpw}) {
+	$ldap = LDAPconnect('auth');
+} else {
+	$ldap = LDAPconnect();
+}
 
 # get the whole config from ldap
 my $CONFIG = LDAPsearch($ldap, $cfg->{ldap}->{rootDN}, "sub", "objectclass=*");
@@ -224,6 +229,7 @@ print "fump: outputDir: $opt->{outputDir}\n";
 								#print "attribute: $serviceattribute customvarvalue: $customvarvalue pattern: $servicepattern\n";
 								if ($customvarvalue =~ /$servicepattern/i) {
 									$CLIENTS_slave->{$client}->{SERVICES}->{$service} = $CLIENTS->{$client}->{SERVICES}->{$service};
+									#print "MATCH! $service\n";
 								}
 							}
 						} else {
@@ -286,32 +292,32 @@ print "fump: outputDir: $opt->{outputDir}\n";
                 }
         }
 
+=pod	
+	print "-----\n";
+	foreach my $val1 (keys %{$CLIENTS}) {
+		print $val1."\n";
+		foreach my $val2 (keys %{$CLIENTS->{$val1}}) {
+			print "\t$val2 => $CLIENTS->{$val1}->{$val2}\n";
+			if ($CLIENTS->{$val1}->{$val2} =~ /HASH/) {
+				foreach my $val3 (keys %{$CLIENTS->{$val1}->{$val2}}) {
+					print "\t\t$val3 => $CLIENTS->{$val1}->{$val2}->{$val3}\n";
+					if ($CLIENTS->{$val1}->{$val2}->{$val3} =~ /HASH/) {
+						foreach my $val4 (keys %{$CLIENTS->{$val1}->{$val2}->{$val3}}) {
+							print "\t\t\t$val4 => $CLIENTS->{$val1}->{$val2}->{$val3}->{$val4}\n";
+							if ($CLIENTS->{$val1}->{$val2}->{$val3}->{$val4} =~ /HASH/) {
+								foreach my $val5 (keys %{$CLIENTS->{$val1}->{$val2}->{$val3}->{$val4}}) {
+									print "\t\t\t\t$val5 => $CLIENTS->{$val1}->{$val2}->{$val3}->{$val4}->{$val5}\n";
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 	
-#	print "-----\n";
-#	foreach my $val1 (keys %{$CLIENTS}) {
-#		print $val1."\n";
-#		foreach my $val2 (keys %{$CLIENTS->{$val1}}) {
-#			print "\t$val2 => $CLIENTS->{$val1}->{$val2}\n";
-#			if ($CLIENTS->{$val1}->{$val2} =~ /HASH/) {
-#				foreach my $val3 (keys %{$CLIENTS->{$val1}->{$val2}}) {
-#					print "\t\t$val3 => $CLIENTS->{$val1}->{$val2}->{$val3}\n";
-#					if ($CLIENTS->{$val1}->{$val2}->{$val3} =~ /HASH/) {
-#						foreach my $val4 (keys %{$CLIENTS->{$val1}->{$val2}->{$val3}}) {
-#							print "\t\t\t$val4 => $CLIENTS->{$val1}->{$val2}->{$val3}->{$val4}\n";
-#							if ($CLIENTS->{$val1}->{$val2}->{$val3}->{$val4} =~ /HASH/) {
-#								foreach my $val5 (keys %{$CLIENTS->{$val1}->{$val2}->{$val3}->{$val4}}) {
-#									print "\t\t\t\t$val5 => $CLIENTS->{$val1}->{$val2}->{$val3}->{$val4}->{$val5}\n";
-#								}
-#							}
-#						}
-#					}
-#				}
-#			}
-#		}
-#	}
-#	
-#	exit;
-	
+	exit;
+=cut	
 	# create tmp target
 	mkdir("$opt->{tmpDir}") if !-d $opt->{tmpDir};
 	
@@ -334,7 +340,11 @@ print "fump: outputDir: $opt->{outputDir}\n";
 	genContacts($CONFIG, '', $opt->{tmpDir});
 	genContactgroups($CONFIG, '', $opt->{tmpDir});
 	genHostgroups($CONFIG, $CLIENTS, '', $opt->{tmpDir});
-	genHostConfig($CLIENTS, $opt->{tmpDir});
+
+	# generate each client host
+	foreach my $client (keys %{$CLIENTS}) {
+		genHostConfig($CLIENTS, $client, $opt->{tmpDir});
+	}
 	
 	#
 	# NOW, START WORKING ON TARGET SERVER's REMOTE DIR
