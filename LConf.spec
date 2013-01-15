@@ -30,17 +30,14 @@ PreReq:         apache2
 %endif 
 Requires:       openldap2 >= 2.3
 Requires:       perl(Net::LDAP)
+Requires:	perl(Parallel::ForkManager) >= 0.7.6
 %if "{_vendor}" == "suse"
 Requires:       openldap2-client
-%else
+%endif
+%if "{_vendor}" == "redhat"
 Requires:       openldap-clients
 %endif
 BuildRequires:  perl(Net::LDAP)
-%if "{_vendor}" == "suse"
-BuildRequires:  openldap2-client
-%else
-Requires:       openldap-clients
-%endif
 %if "{_vendor}" == "suse"
 Recommends:     rsync
 Recommends:	icinga
