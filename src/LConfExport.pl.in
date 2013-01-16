@@ -58,6 +58,7 @@ LConfExport.pl	-o <output dir>
 				[-f]
 				[-h]
 				[-V]
+				[-y]
 				[--full-export]
 				
 Export a Nagios / Icinga config from LConf
@@ -85,6 +86,10 @@ Overwrite the diff export parameter and do a full export
 =item -f|--filter <hostname>
 
 Export only this host (e.g. for debugging)
+
+=item -y|--yes
+
+Answer every question with yes
 
 =item -h|--help
 
@@ -132,6 +137,7 @@ GetOptions(
 	"d|debug:s"	=> \$opt->{debug},
 	"full-export:s"	=> \$opt->{fullExport},
 	"f|filter=s"	=> \$opt->{filter},
+	"y|yes"		=> \$opt->{yes},
 	"h|help"		=> \$opt->{help},
 	"V|version"	=> \$opt->{version}
 );
@@ -177,7 +183,7 @@ LeaveScript('2', "'$opt->{outputDir}' is not writeable")   if !-w $opt->{outputD
 	DebugOutput('REMOVE OLD CONFIG', "start - folder: $opt->{outputDir}");
 	
 	# check if output dir is already labeled?
-	if (!-f "$opt->{outputDir}/lconf.identify") {
+	if (!-f "$opt->{outputDir}/lconf.identify" && !defined $opt->{yes}) {
 		print "It looks like you generate a config into '$opt->{outputDir}' for the first time.\n";
 		print "May lconf delete the folder content?\n\n";
 		print "execute 'rm -r $opt->{outputDir}/*' (y/n) ";
