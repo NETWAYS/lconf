@@ -58,6 +58,7 @@ LConfExport.pl	-o <output dir>
 				[-f]
 				[-h]
 				[-V]
+				[--full-export]
 				
 Export a Nagios / Icinga config from LConf
 
@@ -76,6 +77,10 @@ Verbose mode. If no logfile specified, verbose output will be printed to STDOUT
 =item -d|--debug [<path to logfile>]
 
 Debug mode. If no logfile specified, debug output will be printed to STDOUT
+
+=item --full-export
+
+Overwrite the diff export parameter and do a full export
 
 =item -f|--filter <hostname>
 
@@ -125,6 +130,7 @@ GetOptions(
 	"o|output=s"	=> \$opt->{outputDir},
 	"v|verbose:s"	=> \$opt->{verbose},
 	"d|debug:s"	=> \$opt->{debug},
+	"full-export:s"	=> \$opt->{fullExport},
 	"f|filter=s"	=> \$opt->{filter},
 	"h|help"		=> \$opt->{help},
 	"V|version"	=> \$opt->{version}
@@ -139,7 +145,6 @@ if (defined $opt->{version}) { print $version."\n"; exit 0; }
 
 # should print help?
 if ($opt->{help} || !$opt->{outputDir}) { pod2usage(1); }
-
 
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
 # let's go!
@@ -215,7 +220,7 @@ my $CONFIG = LDAPsearch($ldap, $cfg->{ldap}->{rootDN}, "sub", "objectclass=*");
 
 # search last modified items
 my $DIFF_EXPORT = ();
-if (defined $cfg->{export}->{onlydiffs} && $cfg->{export}->{onlydiffs} == 1) {
+if (defined $cfg->{export}->{onlydiffs} && $cfg->{export}->{onlydiffs} == 1 && !defined $opt->{fullExport}) {
 	my $LASTMODIFIED = LDAPsearch($ldap, $cfg->{ldap}->{rootDN}, "sub", "(|(modifyTimestamp>=$timestamp)(createTimestamp>=$timestamp))");
 	foreach my $val1 (keys %{$LASTMODIFIED}) {
 		my $QUEUE;
