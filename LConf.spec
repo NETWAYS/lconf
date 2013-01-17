@@ -131,6 +131,9 @@ rm -rf %buildroot
 %config(noreplace) %{_sysconfdir}/%{name}/*
 
 %changelog
+* Thu Jan 17 2013 christian.dengler@netways.de
+- adjust version number, add additional BuildRequires, fix broken macro definition
+
 * Mon Jan 07 2013 michael.friedrich@netways.de
 - updated using latest git changes, add rhel support
 
