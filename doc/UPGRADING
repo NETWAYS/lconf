@@ -34,7 +34,7 @@ This feature is disabled by default. To enable it you simply need to set a confi
 |=======================================================|=======================================================================|=======================================================================|
 
 
-Upgrading to 1.3.4rc2
+Upgrading to 1.3rc2
 -----------------------------
 - perl module Parallel::ForkManager (>= 0.7.6) is need 
 
