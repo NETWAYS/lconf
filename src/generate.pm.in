@@ -1,539 +1,542 @@
 sub genTimeperiods {
-	my $CONFIG = shift;
-	my $target = shift;
-	my $dir    = shift;
-	my $outputDir;
+    my $CONFIG = shift;
+    my $target = shift;
+    my $dir    = shift;
+    my $outputDir;
 
-	# set output dir
-	if (defined $dir) { $outputDir = $dir; } else { $outputDir = $opt->{outputDir}; }
-	
-	# get all timeperiods
-	my $TIMEPERIODS = HashGrep($CONFIG, 'objectclass', $cfg->{ldap}->{prefix}.'Timeperiod');
-	
-	# check all timeperiods... are they below $cfg->{ldap}->{baseDN} ?
-	# --> so timeperiod objects in ou=Examples and ou=Templates will not be handled
-	foreach my $val (keys %{$TIMEPERIODS}) { delete $TIMEPERIODS->{$val} if $val !~ /$cfg->{ldap}->{baseDN}$/; }
-	
-	# a special target is set?
-	if (defined($target)) { foreach my $val (keys %{$TIMEPERIODS}) { delete $TIMEPERIODS->{$val} if $val !~ /$target$/; } }
-	
-	foreach my $timeperiod (keys %{$TIMEPERIODS}) {
-		# get target file's name and open it for writing
-		my $writeFile = BuildFilepath($TIMEPERIODS->{$timeperiod}->{dn}, $outputDir);
-		open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
-		
-		print FH "define timeperiod {\n";
-		foreach (sort keys %{$TIMEPERIODS->{$timeperiod}}) {
-			if ($itemMap{$_} || $_ eq "$cfg->{ldap}->{prefix}timeperiodvalue") {
-				if ($_ eq 'cn') {
-					print FH "\ttimeperiod_name\t$TIMEPERIODS->{$timeperiod}->{$_}\n";
-				} elsif ($_ eq "$cfg->{ldap}->{prefix}timeperiodvalue") {
-					foreach my $val (sort keys %{$TIMEPERIODS->{$timeperiod}->{$_}}) {
-						foreach my $timeperiod_value (sort keys %{$TIMEPERIODS->{$timeperiod}->{$_}->{$val}}) {
-							print FH "\t$timeperiod_value\t$TIMEPERIODS->{$timeperiod}->{$_}->{$val}->{$timeperiod_value}\n";
-						}
-					}
-				} else {
-					print FH "\t$itemMap{$_}\t$TIMEPERIODS->{$timeperiod}->{$_}\n";
-				}
-			}
-		}
-		print FH "}\n";
-		
-		# close target file
-		close(FH);
-	}
+    # set output dir
+    if (defined $dir) { $outputDir = $dir; } else { $outputDir = $opt->{outputDir}; }
+
+    # get all timeperiods
+    my $TIMEPERIODS = HashGrep($CONFIG, 'objectclass', $cfg->{ldap}->{prefix}.'Timeperiod');
+
+    # check all timeperiods... are they below $cfg->{ldap}->{baseDN} ?
+    # --> so timeperiod objects in ou=Examples and ou=Templates will not be handled
+    foreach my $val (keys %{$TIMEPERIODS}) { delete $TIMEPERIODS->{$val} if $val !~ /$cfg->{ldap}->{baseDN}$/; }
+
+    # a special target is set?
+    if (defined($target)) { foreach my $val (keys %{$TIMEPERIODS}) { delete $TIMEPERIODS->{$val} if $val !~ /$target$/; } }
+
+    foreach my $timeperiod (keys %{$TIMEPERIODS}) {
+        # get target file's name and open it for writing
+        my $writeFile = BuildFilepath($TIMEPERIODS->{$timeperiod}->{dn}, $outputDir);
+        open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
+
+        print FH "define timeperiod {\n";
+        foreach (sort keys %{$TIMEPERIODS->{$timeperiod}}) {
+            if ($itemMap{$_} || $_ eq "$cfg->{ldap}->{prefix}timeperiodvalue") {
+                if ($_ eq 'cn') {
+                    print FH "\ttimeperiod_name\t$TIMEPERIODS->{$timeperiod}->{$_}\n";
+                } elsif ($_ eq "$cfg->{ldap}->{prefix}timeperiodvalue") {
+                    foreach my $val (sort keys %{$TIMEPERIODS->{$timeperiod}->{$_}}) {
+                        foreach my $timeperiod_value (sort keys %{$TIMEPERIODS->{$timeperiod}->{$_}->{$val}}) {
+                            print FH "\t$timeperiod_value\t$TIMEPERIODS->{$timeperiod}->{$_}->{$val}->{$timeperiod_value}\n";
+                        }
+                    }
+                } else {
+                    print FH "\t$itemMap{$_}\t$TIMEPERIODS->{$timeperiod}->{$_}\n";
+                }
+            }
+        }
+        print FH "}\n";
+
+        # close target file
+        close(FH);
+    }
 }
 
 sub genCommands {
-	my $CONFIG = shift;
-	my $target = shift;
-	my $dir    = shift;
-	my $outputDir;
+    my $CONFIG = shift;
+    my $target = shift;
+    my $dir    = shift;
+    my $outputDir;
 
-	# set output dir
-	if (defined $dir) { $outputDir = $dir; } else { $outputDir = $opt->{outputDir}; }
-	
-	# get all commands
-	my $COMMANDS = HashGrep($CONFIG, 'objectclass', $cfg->{ldap}->{prefix}.'Command');
-	
-	# check all commands... are they below $cfg->{ldap}->{baseDN} ?
-	# --> so command objects in ou=Examples and ou=Templates will not be handled
-	foreach my $val (keys %{$COMMANDS}) { delete $COMMANDS->{$val} if $val !~ /$cfg->{ldap}->{baseDN}$/; }
-	
-	# a special target is set?
-	if (defined($target)) { foreach my $val (keys %{$COMMANDS}) { delete $COMMANDS->{$val} if $val !~ /$target$/; } }
-		
-	foreach my $command (keys %{$COMMANDS}) {
-		# get target file's name and open it for writing
-		my $writeFile = BuildFilepath($COMMANDS->{$command}->{dn}, $outputDir);
-		open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
+    # set output dir
+    if (defined $dir) { $outputDir = $dir; } else { $outputDir = $opt->{outputDir}; }
 
-		print FH "define command {\n";
-		foreach (sort keys %{$COMMANDS->{$command}}) {
-			if ($itemMap{$_}) {
-				if ($_ eq 'cn') {
-					print FH "\tcommand_name\t $COMMANDS->{$command}->{$_}\n";
-				} else {
-					print FH "\t$itemMap{$_}\t $COMMANDS->{$command}->{$_}\n";
-				}
-			}
-		}
-		print FH "}\n";
+    # get all commands
+    my $COMMANDS = HashGrep($CONFIG, 'objectclass', $cfg->{ldap}->{prefix}.'Command');
 
-		# close target file
-		close(FH);
-	}
+    # check all commands... are they below $cfg->{ldap}->{baseDN} ?
+    # --> so command objects in ou=Examples and ou=Templates will not be handled
+    foreach my $val (keys %{$COMMANDS}) { delete $COMMANDS->{$val} if $val !~ /$cfg->{ldap}->{baseDN}$/; }
+
+    # a special target is set?
+    if (defined($target)) { foreach my $val (keys %{$COMMANDS}) { delete $COMMANDS->{$val} if $val !~ /$target$/; } }
+
+    foreach my $command (keys %{$COMMANDS}) {
+        # get target file's name and open it for writing
+        my $writeFile = BuildFilepath($COMMANDS->{$command}->{dn}, $outputDir);
+        open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
+
+        print FH "define command {\n";
+        foreach (sort keys %{$COMMANDS->{$command}}) {
+            if ($itemMap{$_}) {
+                if ($_ eq 'cn') {
+                    print FH "\tcommand_name\t $COMMANDS->{$command}->{$_}\n";
+                } else {
+                    print FH "\t$itemMap{$_}\t $COMMANDS->{$command}->{$_}\n";
+                }
+            }
+        }
+        print FH "}\n";
+
+        # close target file
+        close(FH);
+    }
 }
 
 sub genContacts {
-	my $CONFIG = shift;
-	my $target = shift;
-	my $dir    = shift;
-	my $outputDir;
+    my $CONFIG = shift;
+    my $target = shift;
+    my $dir    = shift;
+    my $outputDir;
 
-	# set output dir
-	if (defined $dir) { $outputDir = $dir; } else { $outputDir = $opt->{outputDir}; }
-	
-	# get all contacts
-	my $CONTACTS = HashGrep($CONFIG, 'objectclass', $cfg->{ldap}->{prefix}.'Contact$');
-	
-	# check all contacts... are they below $cfg->{ldap}->{baseDN} ?
-	# --> so contact objects in ou=Examples and ou=Templates will not be handled
-	foreach my $val (keys %{$CONTACTS}) { delete $CONTACTS->{$val} if $val !~ /$cfg->{ldap}->{baseDN}$/; }
-	
-	# a special target is set?
-	if (defined($target)) { foreach my $val (keys %{$CONTACTS}) { delete $CONTACTS->{$val} if $val !~ /$target$/; } }
-	
-	foreach my $contact (keys %{$CONTACTS}) {
-		# get target file's name and open it for writing
-		my $writeFile = BuildFilepath($CONTACTS->{$contact}->{dn}, $outputDir);
-		open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
-		
-		print FH "define contact {\n";
-		print FH "\tuse generic-contact\n";
-		foreach(sort keys %{$CONTACTS->{$contact}}) {
-			if ($itemMap{$_}) {
-				if ($_ eq 'cn') {
-					print FH "\tcontact_name\t$CONTACTS->{$contact}->{$_}\n";
-				} else {
-					print FH "\t$itemMap{$_}\t$CONTACTS->{$contact}->{$_}\n";
-				}
-			}
-		}
-		print FH "}\n";
+    # set output dir
+    if (defined $dir) { $outputDir = $dir; } else { $outputDir = $opt->{outputDir}; }
 
-		# close target file
-		close(FH);
+    # get all contacts
+    my $CONTACTS = HashGrep($CONFIG, 'objectclass', $cfg->{ldap}->{prefix}.'Contact$');
 
-	}
+    # check all contacts... are they below $cfg->{ldap}->{baseDN} ?
+    # --> so contact objects in ou=Examples and ou=Templates will not be handled
+    foreach my $val (keys %{$CONTACTS}) { delete $CONTACTS->{$val} if $val !~ /$cfg->{ldap}->{baseDN}$/; }
+
+    # a special target is set?
+    if (defined($target)) { foreach my $val (keys %{$CONTACTS}) { delete $CONTACTS->{$val} if $val !~ /$target$/; } }
+
+    foreach my $contact (keys %{$CONTACTS}) {
+        # get target file's name and open it for writing
+        my $writeFile = BuildFilepath($CONTACTS->{$contact}->{dn}, $outputDir);
+        open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
+
+        print FH "define contact {\n";
+        print FH "\tuse generic-contact\n";
+        foreach(sort keys %{$CONTACTS->{$contact}}) {
+            if ($itemMap{$_}) {
+                if ($_ eq 'cn') {
+                    print FH "\tcontact_name\t$CONTACTS->{$contact}->{$_}\n";
+                } else {
+                    print FH "\t$itemMap{$_}\t$CONTACTS->{$contact}->{$_}\n";
+                }
+            }
+        }
+        print FH "}\n";
+
+        # close target file
+        close(FH);
+
+    }
 }
 
 sub genContactgroups {
-	my $CONFIG = shift;
-	my $target = shift;
-	my $dir    = shift;
-	my $outputDir;
+    my $CONFIG = shift;
+    my $target = shift;
+    my $dir    = shift;
+    my $outputDir;
 
-	# set output dir
-	if (defined $dir) { $outputDir = $dir; } else { $outputDir = $opt->{outputDir}; }
-	
-	# get all contactgroups
-	my $CONTACTGROUPS = HashGrep($CONFIG, 'objectclass', $cfg->{ldap}->{prefix}.'Contactgroup');
-	
-	# check all contactgroups... are they below $cfg->{ldap}->{baseDN} ?
-	# --> so contactgroup objects in ou=Examples and ou=Templates will not be handled
-	foreach my $val (keys %{$CONTACTGROUPS}) { delete $CONTACTGROUPS->{$val} if $val !~ /$cfg->{ldap}->{baseDN}$/; }
-	
-	# a special target is set?
-	if (defined($target)) { foreach my $val (keys %{$CONTACTGROUPS}) { delete $CONTACTGROUPS->{$val} if $val !~ /$target$/; } }
-	
-	foreach my $contactgroup (keys %{$CONTACTGROUPS}) {
-		# get target file's name and open it for writing
-		my $writeFile = BuildFilepath($CONTACTGROUPS->{$contactgroup}->{dn}, $outputDir);
-		open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
+    # set output dir
+    if (defined $dir) { $outputDir = $dir; } else { $outputDir = $opt->{outputDir}; }
 
-		print FH "define contactgroup {\n";
-		foreach (sort keys %{$CONTACTGROUPS->{$contactgroup}}) {
-			if ($itemMap{$_}) {
-				if ($_ eq 'cn') {
-					print FH "\tcontactgroup_name\t$CONTACTGROUPS->{$contactgroup}->{$_}\n";
-				} else {
-					print FH "\t$itemMap{$_}\t$CONTACTGROUPS->{$contactgroup}->{$_}\n";
-				}
-			}
-		}
-		print FH "}\n";
+    # get all contactgroups
+    my $CONTACTGROUPS = HashGrep($CONFIG, 'objectclass', $cfg->{ldap}->{prefix}.'Contactgroup');
 
-		# close target file
-		close(FH);
-	}
+    # check all contactgroups... are they below $cfg->{ldap}->{baseDN} ?
+    # --> so contactgroup objects in ou=Examples and ou=Templates will not be handled
+    foreach my $val (keys %{$CONTACTGROUPS}) { delete $CONTACTGROUPS->{$val} if $val !~ /$cfg->{ldap}->{baseDN}$/; }
+
+    # a special target is set?
+    if (defined($target)) { foreach my $val (keys %{$CONTACTGROUPS}) { delete $CONTACTGROUPS->{$val} if $val !~ /$target$/; } }
+
+    foreach my $contactgroup (keys %{$CONTACTGROUPS}) {
+        # get target file's name and open it for writing
+        my $writeFile = BuildFilepath($CONTACTGROUPS->{$contactgroup}->{dn}, $outputDir);
+        open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
+
+        print FH "define contactgroup {\n";
+        foreach (sort keys %{$CONTACTGROUPS->{$contactgroup}}) {
+            if ($itemMap{$_}) {
+                if ($_ eq 'cn') {
+                    print FH "\tcontactgroup_name\t$CONTACTGROUPS->{$contactgroup}->{$_}\n";
+                } else {
+                    print FH "\t$itemMap{$_}\t$CONTACTGROUPS->{$contactgroup}->{$_}\n";
+                }
+            }
+        }
+        print FH "}\n";
+
+        # close target file
+        close(FH);
+    }
 }
 
 sub genHostgroups {
-	my $CONFIG  = shift;
-	my $CLIENTS = shift;
-	my $target  = shift;
-	my $dir    = shift;
-	my $outputDir;
-	
-	# set output dir
-	if (defined $dir) { $outputDir = $dir; } else { $outputDir = $opt->{outputDir}; }
-	
-	# get all hostgroups defined by hostgroup object
-	my $result = HashGrep($CONFIG, 'objectclass', $cfg->{ldap}->{prefix}.'Hostgroup');
-	
-	# check all hostgroups... are they below $cfg->{ldap}->{baseDN} ?
-	# --> so hostgroups objects in ou=Examples and ou=Templates will not be handled
-	foreach my $val (keys %{$result}) { delete $result->{$val} if $val !~ /$cfg->{ldap}->{baseDN}$/; }
-	
-	# a special target is set?
-	if (defined($target)) { foreach my $val (keys %{$result}) { delete $result->{$val} if $val !~ /$target$/; } }
-		
-	# process hostgroups by hostgroup object
-	foreach my $hostgroup (keys %{$result}) {
-		# if there are 'member'-attributes, push the values to $CLIENT hash
-		if (defined $result->{$hostgroup}->{$cfg->{ldap}->{prefix}.'members'}) {
-			# multiple values? split...
-			my @hosts = split(/\,/, $result->{$hostgroup}->{$cfg->{ldap}->{prefix}.'members'});
-			foreach my $host (@hosts) {
-				# find the right host
-				my $tmp_hash = HashGrep($CLIENTS, 'objectclass', $cfg->{ldap}->{prefix}.'Host');
-				my $hostsearch = HashGrep($tmp_hash, 'dn', '^cn='.$host.',');
-				foreach my $val1 (keys %{$hostsearch}) {
-					$CLIENTS->{$val1}->{$cfg->{ldap}->{prefix}.'hostgroups'} .= ','.$result->{$hostgroup}->{cn};
-				}
-			}
-		}
+    my $CONFIG  = shift;
+    my $CLIENTS = shift;
+    my $target  = shift;
+    my $dir    = shift;
+    my $outputDir;
 
-    # Search for escalations below of a hostgroupgroup
-    my $he_result = HashGrep($CONFIG, 'dn', '^[\w]+=[._\w\/\d\s:-]+,'.$hostgroup);
-    my $HOSTESCALATIONS = HashGrep($he_result, 'objectclass', $cfg->{ldap}->{prefix}.'hostescalation$');
-    foreach my $escalation (keys %{$HOSTESCALATIONS}) {
-      my $writeFile = $outputDir."/hostescalations/$he_result->{$escalation}->{cn}.cfg";
+    # set output dir
+    if (defined $dir) { $outputDir = $dir; } else { $outputDir = $opt->{outputDir}; }
 
-      # open target file
-      open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
-      print FH "define hostescalation {\n";
-      print FH "\t$itemMap{lconfhostescalationhostgroups}\t$CONFIG->{$hostgroup}->{cn}\n";
+    # get all hostgroups defined by hostgroup object
+    my $result = HashGrep($CONFIG, 'objectclass', $cfg->{ldap}->{prefix}.'Hostgroup');
 
-      foreach my $val1 (sort keys %{$he_result->{$escalation}}) {
-        if ($val1 =~ /$cfg->{ldap}->{prefix}hostescalation/) {
-          print FH "\t$itemMap{$val1}\t$he_result->{$escalation}->{$val1}\n";
+    # check all hostgroups... are they below $cfg->{ldap}->{baseDN} ?
+    # --> so hostgroups objects in ou=Examples and ou=Templates will not be handled
+    foreach my $val (keys %{$result}) { delete $result->{$val} if $val !~ /$cfg->{ldap}->{baseDN}$/; }
+
+    # a special target is set?
+    if (defined($target)) { foreach my $val (keys %{$result}) { delete $result->{$val} if $val !~ /$target$/; } }
+
+    # process hostgroups by hostgroup object
+    foreach my $hostgroup (keys %{$result}) {
+        # if there are 'member'-attributes, push the values to $CLIENT hash
+        if (defined $result->{$hostgroup}->{$cfg->{ldap}->{prefix}.'members'}) {
+            # multiple values? split...
+            my @hosts = split(/\,/, $result->{$hostgroup}->{$cfg->{ldap}->{prefix}.'members'});
+            foreach my $host (@hosts) {
+                # find the right host
+                my $tmp_hash = HashGrep($CLIENTS, 'objectclass', $cfg->{ldap}->{prefix}.'Host');
+                my $hostsearch = HashGrep($tmp_hash, 'dn', '^cn='.$host.',');
+                foreach my $val1 (keys %{$hostsearch}) {
+                    $CLIENTS->{$val1}->{$cfg->{ldap}->{prefix}.'hostgroups'} .= ','.$result->{$hostgroup}->{cn};
+                }
+            }
         }
-      }
-      print FH "}\n\n";
 
-      # close target file
-      close(FH);
+        # Search for escalations below of a hostgroupgroup
+        my $he_result = HashGrep($CONFIG, 'dn', '^[\w]+=[._\w\/\d\s:-]+,'.$hostgroup);
+        my $HOSTESCALATIONS = HashGrep($he_result, 'objectclass', $cfg->{ldap}->{prefix}.'hostescalation$');
+        foreach my $escalation (keys %{$HOSTESCALATIONS}) {
+            my $writeFile = $outputDir."/hostescalations/$he_result->{$escalation}->{cn}.cfg";
+
+            # open target file
+            open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
+            print FH "define hostescalation {\n";
+            print FH "\t$itemMap{lconfhostescalationhostgroups}\t$CONFIG->{$hostgroup}->{cn}\n";
+
+            foreach my $val1 (sort keys %{$he_result->{$escalation}}) {
+                if ($val1 =~ /$cfg->{ldap}->{prefix}hostescalation/) {
+                    print FH "\t$itemMap{$val1}\t$he_result->{$escalation}->{$val1}\n";
+                }
+            }
+            print FH "}\n\n";
+
+            # close target file
+            close(FH);
+        }
+
     }
 
-	}
-	
-	# get all hostgroups defined by hostobject
-	foreach my $client (keys %{$CLIENTS}) {
-		if (defined $CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostgroups"}) {
-			# multiple or a single hostgroup?
-			if ($CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostgroups"} =~ /,/) {
-				my @val = split(/\s*,\s*/, $CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostgroups"});
-				foreach(@val) { $result->{$_}->{cn} = $_ if $_ ne ''; }
-			} else {
-				$result->{$CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostgroups"}}->{cn} = $CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostgroups"};
-			}
-		}
-	}
-	
-	# write hostgroup files
-	foreach my $hostgroup (keys %{$result}) {
-		# set file path
-		my $writeFile = $outputDir."/hostgroups/$result->{$hostgroup}->{cn}.cfg";
+    # get all hostgroups defined by hostobject
+    foreach my $client (keys %{$CLIENTS}) {
+        if (defined $CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostgroups"}) {
+            # multiple or a single hostgroup?
+            if ($CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostgroups"} =~ /,/) {
+                my @val = split(/\s*,\s*/, $CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostgroups"});
+                foreach(@val) { $result->{$_}->{cn} = $_ if $_ ne ''; }
+            } else {
+                $result->{$CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostgroups"}}->{cn} = $CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostgroups"};
+            }
+        }
+    }
 
-		# open target file
-		open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
-		print FH "define hostgroup {\n";
-		print FH "\thostgroup_name\t$result->{$hostgroup}->{cn}\n";
-		if (defined $result->{$hostgroup}->{$cfg->{ldap}->{prefix}.'alias'}) {
-			print FH "\talias\t$result->{$hostgroup}->{$cfg->{ldap}->{prefix}.'alias'}\n";
-		} else {
-			print FH "\talias\t$result->{$hostgroup}->{cn}\n";
-		}
-		print FH "}\n";
-		
-		# close target file
-		close(FH);
-	}
+    # write hostgroup files
+    foreach my $hostgroup (keys %{$result}) {
+        # set file path
+        my $writeFile = $outputDir."/hostgroups/$result->{$hostgroup}->{cn}.cfg";
+
+        # open target file
+        open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
+        print FH "define hostgroup {\n";
+        print FH "\thostgroup_name\t$result->{$hostgroup}->{cn}\n";
+        if (defined $result->{$hostgroup}->{$cfg->{ldap}->{prefix}.'alias'}) {
+            print FH "\talias\t$result->{$hostgroup}->{$cfg->{ldap}->{prefix}.'alias'}\n";
+        } else {
+            print FH "\talias\t$result->{$hostgroup}->{cn}\n";
+        }
+        print FH "}\n";
+
+        # close target file
+        close(FH);
+    }
 }
 
 sub genServicegroups {
-	my $CONFIG  = shift;
-	my $CLIENTS = shift;
-	my $target  = shift;
-	my $dir     = shift;
-	my $outputDir;
-	
-	# set output dir
-	if (defined $dir) { $outputDir = $dir; } else { $outputDir = $opt->{outputDir}; }
-	
-	# get all hostgroups defined by hostgroup object
-	my $result = HashGrep($CONFIG, 'objectclass', $cfg->{ldap}->{prefix}.'Servicegroup');
-	
-	# check all servicegroups... are they below $cfg->{ldap}->{baseDN} ?
-	# --> so servicegroups objects in ou=Examples and ou=Templates will not be handled
-	foreach my $val (keys %{$result}) { delete $result->{$val} if $val !~ /$cfg->{ldap}->{baseDN}$/; }
-	
-	# a special target is set?
-	if (defined($target)) { foreach my $val (keys %{$result}) { delete $result->{$val} if $val !~ /$target$/; } }
-	
-	# process servicegroups
-	foreach my $servicegroup (keys %{$result}) {
-		# if there are 'member'-attributes, push the values to $CLIENT hash
-		if (defined $result->{$servicegroup}->{$cfg->{ldap}->{prefix}.'members'}) {
-			my @val = split(/\s*,\s*/, $result->{$servicegroup}->{"$cfg->{ldap}->{prefix}members"});
-			my $counter = 0;
-			
-			while($counter <= $#val) {
-				# search full name im client hash :(
-				foreach my $client (keys %{$CLIENTS}) {
-					# if real name was found, add to $CLIENT hash
-					if ($client =~ /^cn=$val[$counter],/) {
-						if ($CLIENTS->{$client}->{SERVICES}->{$val[$counter+1]}->{"$cfg->{ldap}->{prefix}servicegroups"}) {
-							$CLIENTS->{$client}->{SERVICES}->{$val[$counter+1]}->{"$cfg->{ldap}->{prefix}servicegroups"} = $CLIENTS->{$client}->{SERVICES}->{$val[$counter+1]}->{"$cfg->{ldap}->{prefix}servicegroups"}.','.$result->{$servicegroup}->{'cn'};
-						} else {
-							$CLIENTS->{$client}->{SERVICES}->{$val[$counter+1]}->{"$cfg->{ldap}->{prefix}servicegroups"} = $result->{$servicegroup}->{'cn'};
-						}
-					}
-				}
-				
-				$counter = $counter+2;
-			}
-		}
+    my $CONFIG  = shift;
+    my $CLIENTS = shift;
+    my $target  = shift;
+    my $dir     = shift;
+    my $outputDir;
 
-    # Search for escalations below of a servicegroup
-    my $se_result = HashGrep($CONFIG, 'dn', '^[\w]+=[._\w\/\d\s:-]+,'.$servicegroup);
-    my $SERVICEESCALATIONS = HashGrep($se_result, 'objectclass', $cfg->{ldap}->{prefix}.'serviceescalation$');
+    # set output dir
+    if (defined $dir) { $outputDir = $dir; } else { $outputDir = $opt->{outputDir}; }
 
-    foreach my $escalation (keys %{$SERVICEESCALATIONS}) {
-      my $writeFile = $outputDir."/serviceescalations/$se_result->{$escalation}->{cn}.cfg";
+    # get all hostgroups defined by hostgroup object
+    my $result = HashGrep($CONFIG, 'objectclass', $cfg->{ldap}->{prefix}.'Servicegroup');
 
-      # open target file
-      open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
-      print FH "define serviceescalation {\n";
-      print FH "\t$itemMap{lconfserviceescalationservicegroups}\t$CONFIG->{$servicegroup}->{cn}\n";
+    # check all servicegroups... are they below $cfg->{ldap}->{baseDN} ?
+    # --> so servicegroups objects in ou=Examples and ou=Templates will not be handled
+    foreach my $val (keys %{$result}) { delete $result->{$val} if $val !~ /$cfg->{ldap}->{baseDN}$/; }
 
-      foreach my $val1 (sort keys %{$se_result->{$escalation}}) {
-        if ($val1 =~ /$cfg->{ldap}->{prefix}serviceescalation/) {
-          print FH "\t$itemMap{$val1}\t$se_result->{$escalation}->{$val1}\n";
+    # a special target is set?
+    if (defined($target)) { foreach my $val (keys %{$result}) { delete $result->{$val} if $val !~ /$target$/; } }
+
+    # process servicegroups
+    foreach my $servicegroup (keys %{$result}) {
+        # if there are 'member'-attributes, push the values to $CLIENT hash
+        if (defined $result->{$servicegroup}->{$cfg->{ldap}->{prefix}.'members'}) {
+            my @val = split(/\s*,\s*/, $result->{$servicegroup}->{"$cfg->{ldap}->{prefix}members"});
+            my $counter = 0;
+
+            while($counter <= $#val) {
+                # search full name im client hash :(
+                foreach my $client (keys %{$CLIENTS}) {
+                    # if real name was found, add to $CLIENT hash
+                    if ($client =~ /^cn=$val[$counter],/) {
+                        if ($CLIENTS->{$client}->{SERVICES}->{$val[$counter+1]}->{"$cfg->{ldap}->{prefix}servicegroups"}) {
+                            $CLIENTS->{$client}->{SERVICES}->{$val[$counter+1]}->{"$cfg->{ldap}->{prefix}servicegroups"} = $CLIENTS->{$client}->{SERVICES}->{$val[$counter+1]}->{"$cfg->{ldap}->{prefix}servicegroups"}.','.$result->{$servicegroup}->{'cn'};
+                        } else {
+                            $CLIENTS->{$client}->{SERVICES}->{$val[$counter+1]}->{"$cfg->{ldap}->{prefix}servicegroups"} = $result->{$servicegroup}->{'cn'};
+                        }
+                    }
+                }
+
+                $counter = $counter+2;
+            }
+        }
+
+        # Search for escalations below of a servicegroup
+        my $se_result = HashGrep($CONFIG, 'dn', '^[\w]+=[._\w\/\d\s:-]+,'.$servicegroup);
+        my $SERVICEESCALATIONS = HashGrep($se_result, 'objectclass', $cfg->{ldap}->{prefix}.'serviceescalation$');
+
+        foreach my $escalation (keys %{$SERVICEESCALATIONS}) {
+            my $writeFile = $outputDir."/serviceescalations/$se_result->{$escalation}->{cn}.cfg";
+
+            # open target file
+            open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
+            print FH "define serviceescalation {\n";
+            print FH "\t$itemMap{lconfserviceescalationservicegroups}\t$CONFIG->{$servicegroup}->{cn}\n";
+
+            foreach my $val1 (sort keys %{$se_result->{$escalation}}) {
+                if ($val1 =~ /$cfg->{ldap}->{prefix}serviceescalation/) {
+                    print FH "\t$itemMap{$val1}\t$se_result->{$escalation}->{$val1}\n";
+                }
+            }
+            print FH "}\n\n";
+
+            # close target file
+            close(FH);
         }
       }
-      print FH "}\n\n";
 
-      # close target file
-      close(FH);
+    # get all servicegroups defined by serviceobject
+    foreach my $client (keys %{$CLIENTS}) {
+        foreach my $service (keys %{$CLIENTS->{$client}->{SERVICES}}) {
+            if (defined $CLIENTS->{$client}->{SERVICES}->{$service}->{"$cfg->{ldap}->{prefix}servicegroups"}) {
+                # multiple or a single servicegroup?
+                if ($CLIENTS->{$client}->{SERVICES}->{$service}->{"$cfg->{ldap}->{prefix}servicegroups"} =~ /,/) {
+                    my @val = split(/\s*,\s*/, $CLIENTS->{$client}->{SERVICES}->{$service}->{"$cfg->{ldap}->{prefix}servicegroups"});
+                    foreach(@val) { $result->{$_}->{cn} = $_ if $_ ne ''; }
+                } else {
+                    $result->{$CLIENTS->{$client}->{SERVICES}->{$service}->{"$cfg->{ldap}->{prefix}servicegroups"}}->{cn} = $CLIENTS->{$client}->{SERVICES}->{$service}->{"$cfg->{ldap}->{prefix}servicegroups"};
+                }
+            }
+        }
     }
-  }
-	
-	# get all servicegroups defined by serviceobject
-	foreach my $client (keys %{$CLIENTS}) {
-		foreach my $service (keys %{$CLIENTS->{$client}->{SERVICES}}) {
-			if (defined $CLIENTS->{$client}->{SERVICES}->{$service}->{"$cfg->{ldap}->{prefix}servicegroups"}) {
-				# multiple or a single servicegroup?
-				if ($CLIENTS->{$client}->{SERVICES}->{$service}->{"$cfg->{ldap}->{prefix}servicegroups"} =~ /,/) {
-					my @val = split(/\s*,\s*/, $CLIENTS->{$client}->{SERVICES}->{$service}->{"$cfg->{ldap}->{prefix}servicegroups"});
-					foreach(@val) { $result->{$_}->{cn} = $_ if $_ ne ''; }
-				} else {
-					$result->{$CLIENTS->{$client}->{SERVICES}->{$service}->{"$cfg->{ldap}->{prefix}servicegroups"}}->{cn} = $CLIENTS->{$client}->{SERVICES}->{$service}->{"$cfg->{ldap}->{prefix}servicegroups"};
-				}
-			}
-		}
-	}
-	
-	# write servicegroup files
-	foreach my $servicegroup (keys %{$result}) {
-		# set file path
-		my $writeFile = $outputDir."/servicegroups/$result->{$servicegroup}->{cn}.cfg";
-		
-		# open target file
-		open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
-		print FH "define servicegroup {\n";
-		print FH "\tservicegroup_name\t$result->{$servicegroup}->{cn}\n";
-		if (defined $result->{$servicegroup}->{$cfg->{ldap}->{prefix}.'alias'}) {
-			print FH "\talias\t$result->{$servicegroup}->{$cfg->{ldap}->{prefix}.'alias'}\n";
-		} else {
-			print FH "\talias\t$result->{$servicegroup}->{cn}\n";
-		}
-		print FH "}\n";
-		
-		# close target file
-		close(FH);
-	}
+
+    # write servicegroup files
+    foreach my $servicegroup (keys %{$result}) {
+        # set file path
+        my $writeFile = $outputDir."/servicegroups/$result->{$servicegroup}->{cn}.cfg";
+
+        # open target file
+        open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
+        print FH "define servicegroup {\n";
+        print FH "\tservicegroup_name\t$result->{$servicegroup}->{cn}\n";
+        if (defined $result->{$servicegroup}->{$cfg->{ldap}->{prefix}.'alias'}) {
+            print FH "\talias\t$result->{$servicegroup}->{$cfg->{ldap}->{prefix}.'alias'}\n";
+        } else {
+            print FH "\talias\t$result->{$servicegroup}->{cn}\n";
+        }
+        print FH "}\n";
+
+        # close target file
+        close(FH);
+    }
 }
 
 sub genHostConfig {
-	my $CLIENTS = shift;
-  my $client = shift;
-	my $dir    = shift;
-	my $outputDir;
-	
-	# set output dir
-	if (defined $dir) { $outputDir = $dir; } else { $outputDir = $opt->{outputDir}; }
+    my $CLIENTS = shift;
+    my $client = shift;
+    my $dir    = shift;
+    my $outputDir;
+
+    # set output dir
+    if (defined $dir) { $outputDir = $dir; } else { $outputDir = $opt->{outputDir}; }
 
     DebugOutput("$$ GENERATE HOSTCONFIG", "Generate config for $client");
-		if (defined $CLIENTS->{$client}->{dn}) {
-			# only gen config if lconfhostdisable is not set
-			if (!defined $CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostdisable"}) {
-				#
-				# HOST DEFINITION
-				#
-					# get target file's name and open it for writing
-					my $writeFile = BuildFilepath($CLIENTS->{$client}->{dn}, $outputDir);
-					open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
-					
-					# generate host definition
-					print FH "define host {\n";
-					print FH "\tuse generic-host\n";
-					print FH "\thost_name\t$CLIENTS->{$client}->{cn}\n";
-					
-					# process each item...
-					foreach my $val1 (sort keys %{$CLIENTS->{$client}}) {
-						# ...but look after type; only host items
-						# and no service dependency attributes;
-						# they will be handled in an other way
-						if (($val1 =~ /$cfg->{ldap}->{prefix}host/ || $val1 eq "$cfg->{ldap}->{prefix}address" || $val1 eq "$cfg->{ldap}->{prefix}parent" || $val1 eq "$cfg->{ldap}->{prefix}alias") && $val1 !~ /$cfg->{ldap}->{prefix}hostdependency/) {
-							# customvar or a default item?
-							if ($val1 =~ /customvar/i) {
-								foreach my $val2 (sort keys %{$CLIENTS->{$client}->{$val1}}) {
-									print FH "\t$val2\t$CLIENTS->{$client}->{$val1}->{$val2}\n";
-								}
-							} else {
-								print FH "\t$itemMap{$val1}\t$CLIENTS->{$client}->{$val1}\n";
-							}
-						}
-					}
-					
-					# generate end of host definition
-					print FH "}\n";
-					print FH "\n";
-				
-				#
-				# SERVICES
-				#
-				foreach my $service (keys %{$CLIENTS->{$client}->{'SERVICES'}}) {
-          DebugOutput("$$ GENERATE HOSTCONFIG", "Found service $service");
-					# only gen service if lconfservicedisable is not set
-					if (!defined $CLIENTS->{$client}->{'SERVICES'}->{$service}->{"$cfg->{ldap}->{prefix}servicedisable"}) {
-						print FH "define service {\n";
-						print FH "\tuse generic-service\n";
-						print FH "\tservice_description\t$CLIENTS->{$client}->{'SERVICES'}->{$service}->{cn}\n";
-						print FH "\thost_name\t$CLIENTS->{$client}->{cn}\n";
-						
-						# process each item
-						foreach my $val1 (sort keys %{$CLIENTS->{$client}->{'SERVICES'}->{$service}}) {
-							# ...but look after type; only service items!
-							if (($val1 =~ /$cfg->{ldap}->{prefix}service/ || $val1 eq "$cfg->{ldap}->{prefix}checkcommand") && $val1 !~ /$cfg->{ldap}->{prefix}servicedependency/) {
-								# customvar or a default item?
-								if ($val1 =~ /customvar/i) {
-									foreach my $val2 (sort keys %{$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}}) {
-										next if (!$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}->{$val2}); # XXX find a better way to handle empty customvars before
-										print FH "\t$val2\t$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}->{$val2}\n";
-									}
-								} else {
-									print FH "\t$itemMap{$val1}\t$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}\n";
-								}	
-							}
-						}
-					
-						print FH "}\n";
-						print FH "\n";
-					}
-				}
-				
-				#
-				# HOST DEPENDENCIES
-				#
-				foreach my $dependency (sort keys %{$CLIENTS->{$client}->{'DEPENDENCY'}}) {
-					# only if host is not disabled
-					if (!$CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostdisable"}) {
-						print FH "define hostdependency {\n";
-						print FH "\thost_name\t$dependency\n";
-						print FH "\tdependent_host_name\t$CLIENTS->{$client}->{cn}\n";
-						foreach(sort keys %{$CLIENTS->{$client}->{DEPENDENCY}->{$dependency}}) {
-							print FH "\t$itemMap{$_}\t$CLIENTS->{$client}->{DEPENDENCY}->{$dependency}->{$_}\n" if $itemMap{$_};
-						}
-						print FH "}\n";
-						print FH "\n";
-					}
-				}
-				
-				#
-				# SERVICE DEPENDENCIES
-				#
-				foreach my $service (sort keys %{$CLIENTS->{$client}->{'SERVICES'}}) {
-					# only gen service if lconfservicedisable is not set
-					if (!defined $CLIENTS->{$client}->{'SERVICES'}->{$service}->{"$cfg->{ldap}->{prefix}servicedisable"}) {
-						if (defined $CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEDEPENDENCY}) {
-							foreach my $dependency (sort keys %{$CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEDEPENDENCY}}) {
-								my ($depHost, $depService) = (split(/ *-> */, $dependency))[0,1];
-								
-								print FH "define servicedependency {\n";
-								
-								# special stuff for inheritance :-(
-								if ($depHost eq "\$HOSTNAME\$") {
-									print FH "\thost_name\t$CLIENTS->{$client}->{cn}\n";
-								} else {
-									print FH "\thost_name\t$depHost\n";
-								}
-								
-								print FH "\tservice_description\t$depService\n";
-								print FH "\tdependent_host_name\t$CLIENTS->{$client}->{cn}\n";
-								print FH "\tdependent_service_description\t$service\n";
-								foreach (sort keys %{$CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEDEPENDENCY}->{$dependency}}) {
-									print FH "\t$itemMap{$_}\t$CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEDEPENDENCY}->{$dependency}->{$_}\n";
-								}
-								print FH "}\n";
-								print FH "\n";
-							}
-						}
-					}
-				}
-				
-				#
-				# HOST ESCALATIONS
-				#
-				foreach my $escalation (sort keys %{$CLIENTS->{$client}->{'HOSTESCALATION'}}) {
-					# only if host is not disabled
-					if (!$CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostdisable"}) {
-						print FH "define hostescalation {\n";
-						print FH "\thost_name\t$CLIENTS->{$client}->{cn}\n";
-						foreach my $val (keys %{$CLIENTS->{$client}->{HOSTESCALATION}->{$escalation}}) {
-							print FH "\t$itemMap{$val}\t$CLIENTS->{$client}->{HOSTESCALATION}->{$escalation}->{$val}\n";
-						}
-						print FH "}\n";
-						print FH "\n";
-					}
-				}
-				
-				#
-				# SERVICE ESCALATIONS
-				#
-				foreach my $service (sort keys %{$CLIENTS->{$client}->{'SERVICES'}}) {
-					# only gen service if lconfservicedisable is not set
-					if (!defined $CLIENTS->{$client}->{'SERVICES'}->{$service}->{"$cfg->{ldap}->{prefix}servicedisable"}) {
-						if (defined $CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEESCALATION}) {
-							foreach my $escalation (sort keys %{$CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEESCALATION}}) {
-								print FH "define serviceescalation {\n";
-								print FH "\thost_name\t$CLIENTS->{$client}->{cn}\n";
-								print FH "\tservice_description\t$service\n";
-								foreach my $val (keys %{$CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEESCALATION}->{$escalation}}) {
-									print FH "\t$itemMap{$val}\t$CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEESCALATION}->{$escalation}->{$val}\n";
-								}
-								print FH "}\n";
-								print FH "\n";
-							}
-						}
-					}
-				}
-			}
-		}
+    if (defined $CLIENTS->{$client}->{dn}) {
+        # only gen config if lconfhostdisable is not set
+        if (!defined $CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostdisable"}) {
+            #
+            # HOST DEFINITION
+            #
+                # get target file's name and open it for writing
+                my $writeFile = BuildFilepath($CLIENTS->{$client}->{dn}, $outputDir);
+                open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
+
+                # generate host definition
+                print FH "define host {\n";
+                print FH "\tuse generic-host\n";
+                print FH "\thost_name\t$CLIENTS->{$client}->{cn}\n";
+
+                # process each item...
+                foreach my $val1 (sort keys %{$CLIENTS->{$client}}) {
+                    # ...but look after type; only host items
+                    # and no service dependency attributes;
+                    # they will be handled in an other way
+                    if (($val1 =~ /$cfg->{ldap}->{prefix}host/ || $val1 eq "$cfg->{ldap}->{prefix}address" || $val1 eq "$cfg->{ldap}->{prefix}parent" || $val1 eq "$cfg->{ldap}->{prefix}alias") && $val1 !~ /$cfg->{ldap}->{prefix}hostdependency/) {
+                        # customvar or a default item?
+                        if ($val1 =~ /customvar/i) {
+                            foreach my $val2 (sort keys %{$CLIENTS->{$client}->{$val1}}) {
+                                print FH "\t$val2\t$CLIENTS->{$client}->{$val1}->{$val2}\n";
+                            }
+                        } else {
+                            print FH "\t$itemMap{$val1}\t$CLIENTS->{$client}->{$val1}\n";
+                        }
+                    }
+                }
+
+                # generate end of host definition
+                print FH "}\n";
+                print FH "\n";
+
+            #
+            # SERVICES
+            #
+            foreach my $service (keys %{$CLIENTS->{$client}->{'SERVICES'}}) {
+                DebugOutput("$$ GENERATE HOSTCONFIG", "Found service $service");
+                # only gen service if lconfservicedisable is not set
+                if (!defined $CLIENTS->{$client}->{'SERVICES'}->{$service}->{"$cfg->{ldap}->{prefix}servicedisable"}) {
+                    print FH "define service {\n";
+                    print FH "\tuse generic-service\n";
+                    print FH "\tservice_description\t$CLIENTS->{$client}->{'SERVICES'}->{$service}->{cn}\n";
+                    print FH "\thost_name\t$CLIENTS->{$client}->{cn}\n";
+
+                    # process each item
+                    foreach my $val1 (sort keys %{$CLIENTS->{$client}->{'SERVICES'}->{$service}}) {
+                        # ...but look after type; only service items!
+                        if (($val1 =~ /$cfg->{ldap}->{prefix}service/ || $val1 eq "$cfg->{ldap}->{prefix}checkcommand") && $val1 !~ /$cfg->{ldap}->{prefix}servicedependency/) {
+                            # customvar or a default item?
+                            if ($val1 =~ /customvar/i) {
+                                foreach my $val2 (sort keys %{$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}}) {
+                                    next if (!$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}->{$val2}); # XXX find a better way to handle empty customvars before
+                                    print FH "\t$val2\t$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}->{$val2}\n";
+                                }
+                            } else {
+                                print FH "\t$itemMap{$val1}\t$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}\n";
+                            }
+                        }
+                    }
+
+                    print FH "}\n";
+                    print FH "\n";
+                }
+            }
+
+            #
+            # HOST DEPENDENCIES
+            #
+            foreach my $dependency (sort keys %{$CLIENTS->{$client}->{'DEPENDENCY'}}) {
+                # only if host is not disabled
+                if (!$CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostdisable"}) {
+                    print FH "define hostdependency {\n";
+                    print FH "\thost_name\t$dependency\n";
+                    print FH "\tdependent_host_name\t$CLIENTS->{$client}->{cn}\n";
+                    foreach(sort keys %{$CLIENTS->{$client}->{DEPENDENCY}->{$dependency}}) {
+                        print FH "\t$itemMap{$_}\t$CLIENTS->{$client}->{DEPENDENCY}->{$dependency}->{$_}\n" if $itemMap{$_};
+                    }
+                    print FH "}\n";
+                    print FH "\n";
+                }
+            }
+
+            #
+            # SERVICE DEPENDENCIES
+            #
+            foreach my $service (sort keys %{$CLIENTS->{$client}->{'SERVICES'}}) {
+                # only gen service if lconfservicedisable is not set
+                if (!defined $CLIENTS->{$client}->{'SERVICES'}->{$service}->{"$cfg->{ldap}->{prefix}servicedisable"}) {
+                    if (defined $CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEDEPENDENCY}) {
+                        foreach my $dependency (sort keys %{$CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEDEPENDENCY}}) {
+                            my ($depHost, $depService) = (split(/ *-> */, $dependency))[0,1];
+
+                            print FH "define servicedependency {\n";
+
+                            # special stuff for inheritance :-(
+                            if ($depHost eq "\$HOSTNAME\$") {
+                                print FH "\thost_name\t$CLIENTS->{$client}->{cn}\n";
+                            } else {
+                                print FH "\thost_name\t$depHost\n";
+                            }
+
+                            print FH "\tservice_description\t$depService\n";
+                            print FH "\tdependent_host_name\t$CLIENTS->{$client}->{cn}\n";
+                            print FH "\tdependent_service_description\t$service\n";
+                            foreach (sort keys %{$CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEDEPENDENCY}->{$dependency}}) {
+                                print FH "\t$itemMap{$_}\t$CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEDEPENDENCY}->{$dependency}->{$_}\n";
+                            }
+                            print FH "}\n";
+                            print FH "\n";
+                        }
+                    }
+                }
+            }
+
+            #
+            # HOST ESCALATIONS
+            #
+            foreach my $escalation (sort keys %{$CLIENTS->{$client}->{'HOSTESCALATION'}}) {
+                # only if host is not disabled
+                if (!$CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostdisable"}) {
+                    print FH "define hostescalation {\n";
+                    print FH "\thost_name\t$CLIENTS->{$client}->{cn}\n";
+                    foreach my $val (keys %{$CLIENTS->{$client}->{HOSTESCALATION}->{$escalation}}) {
+                        print FH "\t$itemMap{$val}\t$CLIENTS->{$client}->{HOSTESCALATION}->{$escalation}->{$val}\n";
+                    }
+                    print FH "}\n";
+                    print FH "\n";
+                }
+            }
+
+            #
+            # SERVICE ESCALATIONS
+            #
+            foreach my $service (sort keys %{$CLIENTS->{$client}->{'SERVICES'}}) {
+                # only gen service if lconfservicedisable is not set
+                if (!defined $CLIENTS->{$client}->{'SERVICES'}->{$service}->{"$cfg->{ldap}->{prefix}servicedisable"}) {
+                    if (defined $CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEESCALATION}) {
+                        foreach my $escalation (sort keys %{$CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEESCALATION}}) {
+                            print FH "define serviceescalation {\n";
+                            print FH "\thost_name\t$CLIENTS->{$client}->{cn}\n";
+                            print FH "\tservice_description\t$service\n";
+                            foreach my $val (keys %{$CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEESCALATION}->{$escalation}}) {
+                                print FH "\t$itemMap{$val}\t$CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEESCALATION}->{$escalation}->{$val}\n";
+                            }
+                            print FH "}\n";
+                            print FH "\n";
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 1;
+
+# vi: sw=4 ts=4 expandtab :
+
