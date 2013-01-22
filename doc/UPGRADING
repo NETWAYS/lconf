@@ -47,6 +47,10 @@ Upgrading from 1.2.x to 1.3.x
 | $cfg->{export}->{startingpoint} = 'IcingaConfig';     | $cfg->{export}->{exportDN} = 'ou=IcingaConfig'; # below rootDN        | exportDN as starting point (no more hardcoded ou=)                    |
 |=======================================================|=======================================================================|=======================================================================|
 
+LconfSlaveExport(Rules).pl options:
+
+-D|--hashdump=/path/to/LConfExport.hashdump
+
 
 Upgrading to 1.3.0rc2
 -----------------------------

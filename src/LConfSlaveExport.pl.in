@@ -54,6 +54,7 @@ LConfSlaveExport.pl - export an Nagios / Icinga config from LConf to a slave clu
 
 LConfSlaveExport.pl  -H <name of slave server>
                      -p <port>
+                     -D <hashdump>
                      -t <path to config on slave host>
                      -v
                      -h
@@ -72,6 +73,10 @@ Export config to this server
 =item -p|--port <port>
 
 Connect to target host via port <port>
+
+=item -D|--hashdump <lconf hashdump file>
+
+Set Lconf hasdump file location
 
 =item -t|--target <path to config on slave host>
 

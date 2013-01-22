@@ -52,7 +52,11 @@ LConfSlaveExportRules.pl - export an Nagios / Icinga config from LConf to a slav
 
 =head1 SYNOPSIS
 
-LConfSlaveExport.pl  -v
+LConfSlaveExportRules.pl  -H <name of slave server>
+                     -p <port>
+                     -D <hashdump>
+                     -t <path to config on slave host>
+                     -v
                      -h
                      -V
 
@@ -61,6 +65,22 @@ Export an Nagios / Icinga config from LConf to a slave cluster by ruleset
 =head1 OPTIONS
 
 =over
+
+=item -H|--host <name of slave server>
+
+Export config to this server
+
+=item -p|--port <port>
+
+Connect to target host via port <port>
+
+=item -D|--hashdump <lconf hashdump file>
+
+Set Lconf hasdump file location
+
+=item -t|--target <path to config on slave host>
+
+Target path on slave server
 
 =item -v|--verbose <path to logfile>
 
@@ -73,6 +93,7 @@ print help page
 =item -V|--version
 
 print plugin version
+
 
 =cut
 
