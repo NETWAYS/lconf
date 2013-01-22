@@ -8,33 +8,49 @@ Upgrading from 1.2.x to 1.3.x
 - LConf*.pl scripts are moved into $prefix/bin by default
 
 - custom scripts are now located in $prefix/lib/custom/
-	** can be set with configure
+    ** can be set with configure
 
 - contrib/lconf_deploy.sh is renamed to contrib/LConfDeploy.sh
 
 - inheritance of attributes across main and template trees. 
-This feature is disabled by default. To enable it you simply need to set a config option in config.pm. Please let the feature disabled if you're not sure about it or read section "TreeRewrite" of the documentation for further information.
+  This feature is disabled by default. To enable it you simply need to set a
+  config option in config.pm. Please let the feature disabled if you're not sure
+  about it or read section "TreeRewrite" of the documentation for further
+  information.
 
 - new configure options
-	--with-export-script-dir=<path>  sets path to lconf export script (pre,mid,post.pl)
-	--with-temp-dir=<path>  sets path to temp directory path
+    --with-export-script-dir=<path>  sets path to lconf export script
+      (pre,mid,post.pl)
+    --with-temp-dir=<path>  sets path to temp directory path
+
+- custom vars can now be used to name a service
+
+    A servicename like: http_$_SERVICEPORT$
+    
+    can be replaced to "http_8080" when this attribute is set:
+    
+    lconfServiceCustomvar => _PORT 8080
 
 
 !!! WARNING: Changed/New config.pm options !!!
 
 |=======================================================|=======================================================================|=======================================================================|
-| Old							| New 									| Notes									|
+| Old                                                   | New                                                                   | Notes                                                                 |
 |=======================================================|=======================================================================|=======================================================================|
-|							| $cfg->{ldap}->{rootNode} = 'LConf';					| newly added to reflect the ldap's root tree better			|
-| 							| $cfg->{export}->{timestamp} = '/var/LConf/LConfExport.timestamp';	| timestamp when LConfExport started					|
-| 							| $cfg->{export}->{onlydiffs} = 0;					| only export Config Diffs (experimental)				|
-| 							| $cfg->{export}->{childs} = 2;						| max Childs in parallel on LConfExport					|
-| $cfg->{ldap}->{dn} = 'dc=local';			| $cfg->{ldap}->{rootDN} = 'ou='.$cfg->{ldap}->{rootNode}.',dc=local';	| renamed for better identification, requires rootNode to be set	|
-| $cfg->{export}->{startingpoint} = 'IcingaConfig';	| $cfg->{export}->{exportDN} = 'ou=IcingaConfig'; # below rootDN	| exportDN as starting point (no more hardcoded ou=)			|
+| $cfg->{export}->{timestamp}                           | - removed - only existed during 1.3 dev -                             | this file is now found under the export directory                     |
+| $cfg->{export}->{hashdump}                            | - removed -                                                           | this file is now found under the export directory                     |
+| $cfg->{export}->{lockfile}                            | - removed -                                                           | this file is now found under the export directory                     |
+|                                                       | $cfg->{ldap}->{rootNode} = 'LConf';                                   | newly added to reflect the ldap's root tree better                    |
+|                                                       | $cfg->{export}->{onlydiffs} = 0;                                      | only export Config Diffs (experimental)                               |
+|                                                       | $cfg->{export}->{childs} = 2;                                         | max Childs in parallel on LConfExport                                 |
+| $cfg->{ldap}->{dn} = 'dc=local';                      | $cfg->{ldap}->{rootDN} = 'ou='.$cfg->{ldap}->{rootNode}.',dc=local';  | renamed for better identification, requires rootNode to be set        |
+| $cfg->{export}->{startingpoint} = 'IcingaConfig';     | $cfg->{export}->{exportDN} = 'ou=IcingaConfig'; # below rootDN        | exportDN as starting point (no more hardcoded ou=)                    |
 |=======================================================|=======================================================================|=======================================================================|
 
 
 Upgrading to 1.3rc2
 -----------------------------
 - perl module Parallel::ForkManager (>= 0.7.6) is need 
+
+# vi: sw=4 ts=4 expandtab :
 
