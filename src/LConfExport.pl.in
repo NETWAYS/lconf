@@ -52,15 +52,15 @@ LConfExport.pl - export a Nagios / Icinga config from LConf
 
 =head1 SYNOPSIS
 
-LConfExport.pl	-o <output dir>
-				[-v]
-				[-d]
-				[-f]
-				[-h]
-				[-V]
-				[-y]
-				[--full-export]
-				
+LConfExport.pl   -o <output dir>
+                [-v]
+                [-d]
+                [-f]
+                [-h]
+                [-V]
+                [-y]
+                [--full-export]
+
 Export a Nagios / Icinga config from LConf
 
 =head1 OPTIONS
@@ -70,6 +70,10 @@ Export a Nagios / Icinga config from LConf
 =item -o|--output <output dir>
 
 Output dir for config
+
+=item -e|--exportdn <dn path below LConf>
+
+The DN where to start the export, this overrides the config option exportDN
 
 =item -v|--verbose [<path to logfile>]
 
@@ -132,14 +136,15 @@ our @state = ('OK', 'WARNING', 'ERROR', 'UNKNOWN');
 # get command-line parameters
 our $opt;
 GetOptions(
-	"o|output=s"	=> \$opt->{outputDir},
-	"v|verbose:s"	=> \$opt->{verbose},
-	"d|debug:s"	=> \$opt->{debug},
-	"full-export:s"	=> \$opt->{fullExport},
-	"f|filter=s"	=> \$opt->{filter},
-	"y|yes"		=> \$opt->{yes},
-	"h|help"		=> \$opt->{help},
-	"V|version"	=> \$opt->{version}
+    "o|output=s"    => \$opt->{outputDir},
+    "e|exportdn=s"  => \$opt->{exportDN},
+    "v|verbose:s"   => \$opt->{verbose},
+    "d|debug:s"     => \$opt->{debug},
+    "full-export:s" => \$opt->{fullExport},
+    "f|filter=s"    => \$opt->{filter},
+    "y|yes"         => \$opt->{yes},
+    "h|help"        => \$opt->{help},
+    "V|version"     => \$opt->{version}
 );
 
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
@@ -159,41 +164,55 @@ if ($opt->{help} || !$opt->{outputDir}) { pod2usage(1); }
 # define vars
 use vars qw($cfg %itemMap);
 our $exit; $exit->{code} = 0; $exit->{message} = 'No errors';
+
+# override exportDN when set via commandline
+if(defined $opt->{exportDN}) {
+    $cfg->{export}->{exportDN} = $opt->{exportDN};
+}
 $cfg->{ldap}->{baseDN} = $cfg->{export}->{exportDN}.','.$cfg->{ldap}->{rootDN};
 
 # fist of all... check if we're ready to run
-LeaveScript(2, "Variable '\$cfg->{ldap}->{server}' not set in config.pm'") 	if !$cfg->{ldap}->{server};
-LeaveScript(2, "Variable '\$cfg->{ldap}->{rootDN}' not set in config.pm'") 	if !$cfg->{ldap}->{rootDN};
-LeaveScript(2, "Variable '\$cfg->{export}->{user}' not set in config.pm'")	if !$cfg->{export}->{user};
-LeaveScript(2, "Variable '\$cfg->{export}->{exportDN}' not set in config.pm'")	if !$cfg->{export}->{exportDN};
-LeaveScript(2, "Variable '\$cfg->{export}->{treerewrite}' not set in config.pm'")	if !$cfg->{export}->{treerewrite};
+LeaveScript(2, "Variable '\$cfg->{ldap}->{server}' not set in config.pm'")     if !$cfg->{ldap}->{server};
+LeaveScript(2, "Variable '\$cfg->{ldap}->{rootDN}' not set in config.pm'")     if !$cfg->{ldap}->{rootDN};
+LeaveScript(2, "Variable '\$cfg->{export}->{user}' not set in config.pm'")    if !$cfg->{export}->{user};
+LeaveScript(2, "Variable '\$cfg->{export}->{exportDN}' not set in config.pm'")    if !$cfg->{export}->{exportDN};
+LeaveScript(2, "Variable '\$cfg->{export}->{treerewrite}' not set in config.pm'")    if !$cfg->{export}->{treerewrite};
 
 # export with right user?
 LeaveScript(2, "You're not user '$cfg->{export}->{user}'!") if $ENV{USER} ne $cfg->{export}->{user};
-
-# export already running?
-open(LOCK, ">$cfg->{export}->{lock}") or LeaveScript(2, "Cannot open $cfg->{export}->{lock}");
-flock(LOCK, LOCK_EX|LOCK_NB) or LeaveScript(2, "LConfExport locked! Someone is already using it!");
 
 # check output dir
 LeaveScript('2', "'$opt->{outputDir}' is not a directory") if !-d $opt->{outputDir};
 LeaveScript('2', "'$opt->{outputDir}' is not writeable")   if !-w $opt->{outputDir};
 
+# set lockfile
+$cfg->{export}->{lock} = $opt->{outputDir}.'/LConfExport.lock';
+
+# set hashdump file
+$cfg->{export}->{hashdump} = $opt->{outputDir}.'/LConfExport.hashdump';
+
+# set timestamp file
+$cfg->{export}->{timestamp} = $opt->{outputDir}.'/LConfExport.timestamp';
+
+# export already running?
+open(LOCK, ">$cfg->{export}->{lock}") or LeaveScript(2, "Cannot open $cfg->{export}->{lock}");
+flock(LOCK, LOCK_EX|LOCK_NB) or LeaveScript(2, "LConfExport locked! Someone is already using it!");
+
 # clean old output dir
-	DebugOutput('REMOVE OLD CONFIG', "start - folder: $opt->{outputDir}");
-	
-	# check if output dir is already labeled?
-	if (!-f "$opt->{outputDir}/lconf.identify" && !defined $opt->{yes}) {
-		print "It looks like you generate a config into '$opt->{outputDir}' for the first time.\n";
-		print "May lconf delete the folder content?\n\n";
-		print "execute 'rm -r $opt->{outputDir}/*' (y/n) ";
-		my $result = <STDIN>;
-		print "\n";
-		LeaveScript('3', "Directory cleanup canceled...") if $result =~ /^n/i;
-	}
-	
-	qx(rm -r $opt->{outputDir}/* 2>/dev/null);
-	DebugOutput('REMOVE OLD CONFIG', "finished - folder: $opt->{outputDir}");
+    DebugOutput('REMOVE OLD CONFIG', "start - folder: $opt->{outputDir}");
+
+    # check if output dir is already labeled?
+    if (!-f "$opt->{outputDir}/lconf.identify" && !defined $opt->{yes}) {
+        print "It looks like you generate a config into '$opt->{outputDir}' for the first time.\n";
+        print "May lconf delete the folder content?\n\n";
+        print "execute 'rm -r $opt->{outputDir}/*' (y/n) ";
+        my $result = <STDIN>;
+        print "\n";
+        LeaveScript('3', "Directory cleanup canceled...") if $result =~ /^n/i;
+    }
+
+    qx(rm -r $opt->{outputDir}/* 2>/dev/null);
+    DebugOutput('REMOVE OLD CONFIG', "finished - folder: $opt->{outputDir}");
 
 #
 # NOW, WE'RE READY TO RUN :)
@@ -202,18 +221,18 @@ LeaveScript('2', "'$opt->{outputDir}' is not writeable")   if !-w $opt->{outputD
 # connect to LDAP server
 our $ldap;
 if ($cfg->{ldap}->{binddn} && $cfg->{ldap}->{bindpw}) {
-	$ldap = LDAPconnect('auth');	
+    $ldap = LDAPconnect('auth');
 } else {
-	$ldap = LDAPconnect();
+    $ldap = LDAPconnect();
 }
 
 # get last timestamp
 my $timestamp;
 if (-f $cfg->{export}->{timestamp}) {
-	open(FH, "<$cfg->{export}->{timestamp}") || die "Can't read data: $cfg->{export}->{timestamp}$!\n";
-	$timestamp = <FH>;
-	chomp($timestamp);
-	close(FH);
+    open(FH, "<$cfg->{export}->{timestamp}") || die "Can't read data: $cfg->{export}->{timestamp}$!\n";
+    $timestamp = <FH>;
+    chomp($timestamp);
+    close(FH);
 }
 
 # set timestamp
@@ -227,70 +246,70 @@ my $CONFIG = LDAPsearch($ldap, $cfg->{ldap}->{rootDN}, "sub", "objectclass=*");
 # search last modified items
 my $DIFF_EXPORT = ();
 if (defined $cfg->{export}->{onlydiffs} && $cfg->{export}->{onlydiffs} == 1 && !defined $opt->{fullExport}) {
-	my $LASTMODIFIED = LDAPsearch($ldap, $cfg->{ldap}->{rootDN}, "sub", "(|(modifyTimestamp>=$timestamp)(createTimestamp>=$timestamp))");
-	foreach my $val1 (keys %{$LASTMODIFIED}) {
-		my $QUEUE;
+    my $LASTMODIFIED = LDAPsearch($ldap, $cfg->{ldap}->{rootDN}, "sub", "(|(modifyTimestamp>=$timestamp)(createTimestamp>=$timestamp))");
+    foreach my $val1 (keys %{$LASTMODIFIED}) {
+        my $QUEUE;
 
-		if ($LASTMODIFIED->{$val1}->{objectclass} =~ /$cfg->{ldap}->{prefix}Host/i) {
-			$DIFF_EXPORT->{$LASTMODIFIED->{$val1}->{dn}} = $LASTMODIFIED->{$val1}->{dn};
-		} else {
-			# search for links
-			# split and reverse the DN
-			my $searchDN = $val1;
-			$searchDN =~ s/,$cfg->{ldap}->{rootDN}//;
-			my @search = split(",", $searchDN);
-			@search = reverse(@search);
+        if ($LASTMODIFIED->{$val1}->{objectclass} =~ /$cfg->{ldap}->{prefix}Host/i) {
+            $DIFF_EXPORT->{$LASTMODIFIED->{$val1}->{dn}} = $LASTMODIFIED->{$val1}->{dn};
+        } else {
+            # search for links
+            # split and reverse the DN
+            my $searchDN = $val1;
+            $searchDN =~ s/,$cfg->{ldap}->{rootDN}//;
+            my @search = split(",", $searchDN);
+            @search = reverse(@search);
 
-			# search at rootDN...
-			$searchDN = $cfg->{ldap}->{rootDN};
-			my $LINKED = LDAPsearch($ldap, $cfg->{ldap}->{rootDN}, "sub", "aliasedobjectname=$searchDN");
-			foreach my $link (keys %{$LINKED}) { $link =~ s/^ou=//; $QUEUE->{$link} = $link; }
+            # search at rootDN...
+            $searchDN = $cfg->{ldap}->{rootDN};
+            my $LINKED = LDAPsearch($ldap, $cfg->{ldap}->{rootDN}, "sub", "aliasedobjectname=$searchDN");
+            foreach my $link (keys %{$LINKED}) { $link =~ s/^ou=//; $QUEUE->{$link} = $link; }
 
-			# ...and search rest of the three
-			foreach (@search) {
-				$searchDN = $_.",".$searchDN;
-				my $LINKED = LDAPsearch($ldap, $cfg->{ldap}->{rootDN}, "sub", "aliasedobjectname=$searchDN");
-				foreach my $link (keys %{$LINKED}) { $link =~ s/^ou=//;  $QUEUE->{$link} = $link; }
-			}
+            # ...and search rest of the three
+            foreach (@search) {
+                $searchDN = $_.",".$searchDN;
+                my $LINKED = LDAPsearch($ldap, $cfg->{ldap}->{rootDN}, "sub", "aliasedobjectname=$searchDN");
+                foreach my $link (keys %{$LINKED}) { $link =~ s/^ou=//;  $QUEUE->{$link} = $link; }
+            }
 
-			if ($LASTMODIFIED->{$val1}->{objectclass} =~ /alias/i || $LASTMODIFIED->{$val1}->{objectclass} =~ /extensibleObject/i) { $val1 =~ s/^ou=//; }
+            if ($LASTMODIFIED->{$val1}->{objectclass} =~ /alias/i || $LASTMODIFIED->{$val1}->{objectclass} =~ /extensibleObject/i) { $val1 =~ s/^ou=//; }
 
-			$QUEUE->{$val1} = $val1;
+            $QUEUE->{$val1} = $val1;
 
-			foreach my $do (keys %{$QUEUE}) {
-				my @splitted = split('ou=', $do, 2);
-				if ($#splitted == 1) { $do = 'ou='.$splitted[1]; } else { $do = 'ou='.$splitted[0]; }
+            foreach my $do (keys %{$QUEUE}) {
+                my @splitted = split('ou=', $do, 2);
+                if ($#splitted == 1) { $do = 'ou='.$splitted[1]; } else { $do = 'ou='.$splitted[0]; }
 
-				my $TMP_HOSTS = LDAPsearch($ldap, $do, "sub", "objectclass=$cfg->{ldap}->{prefix}Host");
-				foreach (keys %{$TMP_HOSTS}) {
-				        $DIFF_EXPORT->{$_} = $_;
-				}
-			}
-		}
-	}
+                my $TMP_HOSTS = LDAPsearch($ldap, $do, "sub", "objectclass=$cfg->{ldap}->{prefix}Host");
+                foreach (keys %{$TMP_HOSTS}) {
+                        $DIFF_EXPORT->{$_} = $_;
+                }
+            }
+        }
+    }
 }
 
 # get all clients to monitor
 my $CLIENTS = HashGrep($CONFIG, 'objectclass', $cfg->{ldap}->{prefix}.'Host$');
-	# modify $CLIENTS if $cfg->{export}->{onlydiffs} was set
-	if ($cfg->{export}->{onlydiffs}) {
-		foreach my $client (keys %{$CLIENTS}) {
-			delete $CLIENTS->{$client} if !defined $DIFF_EXPORT->{$client};
-		}
-	}
+    # modify $CLIENTS if $cfg->{export}->{onlydiffs} was set
+    if ($cfg->{export}->{onlydiffs}) {
+        foreach my $client (keys %{$CLIENTS}) {
+            delete $CLIENTS->{$client} if !defined $DIFF_EXPORT->{$client};
+        }
+    }
 
-	# modify $CLIENTS if a filter was set
-	if (defined $opt->{filter}) { my $tmp_hash = HashGrep($CLIENTS, 'cn', $opt->{filter}); $CLIENTS = $tmp_hash; }
+    # modify $CLIENTS if a filter was set
+    if (defined $opt->{filter}) { my $tmp_hash = HashGrep($CLIENTS, 'cn', $opt->{filter}); $CLIENTS = $tmp_hash; }
 
 # drop all hosts obove baseDN (eg. examples)
 foreach my $client (keys %{$CLIENTS}) {
-	delete $CLIENTS->{$client} if $client !~ /$cfg->{ldap}->{baseDN}$/;
+    delete $CLIENTS->{$client} if $client !~ /$cfg->{ldap}->{baseDN}$/;
 }
-	
+
 # run custom script (pre)
 if (-f '@EXPORT_SCRIPT_DIR@/pre.pl') {
-	require '@EXPORT_SCRIPT_DIR@/pre.pl';
-	$CLIENTS = CustomPre($CLIENTS);
+    require '@EXPORT_SCRIPT_DIR@/pre.pl';
+    $CLIENTS = CustomPre($CLIENTS);
 }
 
 # build configuration
@@ -308,47 +327,47 @@ my $pm = Parallel::ForkManager->new($cfg->{export}->{childs});
 # stolen from Forkmanager Examples:
 # http://search.cpan.org/~szabgab/Parallel-ForkManager-1.02/lib/Parallel/ForkManager.pm#Data_structure_retrieval
 my %retrieved_responses = ();  # for collecting responses of the childs
-  $pm -> run_on_finish (
+$pm -> run_on_finish (
     sub {
-      my ($pid, $exit_code, $ident, $exit_signal, $core_dump, $data_structure_reference) = @_;
-  
-      # see what the child sent us, if anything
-      if (defined($data_structure_reference)) {  # test rather than assume child sent anything
-        if (0) {  # simple on/off switch to display the contents
-          my $reftype = ref($data_structure_reference);
-          print qq|ident "$ident" returned a "$reftype" reference.\n\n|;
-          print &Dumper($data_structure_reference) . qq|end of "$ident" sent structure\n\n|;
+        my ($pid, $exit_code, $ident, $exit_signal, $core_dump, $data_structure_reference) = @_;
+
+        # see what the child sent us, if anything
+        if (defined($data_structure_reference)) {  # test rather than assume child sent anything
+            if (0) {  # simple on/off switch to display the contents
+                my $reftype = ref($data_structure_reference);
+                print qq|ident "$ident" returned a "$reftype" reference.\n\n|;
+                print &Dumper($data_structure_reference) . qq|end of "$ident" sent structure\n\n|;
+            }
+
+            # we can also collect retrieved data structures for processing after all children have exited
+            $retrieved_responses{$ident} = $data_structure_reference;
+        } else {
+            print qq|Warning:Child did not send data to parent.\n\n|;
         }
-        
-        # we can also collect retrieved data structures for processing after all children have exited
-        $retrieved_responses{$ident} = $data_structure_reference;
-      } else {
-        print qq|Warning:Child did not send data to parent.\n\n|;  
-      }
     }
-  );
+);
 
 foreach my $client (keys %{$CLIENTS}) {
 
-  # create new child
-  my $pid = $pm->start($client) and next; 
+    # create new child
+    my $pid = $pm->start($client) and next;
 
-  beVerbose("$$ CFG BUILD", "Host $client");
-  my %TREE = ();
-  %TREE = TreeBuilder($client, $CONFIG, \%TREE);
-  $CLIENTS = BuildHostConfig($client, $CLIENTS, \%TREE);
+    beVerbose("$$ CFG BUILD", "Host $client");
+    my %TREE = ();
+    %TREE = TreeBuilder($client, $CONFIG, \%TREE);
+    $CLIENTS = BuildHostConfig($client, $CLIENTS, \%TREE);
 
-  # run custom script (mid)
-  if (-f '@EXPORT_SCRIPT_DIR@/mid.pl') {
-    require '@EXPORT_SCRIPT_DIR@/mid.pl';
-    $CLIENTS = CustomMid($CLIENTS);
-  }
+    # run custom script (mid)
+    if (-f '@EXPORT_SCRIPT_DIR@/mid.pl') {
+        require '@EXPORT_SCRIPT_DIR@/mid.pl';
+        $CLIENTS = CustomMid($CLIENTS);
+    }
 
-  # create output dirs and generate config
-  genHostConfig($CLIENTS, $client);
+    # create output dirs and generate config
+    genHostConfig($CLIENTS, $client);
 
-  # finish child, give $client back to the parent
-  $pm->finish(0, \%{$CLIENTS->{$client}});
+    # finish child, give $client back to the parent
+    $pm->finish(0, \%{$CLIENTS->{$client}});
 }
 
 # wait until all childs are finished
@@ -357,7 +376,7 @@ $pm->wait_all_children;
 
 # get the data from the child back to $CLIENTS
 for (sort keys %retrieved_responses) {
-  $CLIENTS->{$_} = $retrieved_responses{$_};
+    $CLIENTS->{$_} = $retrieved_responses{$_};
 }
 
 # generate the rest of the config.
@@ -370,8 +389,8 @@ genServicegroups($CONFIG, $CLIENTS);
 
 # run custom script (post)
 if (-f '@EXPORT_SCRIPT_DIR@/post.pl') {
-	require '@EXPORT_SCRIPT_DIR@/post.pl';
-	$CLIENTS = CustomPost($CLIENTS);
+    require '@EXPORT_SCRIPT_DIR@/post.pl';
+    $CLIENTS = CustomPost($CLIENTS);
 }
 
 # create identifier
@@ -383,16 +402,16 @@ $ldap->unbind();
 
 # just modify the hashdump, if $CLIENTS if $cfg->{export}->{onlydiffs} was set
 if ($cfg->{export}->{onlydiffs} && $cfg->{export}->{onlydiffs} == 1) {
-	# import hashdump
-	my $data; my $VAR1;
-	open FILE, "<$cfg->{export}->{hashdump}" or die $!; while(<FILE>) { $data .= $_; } close FILE;
-	eval($data);
+    # import hashdump
+    my $data; my $VAR1;
+    open FILE, "<$cfg->{export}->{hashdump}" or die $!; while(<FILE>) { $data .= $_; } close FILE;
+    eval($data);
 
-	# merge hashdumps
-	foreach (keys %{$CLIENTS}) {
-		$VAR1->{$_} = $CLIENTS->{$_};
-	}
-	$CLIENTS = $VAR1;
+    # merge hashdumps
+    foreach (keys %{$CLIENTS}) {
+        $VAR1->{$_} = $CLIENTS->{$_};
+    }
+    $CLIENTS = $VAR1;
 }
 
 # dump data to filesystem
@@ -401,3 +420,6 @@ my $data = Dumper($CLIENTS); open FILE, "+>$cfg->{export}->{hashdump}" or die $!
 # exit
 EXIT:
 LeaveScript($exit->{code}, $exit->{message});
+
+# vi: sw=4 ts=4 expandtab :
+

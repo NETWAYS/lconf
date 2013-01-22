@@ -76,7 +76,7 @@ echo deploy config on $HOST
 (cd $LCONFBINPATH ; \
 $SUDOCOMMAND \
 $LCONFBINPATH/LConfSlaveExport.pl -H $HOST \
--s $LCONFTMP \
+-D $LCONFTMP/LConfExport.hashdump \
 -t $LCONFDIR -v )
 done
 

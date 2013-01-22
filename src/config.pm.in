@@ -3,181 +3,185 @@
 #
 # LDAP connection
 #
-$cfg->{ldap}->{server}				= '@LDAP_SERVER@';
-$cfg->{ldap}->{prefix}				= '@LDAP_PREFIX@';
-$cfg->{ldap}->{binddn}				= '@LDAP_BIND_DN@';
-$cfg->{ldap}->{bindpw}				= '@LDAP_BIND_PASSWORD@';
-$cfg->{ldap}->{rootNode}			= 'LConf';
-$cfg->{ldap}->{rootDN}				= 'ou='.$cfg->{ldap}->{rootNode}.',@LDAP_DN@';
+$cfg->{ldap}->{server}                   = '@LDAP_SERVER@';
+$cfg->{ldap}->{prefix}                   = '@LDAP_PREFIX@';
+$cfg->{ldap}->{binddn}                   = '@LDAP_BIND_DN@';
+$cfg->{ldap}->{bindpw}                   = '@LDAP_BIND_PASSWORD@';
+$cfg->{ldap}->{rootNode}                 = 'LConf';
+$cfg->{ldap}->{rootDN}                   = 'ou='.$cfg->{ldap}->{rootNode}.',@LDAP_DN@';
 
 #
 # LConfExport.pl
 #
-$cfg->{export}->{user}				= '@LCONF_CLI_USER@';
-$cfg->{export}->{exportDN}			= 'ou=IcingaConfig'; # below rootDN
-$cfg->{export}->{lock}				= '@PREFIX@/var/LConfExport.lock';
-$cfg->{export}->{hashdump}			= '@PREFIX@/var/LConfExport.hashdump';
-$cfg->{export}->{tmpdir}			= '@PREFIX@/tmp';
-$cfg->{export}->{timestamp}			= '@PREFIX@/var/LConfExport.timestamp';
-$cfg->{export}->{onlydiffs}			= 0;
-$cfg->{export}->{childs}        = 2;
+$cfg->{export}->{user}                   = '@LCONF_CLI_USER@';
+$cfg->{export}->{exportDN}               = 'ou=IcingaConfig'; # below rootDN
+$cfg->{export}->{tmpdir}                 = '@PREFIX@/tmp';
+$cfg->{export}->{onlydiffs}              = 0;
+$cfg->{export}->{childs}                 = 2;
 
+# lock and hashdump moved to output dir!
+#$cfg->{export}->{lock}                  = '@PREFIX@/var/LConfExport.lock';
+#$cfg->{export}->{hashdump}              = '@PREFIX@/var/LConfExport.hashdump';
+#$cfg->{export}->{timestamp}             = '@PREFIX@/var/LConfExport.timestamp';
 
-$cfg->{export}->{treerewrite}			= 'None';
-#$cfg->{export}->{treerewrite}			= 'MainOverLink';
+$cfg->{export}->{treerewrite}            = 'None';
+#$cfg->{export}->{treerewrite}           = 'MainOverLink';
 
 #
 # LConfSlaveSync.pl
 #
-$cfg->{slavesync}->{HOSTS}			= 'host1, host2, host3';
-$cfg->{slavesync}->{localDir}			= '/usr/local/icinga/var/perfdata-local';
-$cfg->{slavesync}->{remoteDir}			= '/usr/local/icinga/var/perfdata-remote';
-$cfg->{slavesync}->{spoolDir}			= '/usr/local/icinga/var/spool/checkresults';
-$cfg->{slavesync}->{ExtCMD}			= '/usr/local/icinga/var/rw/icinga.cmd';
-$cfg->{slavesync}->{getInterval}		= '60';
-$cfg->{slavesync}->{pushInterval}		= '30';
-$cfg->{slavesync}->{directIO}			= '0';
-$cfg->{slavesync}->{pidFile}			= '@PREFIX@/var/LConfSlaveSync.pid';
-$cfg->{slavesync}->{debugLog}			= '@PREFIX@/var/LConfSlaveSync.debug';
-$cfg->{slavesync}->{debug}			= '0';
+$cfg->{slavesync}->{HOSTS}               = 'host1, host2, host3';
+$cfg->{slavesync}->{localDir}            = '/usr/local/icinga/var/perfdata-local';
+$cfg->{slavesync}->{remoteDir}           = '/usr/local/icinga/var/perfdata-remote';
+$cfg->{slavesync}->{spoolDir}            = '/usr/local/icinga/var/spool/checkresults';
+$cfg->{slavesync}->{ExtCMD}              = '/usr/local/icinga/var/rw/icinga.cmd';
+$cfg->{slavesync}->{getInterval}         = '60';
+$cfg->{slavesync}->{pushInterval}        = '30';
+$cfg->{slavesync}->{directIO}            = '0';
+$cfg->{slavesync}->{pidFile}             = '@PREFIX@/var/LConfSlaveSync.pid';
+$cfg->{slavesync}->{debugLog}            = '@PREFIX@/var/LConfSlaveSync.debug';
+$cfg->{slavesync}->{debug}               = '0';
 
 
 #
 # LConfSlaveExportRules.pl
 #
 #$cfg->{slaveexportrules} = {
-#	'rules' => {
-#		'service-rule1' => {
-#		'object' => 'lconfservice',
-#		'attribute' => 'lconfservicecustomvar',
-#		'pattern' => 'Nuernberg'
-#		},
+#   'rules' => {
+#       'service-rule1' => {
+#           'object' => 'lconfservice',
+#           'attribute' => 'lconfservicecustomvar',
+#           'pattern' => 'Nuernberg'
+#       },
 #},
-#	'targets' => {
-#		'satelite1.icinga' => {
-#		'targetDir' => '/etc/icinga/lconf',
-#		'rulemap' => 'service-rule1'
-#		},
-#	},
-#	'settings' => {
-#		'slaveexportparents' => 0,
-#	},
+#   'targets' => {
+#       'satelite1.icinga' => {
+#           'targetDir' => '/etc/icinga/lconf',
+#           'rulemap' => 'service-rule1'
+#       },
+#   },
+#   'settings' => {
+#       'slaveexportparents' => 0,
+#   },
 #};
 
 
 #
 # LConfTest.pl
 #
-$cfg->{test}->{output}				= "/tmp/lconf-test-out";
+$cfg->{test}->{output}                   = "/tmp/lconf-test-out";
 
 #
 # WARNING! DO NOT CHANGE THIS!!
 #
 %itemMap = (
-	# .2.1 | lconf attributes (generally)
-	@LDAP_PREFIX@alias                                        => 'alias',
-	@LDAP_PREFIX@timeperiodvalue                              => '',
-	@LDAP_PREFIX@commandline                                  => 'command_line',
-	@LDAP_PREFIX@members                                      => 'members',
+    # .2.1 | lconf attributes (generally)
+    @LDAP_PREFIX@alias                                        => 'alias',
+    @LDAP_PREFIX@timeperiodvalue                              => '',
+    @LDAP_PREFIX@commandline                                  => 'command_line',
+    @LDAP_PREFIX@members                                      => 'members',
 
-	# .2.2   | lconf attributes (contact)
-	@LDAP_PREFIX@email                                        => 'email',
-	@LDAP_PREFIX@pager                                        => 'pager',
-	@LDAP_PREFIX@contactservicenotificationperiod             => 'service_notification_period',
-	@LDAP_PREFIX@contacthostnotificationperiod                => 'host_notification_period',
-	@LDAP_PREFIX@contactservicenotificationoptions            => 'service_notification_options',
-	@LDAP_PREFIX@contacthostnotificationoptions               => 'host_notification_options',
-	@LDAP_PREFIX@contactservicenotificationcommands           => 'service_notification_commands',
-	@LDAP_PREFIX@contacthostnotificationcommands              => 'host_notification_commands',
-	@LDAP_PREFIX@contactservicenotificationsenabled           => 'service_notifications_enabled',
-	@LDAP_PREFIX@contacthostnotificationsenabled              => 'host_notifications_enabled',
-	@LDAP_PREFIX@contactcansubmitcommands                     => 'can_submit_commands',
-  @LDAP_PREFIX@contactgroups			                          => 'contactgroups',
-	
-	# .2.3 | lconf attributes (host)
-	@LDAP_PREFIX@address                                      => 'address',
-	@LDAP_PREFIX@parent                                       => 'parents',
-	@LDAP_PREFIX@hostcustomvar                                => 'PLACEHOLDER',
-	@LDAP_PREFIX@hostcontacts                                 => 'contacts',
-	@LDAP_PREFIX@hostcontactgroups                            => 'contact_groups',
-	@LDAP_PREFIX@hostnotificationoptions                      => 'notification_options',
-	@LDAP_PREFIX@hostnotificationinterval                     => 'notification_interval',
-	@LDAP_PREFIX@hostnotificationperiod                       => 'notification_period',
-	@LDAP_PREFIX@hostcheckperiod                              => 'check_period',
-	@LDAP_PREFIX@hostcheckinterval                            => 'check_interval',
-	@LDAP_PREFIX@hostcheckretryinterval                       => 'retry_interval',
-	@LDAP_PREFIX@hostcheckmaxcheckattempts                    => 'max_check_attempts',
-	@LDAP_PREFIX@hostprocessperfdata                          => 'process_perf_data',
-	@LDAP_PREFIX@hostactivechecksenabled                      => 'active_checks_enabled',
-	@LDAP_PREFIX@hostpassivechecksenabled                     => 'passive_checks_enabled',
-	@LDAP_PREFIX@hostflapdetectionenabled                     => 'flap_detection_enabled',
-	@LDAP_PREFIX@hostflapdetectionoptions                     => 'flap_detection_options',
-	@LDAP_PREFIX@hosteventhandler                             => 'event_handler',
-	@LDAP_PREFIX@hostnotesurl                                 => 'notes_url',
-	@LDAP_PREFIX@hostactionurl                                => 'action_url',
-	@LDAP_PREFIX@hostgroups                                   => 'hostgroups',
-	@LDAP_PREFIX@hostdependency                               => 'PLACEHOLDER',
-	@LDAP_PREFIX@hostdependencyexecutionfailurecriteria       => 'execution_failure_criteria',
-	@LDAP_PREFIX@hostdependencynotificationfailurecriteria    => 'notification_failure_criteria',
-	@LDAP_PREFIX@hostdependencyinheritsparent                 => 'inherits_parent',
-	@LDAP_PREFIX@hostnotificationsenabled                     => 'notifications_enabled',
-	@LDAP_PREFIX@hostfreshnessthreshold                       => 'freshness_threshold',
-	@LDAP_PREFIX@hostcheckfreshness                           => 'check_freshness',
-	@LDAP_PREFIX@hostcheckcommand                             => 'check_command',
-	@LDAP_PREFIX@hostdisable                                  => '',
-	
-	# .2.4 | lconf attributes (service)
-	@LDAP_PREFIX@checkcommand                                 => 'check_command',
-	@LDAP_PREFIX@servicecustomvar                             => 'PLACEHOLDER',
-	@LDAP_PREFIX@servicecontacts                              => 'contacts',
-	@LDAP_PREFIX@servicecontactgroups                         => 'contact_groups',
-	@LDAP_PREFIX@servicenotificationoptions                   => 'notification_options',
-	@LDAP_PREFIX@servicenotificationinterval                  => 'notification_interval',
-	@LDAP_PREFIX@servicenotificationperiod                    => 'notification_period',
-	@LDAP_PREFIX@servicecheckperiod                           => 'check_period',
-	@LDAP_PREFIX@servicecheckinterval                         => 'check_interval',
-	@LDAP_PREFIX@servicecheckretryinterval                    => 'retry_interval',
-	@LDAP_PREFIX@servicecheckmaxcheckattempts                 => 'max_check_attempts',
-	@LDAP_PREFIX@serviceprocessperfdata                       => 'process_perf_data',
-	@LDAP_PREFIX@serviceactivechecksenabled                   => 'active_checks_enabled',
-	@LDAP_PREFIX@servicepassivechecksenabled                  => 'passive_checks_enabled',
-	@LDAP_PREFIX@serviceflapdetectionenabled                  => 'flap_detection_enabled',
-	@LDAP_PREFIX@serviceflapdetectionoptions                  => 'flap_detection_options',
-	@LDAP_PREFIX@serviceeventhandler                          => 'event_handler',
-	@LDAP_PREFIX@servicenotesurl                              => 'notes_url',
-	@LDAP_PREFIX@serviceactionurl                             => 'action_url',
-	@LDAP_PREFIX@servicegroups                                => 'servicegroups',
-	@LDAP_PREFIX@servicedependency                            => 'PLACEHOLDER',
-	@LDAP_PREFIX@servicedependencyexecutionfailurecriteria    => 'execution_failure_criteria',
-	@LDAP_PREFIX@servicedependencynotificationfailurecriteria => 'notification_failure_criteria',
-	@LDAP_PREFIX@servicedependencyinheritsparent              => 'inherits_parent',
-	@LDAP_PREFIX@servicenotificationsenabled                  => 'notifications_enabled',
-	@LDAP_PREFIX@servicefreshnessthreshold                    => 'freshness_threshold',
-	@LDAP_PREFIX@servicecheckfreshness                        => 'check_freshness',
-	@LDAP_PREFIX@servicecheckcommand                          => 'check_command',
-	@LDAP_PREFIX@servicedisable                               => '',
-	
-	# .2.5 | lconf attributes (host escalations)
-	@LDAP_PREFIX@hostescalationfirstnotification              => 'first_notification',
-	@LDAP_PREFIX@hostescalationlastnotification               => 'last_notification',
-	@LDAP_PREFIX@hostescalationnotificationinterval           => 'notification_interval',
-	@LDAP_PREFIX@hostescalationcontacts                       => 'contacts',
-	@LDAP_PREFIX@hostescalationcontactgroups                  => 'contact_groups',
-	@LDAP_PREFIX@hostescalationperiod                         => 'escalation_period',
-	@LDAP_PREFIX@hostescalationoptions                        => 'escalation_options',
-	@LDAP_PREFIX@hostescalationhostgroups                     => 'hostgroup_name',
-	
-	# .2.6 | lconf attributes (service escalations)
-	@LDAP_PREFIX@serviceescalationfirstnotification           => 'first_notification',
-	@LDAP_PREFIX@serviceescalationlastnotification            => 'last_notification',
-	@LDAP_PREFIX@serviceescalationnotificationinterval        => 'notification_interval',
-	@LDAP_PREFIX@serviceescalationcontacts                    => 'contacts',
-	@LDAP_PREFIX@serviceescalationcontactgroups               => 'contact_groups',
-	@LDAP_PREFIX@serviceescalationperiod                      => 'escalation_period',
-	@LDAP_PREFIX@serviceescalationoptions                     => 'escalation_options',
-  @LDAP_PREFIX@serviceescalationservicegroups               => 'servicegroup_name',
-	@LDAP_PREFIX@serviceescalationhostgroups                  => 'hostgroup_name',
+    # .2.2   | lconf attributes (contact)
+    @LDAP_PREFIX@email                                        => 'email',
+    @LDAP_PREFIX@pager                                        => 'pager',
+    @LDAP_PREFIX@contactservicenotificationperiod             => 'service_notification_period',
+    @LDAP_PREFIX@contacthostnotificationperiod                => 'host_notification_period',
+    @LDAP_PREFIX@contactservicenotificationoptions            => 'service_notification_options',
+    @LDAP_PREFIX@contacthostnotificationoptions               => 'host_notification_options',
+    @LDAP_PREFIX@contactservicenotificationcommands           => 'service_notification_commands',
+    @LDAP_PREFIX@contacthostnotificationcommands              => 'host_notification_commands',
+    @LDAP_PREFIX@contactservicenotificationsenabled           => 'service_notifications_enabled',
+    @LDAP_PREFIX@contacthostnotificationsenabled              => 'host_notifications_enabled',
+    @LDAP_PREFIX@contactcansubmitcommands                     => 'can_submit_commands',
+    @LDAP_PREFIX@contactgroups                                => 'contactgroups',
 
-	# special stuff ;-)
-	cn                                                => 'PLACEHOLDER'
+    # .2.3 | lconf attributes (host)
+    @LDAP_PREFIX@address                                      => 'address',
+    @LDAP_PREFIX@parent                                       => 'parents',
+    @LDAP_PREFIX@hostcustomvar                                => 'PLACEHOLDER',
+    @LDAP_PREFIX@hostcontacts                                 => 'contacts',
+    @LDAP_PREFIX@hostcontactgroups                            => 'contact_groups',
+    @LDAP_PREFIX@hostnotificationoptions                      => 'notification_options',
+    @LDAP_PREFIX@hostnotificationinterval                     => 'notification_interval',
+    @LDAP_PREFIX@hostnotificationperiod                       => 'notification_period',
+    @LDAP_PREFIX@hostcheckperiod                              => 'check_period',
+    @LDAP_PREFIX@hostcheckinterval                            => 'check_interval',
+    @LDAP_PREFIX@hostcheckretryinterval                       => 'retry_interval',
+    @LDAP_PREFIX@hostcheckmaxcheckattempts                    => 'max_check_attempts',
+    @LDAP_PREFIX@hostprocessperfdata                          => 'process_perf_data',
+    @LDAP_PREFIX@hostactivechecksenabled                      => 'active_checks_enabled',
+    @LDAP_PREFIX@hostpassivechecksenabled                     => 'passive_checks_enabled',
+    @LDAP_PREFIX@hostflapdetectionenabled                     => 'flap_detection_enabled',
+    @LDAP_PREFIX@hostflapdetectionoptions                     => 'flap_detection_options',
+    @LDAP_PREFIX@hosteventhandler                             => 'event_handler',
+    @LDAP_PREFIX@hostnotesurl                                 => 'notes_url',
+    @LDAP_PREFIX@hostactionurl                                => 'action_url',
+    @LDAP_PREFIX@hostgroups                                   => 'hostgroups',
+    @LDAP_PREFIX@hostdependency                               => 'PLACEHOLDER',
+    @LDAP_PREFIX@hostdependencyexecutionfailurecriteria       => 'execution_failure_criteria',
+    @LDAP_PREFIX@hostdependencynotificationfailurecriteria    => 'notification_failure_criteria',
+    @LDAP_PREFIX@hostdependencyinheritsparent                 => 'inherits_parent',
+    @LDAP_PREFIX@hostnotificationsenabled                     => 'notifications_enabled',
+    @LDAP_PREFIX@hostfreshnessthreshold                       => 'freshness_threshold',
+    @LDAP_PREFIX@hostcheckfreshness                           => 'check_freshness',
+    @LDAP_PREFIX@hostcheckcommand                             => 'check_command',
+    @LDAP_PREFIX@hostdisable                                  => '',
+
+    # .2.4 | lconf attributes (service)
+    @LDAP_PREFIX@checkcommand                                 => 'check_command',
+    @LDAP_PREFIX@servicecustomvar                             => 'PLACEHOLDER',
+    @LDAP_PREFIX@servicecontacts                              => 'contacts',
+    @LDAP_PREFIX@servicecontactgroups                         => 'contact_groups',
+    @LDAP_PREFIX@servicenotificationoptions                   => 'notification_options',
+    @LDAP_PREFIX@servicenotificationinterval                  => 'notification_interval',
+    @LDAP_PREFIX@servicenotificationperiod                    => 'notification_period',
+    @LDAP_PREFIX@servicecheckperiod                           => 'check_period',
+    @LDAP_PREFIX@servicecheckinterval                         => 'check_interval',
+    @LDAP_PREFIX@servicecheckretryinterval                    => 'retry_interval',
+    @LDAP_PREFIX@servicecheckmaxcheckattempts                 => 'max_check_attempts',
+    @LDAP_PREFIX@serviceprocessperfdata                       => 'process_perf_data',
+    @LDAP_PREFIX@serviceactivechecksenabled                   => 'active_checks_enabled',
+    @LDAP_PREFIX@servicepassivechecksenabled                  => 'passive_checks_enabled',
+    @LDAP_PREFIX@serviceflapdetectionenabled                  => 'flap_detection_enabled',
+    @LDAP_PREFIX@serviceflapdetectionoptions                  => 'flap_detection_options',
+    @LDAP_PREFIX@serviceeventhandler                          => 'event_handler',
+    @LDAP_PREFIX@servicenotesurl                              => 'notes_url',
+    @LDAP_PREFIX@serviceactionurl                             => 'action_url',
+    @LDAP_PREFIX@servicegroups                                => 'servicegroups',
+    @LDAP_PREFIX@servicedependency                            => 'PLACEHOLDER',
+    @LDAP_PREFIX@servicedependencyexecutionfailurecriteria    => 'execution_failure_criteria',
+    @LDAP_PREFIX@servicedependencynotificationfailurecriteria => 'notification_failure_criteria',
+    @LDAP_PREFIX@servicedependencyinheritsparent              => 'inherits_parent',
+    @LDAP_PREFIX@servicenotificationsenabled                  => 'notifications_enabled',
+    @LDAP_PREFIX@servicefreshnessthreshold                    => 'freshness_threshold',
+    @LDAP_PREFIX@servicecheckfreshness                        => 'check_freshness',
+    @LDAP_PREFIX@servicecheckcommand                          => 'check_command',
+    @LDAP_PREFIX@servicedisable                               => '',
+
+    # .2.5 | lconf attributes (host escalations)
+    @LDAP_PREFIX@hostescalationfirstnotification              => 'first_notification',
+    @LDAP_PREFIX@hostescalationlastnotification               => 'last_notification',
+    @LDAP_PREFIX@hostescalationnotificationinterval           => 'notification_interval',
+    @LDAP_PREFIX@hostescalationcontacts                       => 'contacts',
+    @LDAP_PREFIX@hostescalationcontactgroups                  => 'contact_groups',
+    @LDAP_PREFIX@hostescalationperiod                         => 'escalation_period',
+    @LDAP_PREFIX@hostescalationoptions                        => 'escalation_options',
+    @LDAP_PREFIX@hostescalationhostgroups                     => 'hostgroup_name',
+
+    # .2.6 | lconf attributes (service escalations)
+    @LDAP_PREFIX@serviceescalationfirstnotification           => 'first_notification',
+    @LDAP_PREFIX@serviceescalationlastnotification            => 'last_notification',
+    @LDAP_PREFIX@serviceescalationnotificationinterval        => 'notification_interval',
+    @LDAP_PREFIX@serviceescalationcontacts                    => 'contacts',
+    @LDAP_PREFIX@serviceescalationcontactgroups               => 'contact_groups',
+    @LDAP_PREFIX@serviceescalationperiod                      => 'escalation_period',
+    @LDAP_PREFIX@serviceescalationoptions                     => 'escalation_options',
+    @LDAP_PREFIX@serviceescalationservicegroups               => 'servicegroup_name',
+    @LDAP_PREFIX@serviceescalationhostgroups                  => 'hostgroup_name',
+
+    # special stuff ;-)
+    cn                                                => 'PLACEHOLDER'
 );
+
+# vi: sw=4 ts=4 expandtab :
+

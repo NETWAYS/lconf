@@ -133,40 +133,40 @@ LeaveScript(2, "Variable '\$cfg->{slavesync}->{debugLog}' not set in config.pm")
 
 # debug mode?
 if (defined $cfg->{slavesync}->{debug} && $cfg->{slavesync}->{debug} == 1) {
-	our $opt; $opt->{verbose} = $cfg->{slavesync}->{debugLog};
+    our $opt; $opt->{verbose} = $cfg->{slavesync}->{debugLog};
 }
 
 # start or stop?
 if ($ARGV[0] eq 'start') {
-	# convert variable to array
-	my @HOSTS = split(/\s*,\s*/, $cfg->{slavesync}->{HOSTS});
-	
-	# flush buffer
-	$| = 1;
-	
-	# check few things
-	check($cfg->{slavesync}->{localDir}, $cfg->{slavesync}->{remoteDir}, @HOSTS);
-	
-	# daemonize
-	daemonize($cfg->{slavesync}->{pidFile});
-	
-	# start execution thread (direct IO or old style?)
-	my %thread_handle;
-	if (defined $cfg->{slavesync}->{directIO} && $cfg->{slavesync}->{directIO} == 1) {
-		$thread_handle{0} = threads->create('processFilesSpoolDir', $cfg->{slavesync}->{localDir}, $cfg->{slavesync}->{spoolDir}, $cfg->{slavesync}->{pushInterval});
-	} else {
-		$thread_handle{0} = threads->create('processFilesExtCMD', $cfg->{slavesync}->{localDir}, $cfg->{slavesync}->{spoolDir}, $cfg->{slavesync}->{pushInterval}, $cfg->{slavesync}->{ExtCMD});
-	}
-	
-	# run main function
-	main($cfg->{slavesync}->{getInterval}, $cfg->{slavesync}->{localDir}, $cfg->{slavesync}->{remoteDir}, @HOSTS);
-	
-	# join thread
-	$thread_handle{0}->join();
+    # convert variable to array
+    my @HOSTS = split(/\s*,\s*/, $cfg->{slavesync}->{HOSTS});
+
+    # flush buffer
+    $| = 1;
+
+    # check few things
+    check($cfg->{slavesync}->{localDir}, $cfg->{slavesync}->{remoteDir}, @HOSTS);
+
+    # daemonize
+    daemonize($cfg->{slavesync}->{pidFile});
+
+    # start execution thread (direct IO or old style?)
+    my %thread_handle;
+    if (defined $cfg->{slavesync}->{directIO} && $cfg->{slavesync}->{directIO} == 1) {
+        $thread_handle{0} = threads->create('processFilesSpoolDir', $cfg->{slavesync}->{localDir}, $cfg->{slavesync}->{spoolDir}, $cfg->{slavesync}->{pushInterval});
+    } else {
+        $thread_handle{0} = threads->create('processFilesExtCMD', $cfg->{slavesync}->{localDir}, $cfg->{slavesync}->{spoolDir}, $cfg->{slavesync}->{pushInterval}, $cfg->{slavesync}->{ExtCMD});
+    }
+
+    # run main function
+    main($cfg->{slavesync}->{getInterval}, $cfg->{slavesync}->{localDir}, $cfg->{slavesync}->{remoteDir}, @HOSTS);
+
+    # join thread
+    $thread_handle{0}->join();
 } elsif ($ARGV[0] eq 'stop') {
-	killProc($cfg->{slavesync}->{pidFile});
+    killProc($cfg->{slavesync}->{pidFile});
 } else {
-	pod2usage(1);
+    pod2usage(1);
 }
 
 
@@ -175,152 +175,154 @@ if ($ARGV[0] eq 'start') {
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
 
 sub check {
-	my $localDir  = shift;
-	my $remoteDir = shift;
-	my @HOSTS     = @_;
+    my $localDir  = shift;
+    my $remoteDir = shift;
+    my @HOSTS     = @_;
 
-	beVerbose('CHECK', "'$localDir' exists?");
-	if (! -d $localDir) { print "ERROR: can't localte directory '$localDir'\n"; exit 1; }
+    beVerbose('CHECK', "'$localDir' exists?");
+    if (! -d $localDir) { print "ERROR: can't localte directory '$localDir'\n"; exit 1; }
 
-	# login on each remote host possible and $remtoeDir exists?
-	foreach(@HOSTS) {
-		beVerbose('CHECK', "login on '$_'");
-		my $cmd = "ssh -o PasswordAuthentication=no "; $cmd .= $_ ." \"ls -d $remoteDir\" 2>/dev/null";
-		my $val = system($cmd);
+    # login on each remote host possible and $remtoeDir exists?
+    foreach(@HOSTS) {
+        beVerbose('CHECK', "login on '$_'");
+        my $cmd = "ssh -o PasswordAuthentication=no "; $cmd .= $_ ." \"ls -d $remoteDir\" 2>/dev/null";
+        my $val = system($cmd);
 
-		if ($val != 0) {
-			if ($val == 512) {
-				LeaveScript(2, "Can't locate directory $remoteDir on $_");
-			} elsif ($val == 65280) {
-				LeaveScript(2, "Can't login on $_");
-			} else {
-				LeaveScript(2, "Unknown error during connection / test");
-			}
-		}
-	}
+        if ($val != 0) {
+            if ($val == 512) {
+                LeaveScript(2, "Can't locate directory $remoteDir on $_");
+            } elsif ($val == 65280) {
+                LeaveScript(2, "Can't login on $_");
+            } else {
+                LeaveScript(2, "Unknown error during connection / test");
+            }
+        }
+    }
 }
 
 sub daemonize {
-	my $pidFile = shift;
+    my $pidFile = shift;
 
-	chdir '/tmp' or die "Can't chdir to /tmp: $!";
-	open STDIN, '/dev/null' or die "Can't read /dev/null: $!";
-	open STDOUT, '>>/dev/null' or die "Can't write to /dev/null: $!";
-	open STDERR, '>>/dev/null' or die "Can't write to /dev/null: $!";
+    chdir '/tmp' or die "Can't chdir to /tmp: $!";
+    open STDIN, '/dev/null' or die "Can't read /dev/null: $!";
+    open STDOUT, '>>/dev/null' or die "Can't write to /dev/null: $!";
+    open STDERR, '>>/dev/null' or die "Can't write to /dev/null: $!";
 
-	defined(my $pid = fork) or die "Can't fork: $!";
-	exit if $pid;
-	setsid or die "Can't start a new session: $!";
+    defined(my $pid = fork) or die "Can't fork: $!";
+    exit if $pid;
+    setsid or die "Can't start a new session: $!";
 
-	open(FH, ">$pidFile") || die "Can't write $pidFile: $!\n";
-	print FH $$;
-	close(FH);
+    open(FH, ">$pidFile") || die "Can't write $pidFile: $!\n";
+    print FH $$;
+    close(FH);
 
-	umask 0;
+    umask 0;
 }
 
 sub main {
-	my $sleepHostThread = shift;
-	my $localDir        = shift;
-	my $remoteDir       = shift;
-	my @HOSTS = @_;
+    my $sleepHostThread = shift;
+    my $localDir        = shift;
+    my $remoteDir       = shift;
+    my @HOSTS = @_;
 
-	while(1) {
-		foreach(@HOSTS) {
-			getFiles($_, $localDir, $remoteDir);
-		}
+    while(1) {
+        foreach(@HOSTS) {
+            getFiles($_, $localDir, $remoteDir);
+        }
 
-		beVerbose('MAIN', "sleep $sleepHostThread");
-		sleep $sleepHostThread;
-	}
+        beVerbose('MAIN', "sleep $sleepHostThread");
+        sleep $sleepHostThread;
+    }
 }
 
 sub getFiles {
-	my $host      = shift;
-	my $localDir  = shift;
-	my $remoteDir = shift;
+    my $host      = shift;
+    my $localDir  = shift;
+    my $remoteDir = shift;
 
-	beVerbose("GET FILES", "from host '$host'");
-	my $cmd = "rsync --remove-sent-files -azd -e ssh $host:$remoteDir/ $localDir";
-	my $val = system($cmd);
+    beVerbose("GET FILES", "from host '$host'");
+    my $cmd = "rsync --remove-sent-files -azd -e ssh $host:$remoteDir/ $localDir";
+    my $val = system($cmd);
 
-	if ($val != 0) { print "ERROR: data sync with $host failed!\n"}
+    if ($val != 0) { print "ERROR: data sync with $host failed!\n"}
 }
 
 sub killProc {
-	my $pidFile = shift;
+    my $pidFile = shift;
 
-	open(FH, "<$pidFile") || die "Can't read $pidFile: $!\n";
-	while(<FH>) {
-		qx(kill -9 $_);
-	}
-	close(FH);
-	qx(rm $pidFile);
+    open(FH, "<$pidFile") || die "Can't read $pidFile: $!\n";
+    while(<FH>) {
+        qx(kill -9 $_);
+    }
+    close(FH);
+    qx(rm $pidFile);
 }
 
 sub processFilesSpoolDir {
-	my $localDir        = shift;
-	my $spoolDir        = shift;
-	my $sleepExecThread = shift;
+    my $localDir        = shift;
+    my $spoolDir        = shift;
+    my $sleepExecThread = shift;
 }
 
 sub processFilesExtCMD {
-	my $localDir            = shift;
-	my $spoolDir            = shift;
-	my $sleepExecThread     = shift;
-	my $ExternalCommandInterface = shift;
+    my $localDir            = shift;
+    my $spoolDir            = shift;
+    my $sleepExecThread     = shift;
+    my $ExternalCommandInterface = shift;
 
-	while(1) {
-		my $counter = 999999999;
+    while(1) {
+        my $counter = 999999999;
 
-		# define array
-		my @FILES;
+        # define array
+        my @FILES;
 
-		# get files
-		opendir(DIR, $localDir) || die "can't open dir $localDir: $!";
-		while((my $val = readdir(DIR))) {
-			push(@FILES, $val);
-		}
-		closedir(DIR);
+        # get files
+        opendir(DIR, $localDir) || die "can't open dir $localDir: $!";
+        while((my $val = readdir(DIR))) {
+            push(@FILES, $val);
+        }
+        closedir(DIR);
 
-		# sort stuff
-		@FILES = sort(@FILES);
+        # sort stuff
+        @FILES = sort(@FILES);
 
-		# how mouch in spool?
-		my $size_all = 0;
-		opendir(DIR, $spoolDir) || die "can't open dir $spoolDir: $!";
-		while((my $val = readdir(DIR))) {
-			if ($val ne "." && $val ne "..") {
-				my $size_file = -s "$spoolDir/$val";
-				$size_all = $size_all + $size_file;
-			}
-		}
-		closedir(DIR);
+        # how mouch in spool?
+        my $size_all = 0;
+        opendir(DIR, $spoolDir) || die "can't open dir $spoolDir: $!";
+        while((my $val = readdir(DIR))) {
+            if ($val ne "." && $val ne "..") {
+                my $size_file = -s "$spoolDir/$val";
+                $size_all = $size_all + $size_file;
+            }
+        }
+        closedir(DIR);
 
-		# re-calc
-		$size_all = $size_all/1024;
-		$size_all = $size_all/1024;
+        # re-calc
+        $size_all = $size_all/1024;
+        $size_all = $size_all/1024;
 
-		# reset?
-		if ($size_all <= 1) {
-			$counter = 0;
-			beVerbose('PROCESS_FILES', 'reset counter => proceed!');
-		}
+        # reset?
+        if ($size_all <= 1) {
+            $counter = 0;
+            beVerbose('PROCESS_FILES', 'reset counter => proceed!');
+        }
 
-		# execute stuff
-		foreach my $val (@FILES) {
-			if ($counter <= 30) {
-				if ($val ne "." && $val ne ".." && $val =~ /\./) {
-					my $cmd =  "[".time()."] PROCESS_FILE;$localDir/"."$val;1";
-					qx(echo "$cmd" > $ExternalCommandInterface);
-					beVerbose('PROCESS_FILES', "proceed file '$val'");
-				}
-			}
-			$counter++;
-		}
+        # execute stuff
+        foreach my $val (@FILES) {
+            if ($counter <= 30) {
+                if ($val ne "." && $val ne ".." && $val =~ /\./) {
+                    my $cmd =  "[".time()."] PROCESS_FILE;$localDir/"."$val;1";
+                    qx(echo "$cmd" > $ExternalCommandInterface);
+                    beVerbose('PROCESS_FILES', "proceed file '$val'");
+                }
+            }
+            $counter++;
+        }
 
-		beVerbose('PROCESS_FILES', "sleep $sleepExecThread");
-		sleep $sleepExecThread;
-	}
+        beVerbose('PROCESS_FILES', "sleep $sleepExecThread");
+        sleep $sleepExecThread;
+    }
 }
-				
+
+# vi: sw=4 ts=4 expandtab :
+

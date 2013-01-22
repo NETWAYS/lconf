@@ -116,12 +116,13 @@ our @state = ('OK', 'WARNING', 'ERROR', 'UNKNOWN');
 # get command-line parameters
 our $opt;
 GetOptions(
-	"H|host=s"			=> \$opt->{host},
-	"p|port=s"			=> \$opt->{port},
-	"t|target=s"		=> \$opt->{target},
-	"v|verbose:s"		=> \$opt->{verbose},
-	"h|help"			=> \$opt->{help},
-	"V|version"		=> \$opt->{version}
+    "H|host=s"     => \$opt->{host},
+    "p|port=s"     => \$opt->{port},
+    "D|hashdump=s" => \$opt->{hashdump},
+    "t|target=s"   => \$opt->{target},
+    "v|verbose:s"  => \$opt->{verbose},
+    "h|help"       => \$opt->{help},
+    "V|version"    => \$opt->{version}
 );
 
 
@@ -158,7 +159,8 @@ LeaveScript(2, "Variable '\$cfg->{export}->{user}' not set in config.pm'") if !$
 LeaveScript(2, "You're not user '$cfg->{export}->{user}'!") if $ENV{USER} ne $cfg->{export}->{user};
 
 # hashdump exists?
-LeaveScript(2, "Hashdump from LConfExport.pl does not exist!") if !-f $cfg->{export}->{hashdump};
+LeaveScript(2, "please specify Hashdump with --hashdump or -D") if ! $opt->{hashdump};
+LeaveScript(2, "Hashdump from '$opt->{hashdump}' does not exist!") if !-f $opt->{hashdump};
 
 #
 # NOW, WE'RE READY TO RUN :)
@@ -166,29 +168,29 @@ LeaveScript(2, "Hashdump from LConfExport.pl does not exist!") if !-f $cfg->{exp
 
 # import hashdump
 my $data; my $VAR1;
-open FILE, "<$cfg->{export}->{hashdump}" or die $!; while(<FILE>) { $data .= $_; } close FILE;
+open FILE, "<$opt->{hashdump}" or die $!; while(<FILE>) { $data .= $_; } close FILE;
 eval($data);
 $CLIENTS = $VAR1;
 
 # connect to LDAP server
 our $ldap;
 if ($cfg->{ldap}->{binddn} && $cfg->{ldap}->{bindpw}) {
-	$ldap = LDAPconnect('auth');	
+    $ldap = LDAPconnect('auth');
 } else {
-	$ldap = LDAPconnect();
+    $ldap = LDAPconnect();
 }
 
 # define target hosts / host is set?
 if (!defined $opt->{host}) {
-	# search after all hosts
-	my $result;
-	$result = LDAPsearch($ldap, $cfg->{ldap}->{baseDN}, "sub", "description=LCONF->EXPORT->HOST*");
-	foreach my $host (keys %{$result}) { $result->{$host}->{description} =~ m/^LCONF->EXPORT->HOST[\s=_-]*([-_\w\d]+)/; push(@hosts, $1); }
-	
-	$result = LDAPsearch($ldap, $cfg->{ldap}->{baseDN}, "sub", "description=LCONF->EXPORT->CLUSTER*");
-	foreach my $host (keys %{$result}) { $result->{$host}->{description} =~ m/^LCONF->EXPORT->CLUSTER[\s=_-]*([-_\w\d]+)/; push(@hosts, $1); }
+    # search after all hosts
+    my $result;
+    $result = LDAPsearch($ldap, $cfg->{ldap}->{baseDN}, "sub", "description=LCONF->EXPORT->HOST*");
+    foreach my $host (keys %{$result}) { $result->{$host}->{description} =~ m/^LCONF->EXPORT->HOST[\s=_-]*([-_\w\d]+)/; push(@hosts, $1); }
+
+    $result = LDAPsearch($ldap, $cfg->{ldap}->{baseDN}, "sub", "description=LCONF->EXPORT->CLUSTER*");
+    foreach my $host (keys %{$result}) { $result->{$host}->{description} =~ m/^LCONF->EXPORT->CLUSTER[\s=_-]*([-_\w\d]+)/; push(@hosts, $1); }
 } else {
-	push(@hosts, $opt->{host});
+    push(@hosts, $opt->{host});
 }
 
 # get the whole config from ldap
@@ -196,119 +198,119 @@ my $CONFIG = LDAPsearch($ldap, $cfg->{ldap}->{rootDN}, "sub", "objectclass=*");
 
 # proceed config for each host
 foreach my $host (@hosts) {
-	# re-map var
-	$opt->{host} = $host;
-	
-	# get global tree's
-	my $exportGLOBAL = LDAPsearch($ldap, $cfg->{ldap}->{baseDN}, "sub", "description=LCONF->EXPORT->GLOBAL");
-	@export = addPaths($exportGLOBAL, @export) if defined $exportGLOBAL;
+    # re-map var
+    $opt->{host} = $host;
 
-	# get slaves cluster tree's
-	# LCONF->EXPORT->CLUSTER and LCONF->EXPORT->HOST. Both will work...
-	my $exportSLAVE = LDAPsearch($ldap, $cfg->{ldap}->{baseDN}, "sub", "description=LCONF->EXPORT->CLUSTER*$opt->{host}");
-	@export = addPaths($exportSLAVE, @export) if defined $exportSLAVE;
-	$exportSLAVE = LDAPsearch($ldap, $cfg->{ldap}->{baseDN}, "sub", "description=LCONF->EXPORT->HOST*$opt->{host}");
-	@export = addPaths($exportSLAVE, @export) if defined $exportSLAVE;
+    # get global tree's
+    my $exportGLOBAL = LDAPsearch($ldap, $cfg->{ldap}->{baseDN}, "sub", "description=LCONF->EXPORT->GLOBAL");
+    @export = addPaths($exportGLOBAL, @export) if defined $exportGLOBAL;
 
-	# delete useless items from $CLIENTS
-	foreach my $client (keys %{$CLIENTS}) {
-		my $delete = 1;
-		foreach(@export) { if ($client =~ /$_/) { $delete = 0; } }
-		delete $CLIENTS->{$client} if $delete == 1;
-	}
+    # get slaves cluster tree's
+    # LCONF->EXPORT->CLUSTER and LCONF->EXPORT->HOST. Both will work...
+    my $exportSLAVE = LDAPsearch($ldap, $cfg->{ldap}->{baseDN}, "sub", "description=LCONF->EXPORT->CLUSTER*$opt->{host}");
+    @export = addPaths($exportSLAVE, @export) if defined $exportSLAVE;
+    $exportSLAVE = LDAPsearch($ldap, $cfg->{ldap}->{baseDN}, "sub", "description=LCONF->EXPORT->HOST*$opt->{host}");
+    @export = addPaths($exportSLAVE, @export) if defined $exportSLAVE;
 
-	# modifications?
-	foreach my $client (keys %{$CLIENTS}) {
-		# delete excluded hosts
-		if (defined $CLIENTS->{$client}->{description}) {
-			foreach my $desc (keys %{$CLIENTS->{$client}->{description}}) {
-				# modify hostattribute if LCONF->EXPORT->MODIFY->HOST is set
-				if ($desc =~ /^LCONF->EXPORT->MODIFY->HOST/) {
-					$desc =~ m/^LCONF->EXPORT->MODIFY->HOST\s+([a-zA-Z]+)\s+(.*)/;
-					$CLIENTS->{$client}->{$1} = $2;
-				}
+    # delete useless items from $CLIENTS
+    foreach my $client (keys %{$CLIENTS}) {
+        my $delete = 1;
+        foreach(@export) { if ($client =~ /$_/) { $delete = 0; } }
+        delete $CLIENTS->{$client} if $delete == 1;
+    }
 
-				# delete host if LCONF->EXPORT->EXCLUDE is set
-				delete $CLIENTS->{$client} if $desc eq 'LCONF->EXPORT->EXCLUDE';
-			}
-		}
+    # modifications?
+    foreach my $client (keys %{$CLIENTS}) {
+        # delete excluded hosts
+        if (defined $CLIENTS->{$client}->{description}) {
+            foreach my $desc (keys %{$CLIENTS->{$client}->{description}}) {
+                # modify hostattribute if LCONF->EXPORT->MODIFY->HOST is set
+                if ($desc =~ /^LCONF->EXPORT->MODIFY->HOST/) {
+                    $desc =~ m/^LCONF->EXPORT->MODIFY->HOST\s+([a-zA-Z]+)\s+(.*)/;
+                    $CLIENTS->{$client}->{$1} = $2;
+                }
 
-		foreach my $service (keys %{$CLIENTS->{$client}->{SERVICES}}) {
-			if (defined $CLIENTS->{$client}->{SERVICES}->{$service}->{description}) {
-				foreach my $desc (keys %{$CLIENTS->{$client}->{SERVICES}->{$service}->{description}}) {
-					# modify serviceattribute if LCONF->EXPORT->MODIFY->HOST is set
-					if ($desc =~ /^LCONF->EXPORT->MODIFY->SERVICE/) {
-						$desc =~ m/^LCONF->EXPORT->MODIFY->SERVICE\s+([a-zA-Z]+)\s+(.*)/;
-						$CLIENTS->{$client}->{SERVICES}->{$service}->{$1} = $2;
-					}
+                # delete host if LCONF->EXPORT->EXCLUDE is set
+                delete $CLIENTS->{$client} if $desc eq 'LCONF->EXPORT->EXCLUDE';
+            }
+        }
 
-					# delete service if LCONF->EXPORT->EXCLUDE is set
-					delete $CLIENTS->{$client}->{SERVICES}->{$service} if $desc eq 'LCONF->EXPORT->EXCLUDE';
-				}
-			}
-		}
-	}
-	
-	# create tmp target
-	$opt->{outputDir} = $cfg->{export}->{tmpdir}.'/'.$opt->{host}.'/';
-	mkdir("$opt->{outputDir}") if !-d $opt->{outputDir};
-	
-	# clean tmp target
-	qx(rm -r $opt->{outputDir}/*) if -f "$opt->{outputDir}/lconf.identify";
+        foreach my $service (keys %{$CLIENTS->{$client}->{SERVICES}}) {
+            if (defined $CLIENTS->{$client}->{SERVICES}->{$service}->{description}) {
+                foreach my $desc (keys %{$CLIENTS->{$client}->{SERVICES}->{$service}->{description}}) {
+                    # modify serviceattribute if LCONF->EXPORT->MODIFY->HOST is set
+                    if ($desc =~ /^LCONF->EXPORT->MODIFY->SERVICE/) {
+                        $desc =~ m/^LCONF->EXPORT->MODIFY->SERVICE\s+([a-zA-Z]+)\s+(.*)/;
+                        $CLIENTS->{$client}->{SERVICES}->{$service}->{$1} = $2;
+                    }
 
-	# create identifier
-	open(FH, ">$opt->{outputDir}/lconf.identify") || die "Can't write data: $opt->{outputDir}/lconf.identify $!\n"; close(FH);
-	
-	 # copy defaults localy
- 	beVerbose("LOCAL COPY", "cp @SYSCONF_DIR@/default-templates.cfg $opt->{outputDir}/");
- 	qx(cp @SYSCONF_DIR@/default-templates.cfg $opt->{outputDir}/);
+                    # delete service if LCONF->EXPORT->EXCLUDE is set
+                    delete $CLIENTS->{$client}->{SERVICES}->{$service} if $desc eq 'LCONF->EXPORT->EXCLUDE';
+                }
+            }
+        }
+    }
 
-	# create dirs and write config
-	createDirs($cfg->{ldap}->{baseDN}, $opt->{outputDir});
-	mkdir("$opt->{outputDir}/hostgroups/");
-	mkdir("$opt->{outputDir}/servicegroups/");
-	foreach(@export) {
-		genTimeperiods($CONFIG, $_);
-		genCommands($CONFIG, $_);
-		genContacts($CONFIG, $_);
-		genContactgroups($CONFIG, $_);
-		genHostgroups($CONFIG, $CLIENTS, $_);
-		genServicegroups($CONFIG, $CLIENTS, $_);
-	}
+    # create tmp target
+    $opt->{outputDir} = $cfg->{export}->{tmpdir}.'/'.$opt->{host}.'/';
+    mkdir("$opt->{outputDir}") if !-d $opt->{outputDir};
+
+    # clean tmp target
+    qx(rm -r $opt->{outputDir}/*) if -f "$opt->{outputDir}/lconf.identify";
+
+    # create identifier
+    open(FH, ">$opt->{outputDir}/lconf.identify") || die "Can't write data: $opt->{outputDir}/lconf.identify $!\n"; close(FH);
+
+     # copy defaults localy
+    beVerbose("LOCAL COPY", "cp @SYSCONF_DIR@/default-templates.cfg $opt->{outputDir}/");
+    qx(cp @SYSCONF_DIR@/default-templates.cfg $opt->{outputDir}/);
+
+    # create dirs and write config
+    createDirs($cfg->{ldap}->{baseDN}, $opt->{outputDir});
+    mkdir("$opt->{outputDir}/hostgroups/");
+    mkdir("$opt->{outputDir}/servicegroups/");
+    foreach(@export) {
+        genTimeperiods($CONFIG, $_);
+        genCommands($CONFIG, $_);
+        genContacts($CONFIG, $_);
+        genContactgroups($CONFIG, $_);
+        genHostgroups($CONFIG, $CLIENTS, $_);
+        genServicegroups($CONFIG, $CLIENTS, $_);
+    }
 
   foreach my $client (keys %{$CLIENTS}) {
     genHostConfig($CLIENTS, $client);
   }
 
-	# disconnect from LDAP Server
-	$ldap->unbind();
+    # disconnect from LDAP Server
+    $ldap->unbind();
 
-	#
-	# NOW, START WORKING ON TARGET SERVER's REMOTE DIR
-	#
+    #
+    # NOW, START WORKING ON TARGET SERVER's REMOTE DIR
+    #
 
-	# remote dir exists?
-	checkRemoteDir($opt->{host}, $opt->{target}, $opt->{port});
+    # remote dir exists?
+    checkRemoteDir($opt->{host}, $opt->{target}, $opt->{port});
 
-	# copy config to client
-	my $cmd;
-	if (defined $opt->{port}) {
-		$cmd = "rsync -zai -e 'ssh -p $opt->{port}' --stats --checksum --omit-dir-times --delay-updates --delete-after $opt->{outputDir}/* $opt->{host}:$opt->{target}";
-	} else {
-		$cmd = "rsync -zai -e ssh --stats --checksum --omit-dir-times --delay-updates --delete-after $opt->{outputDir}/* $opt->{host}:$opt->{target}";
-	}
-	beVerbose("COPY", $cmd);
-	qx($cmd);
-	
-	# reload Nagios / Icinga on slave
-	if (defined $opt->{port}) {
-		$cmd = "ssh -p $opt->{port} $opt->{host} '/etc/init.d/icinga reload'";
-	} else {
-		$cmd = "ssh $opt->{host} '/etc/init.d/icinga reload'";
-	}
-	#beVerbose("RELOAD", $cmd);
-	#my $result = qx($cmd);
-	#print $result;
+    # copy config to client
+    my $cmd;
+    if (defined $opt->{port}) {
+        $cmd = "rsync -zai -e 'ssh -p $opt->{port}' --stats --checksum --omit-dir-times --delay-updates --delete-after $opt->{outputDir}/* $opt->{host}:$opt->{target}";
+    } else {
+        $cmd = "rsync -zai -e ssh --stats --checksum --omit-dir-times --delay-updates --delete-after $opt->{outputDir}/* $opt->{host}:$opt->{target}";
+    }
+    beVerbose("COPY", $cmd);
+    qx($cmd);
+
+    # reload Nagios / Icinga on slave
+    if (defined $opt->{port}) {
+        $cmd = "ssh -p $opt->{port} $opt->{host} '/etc/init.d/icinga reload'";
+    } else {
+        $cmd = "ssh $opt->{host} '/etc/init.d/icinga reload'";
+    }
+    #beVerbose("RELOAD", $cmd);
+    #my $result = qx($cmd);
+    #print $result;
 }
 
 # exit
@@ -321,10 +323,13 @@ LeaveScript($exit->{code}, $exit->{message});
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
 
 sub addPaths {
-	my $result = shift;
-	my @to_return = @_;
-	
-	foreach(keys %{$result}) { push(@to_return, $_); }
-	
-	return @to_return;
+    my $result = shift;
+    my @to_return = @_;
+
+    foreach(keys %{$result}) { push(@to_return, $_); }
+
+    return @to_return;
 }
+
+# vi: sw=4 ts=4 expandtab :
+
