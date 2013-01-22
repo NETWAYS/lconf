@@ -103,6 +103,12 @@ all:
 				-e "s/@LDAP_BIND_PASSWORD@/$(LDAP_BIND_PASSWORD)/g" \
 				-e "s/@LCONF_CLI_USER@/$(LCONF_CLI_USER)/g" \
 				-e "s/@PREFIX@/$(PREFIX_QUOTED)/g" \
+				-e "s/@EXPORT_SCRIPT_DIR@/$(EXPORT_SCRIPT_DIR_QUOTED)/g" \
+				-e "s/@SYSCONF_DIR@/$(SYSCONF_DIR_QUOTED)/g" \
+				-e "s/@BIN_DIR@/$(BIN_DIR_QUOTED)/g" \
+				-e "s/@LIB_DIR@/$(LIB_DIR_QUOTED)/g" \
+				-e "s/@TMP_DIR@/$(TMP_DIR_QUOTED)/g" \
+				-e "s/@LOCALSTATE_DIR@/$(LOCALSTATE_DIR_QUOTED)/g" \
 				> src/config.pm
 			# default-templates.cfg.in
 			cat src/default-templates.cfg.in > src/default-templates.cfg

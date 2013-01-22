@@ -15,14 +15,14 @@ $cfg->{ldap}->{rootDN}                   = 'ou='.$cfg->{ldap}->{rootNode}.',@LDA
 #
 $cfg->{export}->{user}                   = '@LCONF_CLI_USER@';
 $cfg->{export}->{exportDN}               = 'ou=IcingaConfig'; # below rootDN
-$cfg->{export}->{tmpdir}                 = '@PREFIX@/tmp';
+$cfg->{export}->{tmpdir}                 = '@TMP_DIR@';
 $cfg->{export}->{onlydiffs}              = 0;
 $cfg->{export}->{childs}                 = 2;
 
 # moved to output dir, but can be overridden here
-#$cfg->{export}->{lock}                  = '@PREFIX@/var/LConfExport.lock';
-#$cfg->{export}->{hashdump}              = '@PREFIX@/var/LConfExport.hashdump';
-#$cfg->{export}->{timestamp}             = '@PREFIX@/var/LConfExport.timestamp';
+#$cfg->{export}->{lock}                  = '@LOCALSTATE_DIR@/LConfExport.lock';
+#$cfg->{export}->{hashdump}              = '@LOCALSTATE_DIR@/LConfExport.hashdump';
+#$cfg->{export}->{timestamp}             = '@LOCALSTATE_DIR@/LConfExport.timestamp';
 
 $cfg->{export}->{treerewrite}            = 'None';
 #$cfg->{export}->{treerewrite}           = 'MainOverLink';
@@ -38,8 +38,8 @@ $cfg->{slavesync}->{ExtCMD}              = '/usr/local/icinga/var/rw/icinga.cmd'
 $cfg->{slavesync}->{getInterval}         = '60';
 $cfg->{slavesync}->{pushInterval}        = '30';
 $cfg->{slavesync}->{directIO}            = '0';
-$cfg->{slavesync}->{pidFile}             = '@PREFIX@/var/LConfSlaveSync.pid';
-$cfg->{slavesync}->{debugLog}            = '@PREFIX@/var/LConfSlaveSync.debug';
+$cfg->{slavesync}->{pidFile}             = '@LOCALSTATE_DIR@/LConfSlaveSync.pid';
+$cfg->{slavesync}->{debugLog}            = '@LOCALSTATE_DIR@/LConfSlaveSync.debug';
 $cfg->{slavesync}->{debug}               = '0';
 
 
