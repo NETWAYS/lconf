@@ -19,7 +19,7 @@ $cfg->{export}->{tmpdir}                 = '@PREFIX@/tmp';
 $cfg->{export}->{onlydiffs}              = 0;
 $cfg->{export}->{childs}                 = 2;
 
-# lock and hashdump moved to output dir!
+# moved to output dir, but can be overridden here
 #$cfg->{export}->{lock}                  = '@PREFIX@/var/LConfExport.lock';
 #$cfg->{export}->{hashdump}              = '@PREFIX@/var/LConfExport.hashdump';
 #$cfg->{export}->{timestamp}             = '@PREFIX@/var/LConfExport.timestamp';

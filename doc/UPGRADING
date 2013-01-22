@@ -37,9 +37,9 @@ Upgrading from 1.2.x to 1.3.x
 |=======================================================|=======================================================================|=======================================================================|
 | Old                                                   | New                                                                   | Notes                                                                 |
 |=======================================================|=======================================================================|=======================================================================|
-| $cfg->{export}->{timestamp}                           | - removed - only existed during 1.3 dev -                             | this file is now found under the export directory                     |
-| $cfg->{export}->{hashdump}                            | - removed -                                                           | this file is now found under the export directory                     |
-| $cfg->{export}->{lockfile}                            | - removed -                                                           | this file is now found under the export directory                     |
+| $cfg->{export}->{timestamp}                           | optional                                                              | this file is now located in the export directory                      |
+| $cfg->{export}->{hashdump}                            | optional                                                              | this file is now located in the export directory                      |
+| $cfg->{export}->{lockfile}                            | optional                                                              | this file is now located in the export directory                      |
 |                                                       | $cfg->{ldap}->{rootNode} = 'LConf';                                   | newly added to reflect the ldap's root tree better                    |
 |                                                       | $cfg->{export}->{onlydiffs} = 0;                                      | only export Config Diffs (experimental)                               |
 |                                                       | $cfg->{export}->{childs} = 2;                                         | max Childs in parallel on LConfExport                                 |
@@ -48,7 +48,7 @@ Upgrading from 1.2.x to 1.3.x
 |=======================================================|=======================================================================|=======================================================================|
 
 
-Upgrading to 1.3rc2
+Upgrading to 1.3.0rc2
 -----------------------------
 - perl module Parallel::ForkManager (>= 0.7.6) is need 
 

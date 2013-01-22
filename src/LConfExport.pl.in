@@ -185,14 +185,20 @@ LeaveScript(2, "You're not user '$cfg->{export}->{user}'!") if $ENV{USER} ne $cf
 LeaveScript('2', "'$opt->{outputDir}' is not a directory") if !-d $opt->{outputDir};
 LeaveScript('2', "'$opt->{outputDir}' is not writeable")   if !-w $opt->{outputDir};
 
-# set lockfile
-$cfg->{export}->{lock} = $opt->{outputDir}.'/LConfExport.lock';
+# set lockfile, if not set otherwise via config
+if(!defined($cfg->{export}->{lock})) {
+    $cfg->{export}->{lock} = $opt->{outputDir}.'/LConfExport.lock';
+}
 
 # set hashdump file
-$cfg->{export}->{hashdump} = $opt->{outputDir}.'/LConfExport.hashdump';
+if(!defined($cfg->{export}->{hashdump})) {
+    $cfg->{export}->{hashdump} = $opt->{outputDir}.'/LConfExport.hashdump';
+}
 
 # set timestamp file
-$cfg->{export}->{timestamp} = $opt->{outputDir}.'/LConfExport.timestamp';
+if(!defined($cfg->{export}->{timestamp})) {
+    $cfg->{export}->{timestamp} = $opt->{outputDir}.'/LConfExport.timestamp';
+}
 
 # export already running?
 open(LOCK, ">$cfg->{export}->{lock}") or LeaveScript(2, "Cannot open $cfg->{export}->{lock}");
