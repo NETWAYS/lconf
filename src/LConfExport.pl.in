@@ -191,6 +191,9 @@ $cfg->{export}->{lock} = $opt->{outputDir}.'/LConfExport.lock';
 # set hashdump file
 $cfg->{export}->{hashdump} = $opt->{outputDir}.'/LConfExport.hashdump';
 
+# set timestamp file
+$cfg->{export}->{timestamp} = $opt->{outputDir}.'/LConfExport.timestamp';
+
 # export already running?
 open(LOCK, ">$cfg->{export}->{lock}") or LeaveScript(2, "Cannot open $cfg->{export}->{lock}");
 flock(LOCK, LOCK_EX|LOCK_NB) or LeaveScript(2, "LConfExport locked! Someone is already using it!");
