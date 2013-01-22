@@ -91,10 +91,13 @@ perl -e "use strict" 2>/dev/null
 if test $? != 0; then AC_MSG_ERROR([ Could not find and exec perl; perl packages are installed? ]); fi
 AC_MSG_NOTICE([checking for perl Net::LDAP... ])
 perl -e "use Net::LDAP" 2>/dev/null
-if test $? != 0; then AC_MSG_ERROR([ Could not find perl module 'Net::LDAP'; packages is installed? ]); fi
+if test $? != 0; then AC_MSG_ERROR([ Could not find perl module 'Net::LDAP'; perl package is installed? ]); fi
 AC_MSG_NOTICE([checking for perl Net::LDAP::Entry... ])
 perl -e "use Net::LDAP::Entry" 2>/dev/null
-if test $? != 0; then AC_MSG_ERROR([ Could not find perl module 'Net::LDAP::Entry'; packages is installed? ]); fi
+if test $? != 0; then AC_MSG_ERROR([ Could not find perl module 'Net::LDAP::Entry'; perl package is installed? ]); fi
+AC_MSG_NOTICE([checking for perl Parallel::ForkManager... ])
+perl -e "use Parallel::ForkManager" 2>/dev/null
+if test $? != 0; then AC_MSG_ERROR([ Could not find perl module 'Parallel::ForkManager'; perl package is installed? ]); fi
 
 
 # exit

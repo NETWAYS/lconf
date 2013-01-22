@@ -2100,11 +2100,15 @@ if test $? != 0; then as_fn_error $? " Could not find and exec perl; perl packag
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for perl Net::LDAP... " >&5
 $as_echo "$as_me: checking for perl Net::LDAP... " >&6;}
 perl -e "use Net::LDAP" 2>/dev/null
-if test $? != 0; then as_fn_error $? " Could not find perl module 'Net::LDAP'; packages is installed? " "$LINENO" 5; fi
+if test $? != 0; then as_fn_error $? " Could not find perl module 'Net::LDAP'; perl package is installed? " "$LINENO" 5; fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for perl Net::LDAP::Entry... " >&5
 $as_echo "$as_me: checking for perl Net::LDAP::Entry... " >&6;}
 perl -e "use Net::LDAP::Entry" 2>/dev/null
-if test $? != 0; then as_fn_error $? " Could not find perl module 'Net::LDAP::Entry'; packages is installed? " "$LINENO" 5; fi
+if test $? != 0; then as_fn_error $? " Could not find perl module 'Net::LDAP::Entry'; perl package is installed? " "$LINENO" 5; fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for perl Parallel::ForkManager... " >&5
+$as_echo "$as_me: checking for perl Parallel::ForkManager... " >&6;}
+perl -e "use Parallel::ForkManager" 2>/dev/null
+if test $? != 0; then as_fn_error $? " Could not find perl module 'Parallel::ForkManager'; perl package is installed? " "$LINENO" 5; fi
 
 
 # exit
