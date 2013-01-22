@@ -84,6 +84,15 @@ all:
 				-e "s/@VERSION@/$(VERSION)/g" \
 				> src/LConfSlaveExport.pl
 			chmod 755 src/LConfSlaveExport.pl
+			# LConfSlaveExportRules.pl
+			cat src/LConfSlaveExportRules.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" \
+				-e "s/@EXPORT_SCRIPT_DIR@/$(EXPORT_SCRIPT_DIR_QUOTED)/g" \
+				-e "s/@SYSCONF_DIR@/$(SYSCONF_DIR_QUOTED)/g" \
+				-e "s/@BIN_DIR@/$(BIN_DIR_QUOTED)/g" \
+				-e "s/@LIB_DIR@/$(LIB_DIR_QUOTED)/g" \
+				-e "s/@VERSION@/$(VERSION)/g" \
+				> src/LConfSlaveExportRules.pl
+			chmod 755 src/LConfSlaveExportRules.pl
 			# LConfSlaveSync.pl
 			cat src/LConfSlaveSync.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" \
 				-e "s/@EXPORT_SCRIPT_DIR@/$(EXPORT_SCRIPT_DIR_QUOTED)/g" \
@@ -134,14 +143,6 @@ all:
 				-e "s/@VERSION@/$(VERSION)/g" \
 				> contrib/LConfDeploy.sh
 			chmod 755 contrib/LConfDeploy.sh
-			# LConfSlaveExportRules.pl
-			cat contrib/LConfSlaveExportRules.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" \
-				-e "s/@EXPORT_SCRIPT_DIR@/$(EXPORT_SCRIPT_DIR_QUOTED)/g" \
-				-e "s/@SYSCONF_DIR@/$(SYSCONF_DIR_QUOTED)/g" \
-				-e "s/@LIB_DIR@/$(LIB_DIR_QUOTED)/g" \
-				-e "s/@VERSION@/$(VERSION)/g" \
-				> contrib/LConfSlaveExportRules.pl
-			chmod 755 contrib/LConfSlaveExportRules.pl
 		# LDAP SCHEMA + BASE.LDIF
 			# netways.schema
 			cat src/netways.schema.in | sed -e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" > src/netways.schema
@@ -199,6 +200,7 @@ install:
 		$(INSTALL) -m 750 $(INSTALL_OPTS) src/LConfExport.pl ${DESTDIR}$(BIN_DIR)/LConfExport.pl
 		$(INSTALL) -m 750 $(INSTALL_OPTS) src/LConfImport.pl ${DESTDIR}$(BIN_DIR)/LConfImport.pl
 		$(INSTALL) -m 750 $(INSTALL_OPTS) src/LConfSlaveExport.pl ${DESTDIR}$(BIN_DIR)/LConfSlaveExport.pl
+		$(INSTALL) -m 750 $(INSTALL_OPTS) src/LConfSlaveExportRules.pl ${DESTDIR}$(BIN_DIR)/LConfSlaveExportRules.pl
 		$(INSTALL) -m 750 $(INSTALL_OPTS) src/LConfSlaveSync.pl ${DESTDIR}$(BIN_DIR)/LConfSlaveSync.pl
 		$(INSTALL) -b -m 640 $(INSTALL_OPTS) src/config.pm ${DESTDIR}$(SYSCONF_DIR)/config.pm
 		$(INSTALL) -b -m 640 $(INSTALL_OPTS) src/default-templates.cfg ${DESTDIR}$(SYSCONF_DIR)/default-templates.cfg
@@ -236,6 +238,7 @@ clean:
 	rm -f src/LConfExport.pl src/LConfExport.pl.[0-9]
 	rm -f src/LConfImport.pl src/LConfImport.pl.[0-9]
 	rm -f src/LConfSlaveExport.pl src/LConfSlaveExport.pl.[0-9]
+	rm -f src/LConfSlaveExportRules.pl src/LConfSlaveExportRules.pl.[0-9]
 	rm -f src/LConfSlaveSync.pl src/LConfSlaveSync.pl.[0-9]
 	rm -f src/config.pm src/config.pm.[0-9]
 	rm -f src/misc.pm src/misc.pm.[0-9]

@@ -8,11 +8,11 @@ autom4te.cache
 contrib/create_lconf-web-dn-mid.pl
 contrib/lconf-slavesync
 contrib/LConfDeploy.sh
-contrib/LConfSlaveExportRules.pl
 
 src/LConfExport.pl
 src/LConfImport.pl
 src/LConfSlaveExport.pl
+src/LConfSlaveExportRules.pl
 src/LConfSlaveSync.pl
 src/base.ldif
 src/base.ldif.[0-9]

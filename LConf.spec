@@ -88,7 +88,6 @@ make
     INSTALL_OPTS="" \
     INIT_OPTS=""
 
-install -m0755 contrib/LConfSlaveExportRules.pl "%{buildroot}%{_bindir}/LConfSlaveExportRules.pl"
 # FIXME sed all required paths
 #install -m0755 contrib/LConfDeploy.sh "%{buildroot}%{_bindir}/LConfDeploy.sh"
 
