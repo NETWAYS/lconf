@@ -142,12 +142,14 @@ sub TreeBuilder {
         if (defined $cfg->{export}->{treerewrite} && $cfg->{export}->{treerewrite} =~ /None/i) {
             foreach my $alias (keys %{$ALIASES}) {
                 DebugOutput('TREE BUILDER', "Found link $ALIASES->{$alias}->{ou} --> follow to target $ALIASES->{$alias}->{aliasedobjectname}");
-                my %tmp_forward = TreeBuilder($ALIASES->{$alias}->{aliasedobjectname}, $CONFIG,  dclone(\%forward));
+
+                # give an empty hash to TreeBuilder to avoid to mix up forwards from different subtrees 
+                my %empty_hash = ();
+                my %tmp_forward = TreeBuilder($ALIASES->{$alias}->{aliasedobjectname}, $CONFIG,  \%empty_hash);
 
                 # process services on links main area
                 foreach my $service (keys %{$tmp_forward{SERVICES}}) {
                     foreach my $val1 (keys %{$tmp_forward{SERVICES}{$service}}) {
-                        #$forward{'SERVICES'}{$service}{$val1} = $tmp_forward{SERVICES}{$service}{$val1};
 
                         # ist das link ziel da?
                         if(!defined $CONFIG->{$ALIASES->{$alias}->{aliasedobjectname}}->{objectclass}) {
