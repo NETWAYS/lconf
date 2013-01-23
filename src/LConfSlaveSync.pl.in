@@ -69,6 +69,54 @@ Start SlaveSync Daemon
 
 Stop SlaveSync Daemon
 
+=item -H|--hosts <list>
+
+A comma separeted list of hosts
+
+=item --localdir <path>
+
+The local directory to sync files to
+
+=item --remotedir <path>
+
+The remote directory to sync files from
+
+=item --spooldir <path>
+
+The checkresults spool directory of Icinga
+
+(used when directIO == 1)
+
+=item --directIO 0|1
+
+Save checkresults directly instead of
+
+=item --ExtCMD <commandpipe>
+
+Path to the Icinga commandpipe
+
+(used when directIO == 0)
+
+=item --pidFile <file>
+
+Filename of the PID used for the Slave Sync daemon
+
+=item --getInterval <seconds>
+
+Interval to sync files from remote
+
+=item --pushInterval <seconds>
+
+Interval to push data into master
+
+=item -d|--debug 0|1
+
+Debug log
+
+=item --debugLog <file>
+
+Debug logfile
+
 =item -h|--help
 
 print help page
@@ -81,6 +129,7 @@ print plugin version
 
 # includes
 use strict;
+use Getopt::Long qw(:config no_ignore_case bundling);
 use POSIX qw(setsid);
 use LWP::Simple;
 use Pod::Usage;
@@ -101,24 +150,37 @@ my $version = '@VERSION@';
 # define states
 our @state = ('OK', 'WARNING', 'ERROR');
 
+# define vars
+use vars qw($cfg);
 
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
 # help and version page
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
 
-pod2usage(1) if !defined $ARGV[0];
-pod2usage(1) if $ARGV[0] eq '-h';
-pod2usage(1) if $ARGV[0] eq '--help';
-print $version."\n" if $ARGV[0] eq '-V';
-print $version."\n" if $ARGV[0] eq '--version';
+our $opt;
+GetOptions(
+    "H|hosts=s"      => \$cfg->{slavesync}->{HOSTS},
+    "localdir=s"     => \$cfg->{slavesync}->{localdir},
+    "remotedir=s"    => \$cfg->{slavesync}->{remotedir},
+    "spooldir=s"     => \$cfg->{slavesync}->{spooldir},
+    "ExtCMD=s"       => \$cfg->{slavesync}->{ExtCMD},
+    "getInterval=s"  => \$cfg->{slavesync}->{getInterval},
+    "pushInterval=s" => \$cfg->{slavesync}->{pushInterval},
+    "directIO=s"     => \$cfg->{slavesync}->{directIO},
+    "pidFile=s"      => \$cfg->{slavesync}->{pidFile},
+    "d|debug=s"      => \$cfg->{slavesync}->{debug},
+    "debugLog"       => \$cfg->{slavesync}->{debugLog},
+    "h|help"         => \$opt->{help},
+    "V|version"      => \$opt->{version}
+);
 
+pod2usage(1) if !defined $ARGV[0];
+pod2usage(1) if defined $opt->{help};
+print $version."\n" if defined $opt->{version};
 
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
 # let's go!
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
-
-# define vars
-use vars qw($cfg);
 
 # fist of all... check if we're ready to run
 LeaveScript(2, "Variable '\$cfg->{slavesync}->{HOSTS}' not set in config.pm")        if !$cfg->{slavesync}->{HOSTS};
@@ -133,7 +195,7 @@ LeaveScript(2, "Variable '\$cfg->{slavesync}->{debugLog}' not set in config.pm")
 
 # debug mode?
 if (defined $cfg->{slavesync}->{debug} && $cfg->{slavesync}->{debug} == 1) {
-    our $opt; $opt->{verbose} = $cfg->{slavesync}->{debugLog};
+    $opt->{verbose} = $cfg->{slavesync}->{debugLog};
 }
 
 # start or stop?
