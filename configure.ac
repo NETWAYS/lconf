@@ -89,15 +89,17 @@ if test -z $ac_cv_path_LDAPADD ; then AC_MSG_ERROR([ Could not find the command 
 AC_MSG_NOTICE([checking for perl... ])
 perl -e "use strict" 2>/dev/null
 if test $? != 0; then AC_MSG_ERROR([ Could not find and exec perl; perl packages are installed? ]); fi
-AC_MSG_NOTICE([checking for perl Net::LDAP... ])
-perl -e "use Net::LDAP" 2>/dev/null
-if test $? != 0; then AC_MSG_ERROR([ Could not find perl module 'Net::LDAP'; perl package is installed? ]); fi
-AC_MSG_NOTICE([checking for perl Net::LDAP::Entry... ])
-perl -e "use Net::LDAP::Entry" 2>/dev/null
-if test $? != 0; then AC_MSG_ERROR([ Could not find perl module 'Net::LDAP::Entry'; perl package is installed? ]); fi
-AC_MSG_NOTICE([checking for perl Parallel::ForkManager... ])
-perl -e "use Parallel::ForkManager" 2>/dev/null
-if test $? != 0; then AC_MSG_ERROR([ Could not find perl module 'Parallel::ForkManager'; perl package is installed? ]); fi
+
+for module in Net::LDAP Net::LDAP::Entry Parallel::ForkManager; do
+    AC_MSG_NOTICE([checking for perl $module... ])
+    perl -e "use $module" 2>/dev/null
+    if test $? != 0; then AC_MSG_ERROR([ Could not find perl module '$module'; perl package is installed? ]); fi
+done
+
+forkmanager_min="0.76"
+AC_MSG_NOTICE([checking for perl Parallel::ForkManager version... ])
+perl -MParallel::ForkManager -Mversion -e 'my $version = version->parse("$Parallel::ForkManager::VERSION"); my $iwant = version->parse("'$forkmanager_min'"); print "Version found: $version\n"; exit 1 unless $version >= $iwant;'
+if test $? != 0; then AC_MSG_ERROR([ perl module 'Parallel::ForkManager' needs to be at least version $forkmanager_min ]); fi
 
 
 # exit
