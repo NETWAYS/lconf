@@ -53,12 +53,12 @@ LConfSlaveExport.pl - export an Nagios / Icinga config from LConf to a slave clu
 =head1 SYNOPSIS
 
 LConfSlaveExport.pl  -H <name of slave server>
-                     -p <port>
-                     -D <hashdump>
+                     [-p <port>]
+                     [-D <hashdump>]
                      -t <path to config on slave host>
-                     -v
-                     -h
-                     -V
+                     [-v]
+                     [-h]
+                     [-V]
 
 Export an Nagios / Icinga config from LConf to a slave cluster
 
@@ -76,7 +76,7 @@ Connect to target host via port <port>
 
 =item -D|--hashdump <lconf hashdump file>
 
-Set Lconf hasdump file location
+Set Lconf hashdump file location
 
 =item -t|--target <path to config on slave host>
 
@@ -85,6 +85,20 @@ Target path on slave server
 =item -v|--verbose <path to logfile>
 
 Verbose mode. If no logfile is specified, verbose output will be printend to STDOUT
+
+=item -o|--output <directory>
+
+The directory where to write the configuration.
+
+Default: <lconftmp>/<host>
+
+=item -n|--noremote
+
+Do not push the config to a remote host
+
+=item -e|--exportdn <dn path below LConf>
+
+The DN where to start the export, this overrides the config option exportDN
 
 =item -h|--help
 
@@ -125,6 +139,9 @@ GetOptions(
     "p|port=s"     => \$opt->{port},
     "D|hashdump=s" => \$opt->{hashdump},
     "t|target=s"   => \$opt->{target},
+    "o|output=s"   => \$opt->{outputDir},
+    "n|noremote"   => \$opt->{noremote},
+    "e|exportdn=s" => \$opt->{exportDN},
     "v|verbose:s"  => \$opt->{verbose},
     "h|help"       => \$opt->{help},
     "V|version"    => \$opt->{version}
@@ -139,7 +156,7 @@ GetOptions(
 if (defined $opt->{version}) { print $version."\n"; exit 0; }
 
 # should print help?
-if ($opt->{help} || !$opt->{target}) { pod2usage(1); }
+if ($opt->{help} || !$opt->{noremote} && !$opt->{target}) { pod2usage(1); }
 
 
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
@@ -148,7 +165,12 @@ if ($opt->{help} || !$opt->{target}) { pod2usage(1); }
 
 # define vars
 use vars qw($cfg);
-$cfg->{ldap}->{baseDN} = $cfg->{export}->{exportDN}.','.$cfg->{ldap}->{rootDN};
+if (defined $opt->{exportDN}) {
+    $cfg->{ldap}->{baseDN} = $opt->{exportDN}.','.$cfg->{ldap}->{rootDN};
+}
+else {
+    $cfg->{ldap}->{baseDN} = $cfg->{export}->{exportDN}.','.$cfg->{ldap}->{rootDN};
+}
 our $CLIENTS;
 my @export;
 my @hosts;
@@ -261,7 +283,9 @@ foreach my $host (@hosts) {
     }
 
     # create tmp target
-    $opt->{outputDir} = $cfg->{export}->{tmpdir}.'/'.$opt->{host}.'/';
+    if(!defined $opt->{outputDir}) {
+        $opt->{outputDir} = $cfg->{export}->{tmpdir}.'/'.$opt->{host}.'/';
+    }
     mkdir("$opt->{outputDir}") if !-d $opt->{outputDir};
 
     # clean tmp target
@@ -287,9 +311,9 @@ foreach my $host (@hosts) {
         genServicegroups($CONFIG, $CLIENTS, $_);
     }
 
-  foreach my $client (keys %{$CLIENTS}) {
-    genHostConfig($CLIENTS, $client);
-  }
+    foreach my $client (keys %{$CLIENTS}) {
+        genHostConfig($CLIENTS, $client);
+    }
 
     # disconnect from LDAP Server
     $ldap->unbind();
@@ -298,28 +322,30 @@ foreach my $host (@hosts) {
     # NOW, START WORKING ON TARGET SERVER's REMOTE DIR
     #
 
-    # remote dir exists?
-    checkRemoteDir($opt->{host}, $opt->{target}, $opt->{port});
+    if(!defined $opt->{noremote}) {
+        # remote dir exists?
+        checkRemoteDir($opt->{host}, $opt->{target}, $opt->{port});
 
-    # copy config to client
-    my $cmd;
-    if (defined $opt->{port}) {
-        $cmd = "rsync -zai -e 'ssh -p $opt->{port}' --stats --checksum --omit-dir-times --delay-updates --delete-after $opt->{outputDir}/* $opt->{host}:$opt->{target}";
-    } else {
-        $cmd = "rsync -zai -e ssh --stats --checksum --omit-dir-times --delay-updates --delete-after $opt->{outputDir}/* $opt->{host}:$opt->{target}";
-    }
-    beVerbose("COPY", $cmd);
-    qx($cmd);
+        # copy config to client
+        my $cmd;
+        if (defined $opt->{port}) {
+            $cmd = "rsync -zai -e 'ssh -p $opt->{port}' --stats --checksum --omit-dir-times --delay-updates --delete-after $opt->{outputDir}/* $opt->{host}:$opt->{target}";
+        } else {
+            $cmd = "rsync -zai -e ssh --stats --checksum --omit-dir-times --delay-updates --delete-after $opt->{outputDir}/* $opt->{host}:$opt->{target}";
+        }
+        beVerbose("COPY", $cmd);
+        qx($cmd);
 
-    # reload Nagios / Icinga on slave
-    if (defined $opt->{port}) {
-        $cmd = "ssh -p $opt->{port} $opt->{host} '/etc/init.d/icinga reload'";
-    } else {
-        $cmd = "ssh $opt->{host} '/etc/init.d/icinga reload'";
+        # reload Nagios / Icinga on slave
+        if (defined $opt->{port}) {
+            $cmd = "ssh -p $opt->{port} $opt->{host} '/etc/init.d/icinga reload'";
+        } else {
+            $cmd = "ssh $opt->{host} '/etc/init.d/icinga reload'";
+        }
+        #beVerbose("RELOAD", $cmd);
+        #my $result = qx($cmd);
+        #print $result;
     }
-    #beVerbose("RELOAD", $cmd);
-    #my $result = qx($cmd);
-    #print $result;
 }
 
 # exit
