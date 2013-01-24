@@ -62,6 +62,7 @@ $cfg->{slavesync}->{debug}               = '0';
 #   },
 #   'settings' => {
 #       'slaveexportparents' => 0,
+#       'slaveexportdependencies' => 0,
 #   },
 #};
 

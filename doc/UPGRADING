@@ -58,3 +58,45 @@ Upgrading to 1.3.0rc2
 
 # vi: sw=4 ts=4 expandtab :
 
+
+LConfSlaveExportRules
+----------------------------
+
+Within a distributed Master/Slave setup, you may encounter the problem
+that you cannot export the configuration based on your trees and config
+within the LConf export mechanism, but do that via pattern matching.
+
+This is where LConfSlaveExportRules replaces LConfSlaveExport - it will
+match defined attributes against a pattern, and also puts those rules against
+targets for deployment, slave name and location.
+
+Furthermore, within such a setup, with a "cut off" config mechanism, it does
+not make much sense to let the slaves check parents and/or dependencies. So
+in order to stay sane on this, you can disable those for the export then.
+
+Below an example for all services having a CV with pattern 'Nuernberg', 
+being exported to satelite1.icinga into /etc/icinga/lconf
+
+#
+# LConfSlaveExportRules.pl
+#
+$cfg->{slaveexportrules} = {
+    'rules' => {
+        'service-rule1' => {
+            'object' => 'lconfservice',
+           'attribute' => 'lconfservicecustomvar',
+           'pattern' => 'Nuernberg'
+        },
+    },
+    'targets' => {
+        'satelite1.icinga' => {
+           'targetDir' => '/etc/icinga/lconf',
+           'rulemap' => 'service-rule1'
+        },
+    },
+    'settings' => {
+       'slaveexportparents' => 0,
+       'slaveexportdependencies' => 0,
+    },
+};
+
