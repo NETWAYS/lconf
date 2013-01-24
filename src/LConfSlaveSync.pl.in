@@ -160,16 +160,16 @@ use vars qw($cfg);
 our $opt;
 GetOptions(
     "H|hosts=s"      => \$cfg->{slavesync}->{HOSTS},
-    "localdir=s"     => \$cfg->{slavesync}->{localdir},
-    "remotedir=s"    => \$cfg->{slavesync}->{remotedir},
-    "spooldir=s"     => \$cfg->{slavesync}->{spooldir},
+    "localdir=s"     => \$cfg->{slavesync}->{localDir},
+    "remotedir=s"    => \$cfg->{slavesync}->{remoteDir},
+    "spooldir=s"     => \$cfg->{slavesync}->{spoolDir},
     "ExtCMD=s"       => \$cfg->{slavesync}->{ExtCMD},
     "getInterval=s"  => \$cfg->{slavesync}->{getInterval},
     "pushInterval=s" => \$cfg->{slavesync}->{pushInterval},
     "directIO=s"     => \$cfg->{slavesync}->{directIO},
     "pidFile=s"      => \$cfg->{slavesync}->{pidFile},
     "d|debug=s"      => \$cfg->{slavesync}->{debug},
-    "debugLog"       => \$cfg->{slavesync}->{debugLog},
+    "debugLog=s"     => \$cfg->{slavesync}->{debugLog},
     "h|help"         => \$opt->{help},
     "V|version"      => \$opt->{version}
 );
