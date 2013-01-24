@@ -319,7 +319,7 @@ foreach my $client (keys %{$CLIENTS}) {
 
 # run custom script (pre)
 if (-f '@EXPORT_SCRIPT_DIR@/pre.pl') {
-    require '@EXPORT_SCRIPT_DIR@/custom/pre.pl';
+    require '@EXPORT_SCRIPT_DIR@/pre.pl';
     $CLIENTS = CustomPre($CLIENTS);
 }
 
@@ -370,8 +370,8 @@ foreach my $client (keys %{$CLIENTS}) {
 
 
     # run custom script (mid)
-    if (-f '@EXPORT_SCRIPT_DIR@/custom/mid.pl') {
-        require '@EXPORT_SCRIPT_DIR@/custom/mid.pl';
+    if (-f '@EXPORT_SCRIPT_DIR@/mid.pl') {
+        require '@EXPORT_SCRIPT_DIR@/mid.pl';
         $CLIENTS = CustomMid($CLIENTS, $client);
     }
 
