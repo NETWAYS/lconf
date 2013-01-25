@@ -201,8 +201,8 @@ if(!defined($cfg->{export}->{timestamp})) {
 }
 
 # set master config manipulation
-if(!defined($cfg->{export}->{allowmasterconfigchange})) {
-    $cfg->{export}->{allowmasterconfigchange} = 0;
+if(!defined($cfg->{export}->{enablemidmaster})) {
+    $cfg->{export}->{enablemidmaster} = 0;
 }
 
 # export already running?
@@ -376,7 +376,7 @@ foreach my $client (keys %{$CLIENTS}) {
     }
 
 	# check if our mid.pl is allowed to change the master config
-	if ($cfg->{export}->{allowmasterconfigchange} == 1) {
+	if ($cfg->{export}->{enablemidmaster} == 1) {
 		# create a copy of modified config just for the master
 		my $CLIENTS_MASTER_MOD = dclone($CLIENTS);
 

@@ -28,7 +28,7 @@ $cfg->{export}->{treerewrite}            = 'None';
 #$cfg->{export}->{treerewrite}           = 'MainOverLink';
 
 # enable mid-master.pl to change master config in distributed envs
-$cfg->{export}->{allowmasterconfigchange} = 0;
+$cfg->{export}->{enablemidmaster}       = 0;
 
 #
 # LConfSlaveSync.pl
