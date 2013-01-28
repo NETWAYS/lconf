@@ -7,12 +7,6 @@
 # package are under the same license as the package itself.
 #
 
-%if "%{_vendor}" == "suse"
-%define installdir /srv/www/%{name}
-%endif
-%if "%{_vendor}" == "redhat"
-%define installdir /var/www/%{name}
-%endif
 
 Name:           LConf
 Summary:        LDAP based configuration tool for Icinga and Nagios
@@ -21,25 +15,20 @@ Release:        1
 Url:            https://www.netways.org/projects/lconf
 License:        GPL v2 or later
 Group:          System/Monitoring
-%if "%{_vendor}" == "suse"
-BuildRequires:  apache2-devel
+AutoReqProv: 	no
 %if 0%{?suse_version} > 1020
 BuildRequires:  fdupes
 %endif
-PreReq:         apache2
-%endif 
-Requires:       openldap2 >= 2.3
-Requires:       perl(Net::LDAP)
-Requires:	perl(Parallel::ForkManager) >= 0.7.6
 %if "%{_vendor}" == "suse"
+Requires:       openldap2 >= 2.3
 Requires:       openldap2-client
 BuildRequires:	openldap2-client
 %endif
 %if "%{_vendor}" == "redhat"
+Requires:       openldap >= 2.3
 Requires:       openldap-clients
 BuildRequires:	openldap-clients
 %endif
-BuildRequires:  perl(Net::LDAP)
 %if "%{_vendor}" == "suse"
 Recommends:     rsync
 Recommends:	icinga
@@ -48,10 +37,11 @@ Source0:        %name-%version.tar.gz
 BuildArch:      noarch
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 
-%if "%{_vendor}" == "suse"
-%define         apxs2 /usr/sbin/apxs2-prefork
-%define         apache2_sysconfdir %(%{apxs2} -q SYSCONFDIR)
-%endif
+Requires:       perl(Net::LDAP)
+Requires:	perl(Parallel::ForkManager) >= 0.7.6
+BuildRequires:  perl(Net::LDAP)
+BuildRequires:  perl(Parallel::ForkManager)
+
 
 %description
 LConf is a LDAP based configuration tool for Icinga® and Nagios®. All
@@ -130,6 +120,9 @@ rm -rf %buildroot
 %config(noreplace) %{_sysconfdir}/%{name}/*
 
 %changelog
+* Thu Jan 28 2013 christian.dengler@netways.de
+- disable AutoReqProv; correct Requires
+
 * Thu Jan 17 2013 christian.dengler@netways.de
 - adjust version number, add additional BuildRequires, fix broken macro definition
 
