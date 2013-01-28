@@ -211,6 +211,7 @@ foreach my $target (sort keys %{$cfg->{slaveexportrules}->{targets}}) {
 	$opt->{tmpDir}    = $cfg->{export}->{tmpdir}.'/'.$opt->{host}.'/';
 	$opt->{outputDir} = $cfg->{slaveexportrules}->{targets}->{$target}->{targetDir};
 	$opt->{slaveexportparents} = $cfg->{slaveexportrules}->{'settings'}->{slaveexportparents};
+	$opt->{slaveexportdependencies} = $cfg->{slaveexportrules}->{'settings'}->{slaveexportdependencies};
 	
 print "fump: host: $opt->{host}\n";
 print "fump: tmpDir: $opt->{tmpDir}\n";
@@ -244,6 +245,14 @@ print "fump: outputDir: $opt->{outputDir}\n";
 				foreach my $service (keys %{$CLIENTS->{$client}->{SERVICES}}) {
 					my $serviceattribute = $cfg->{slaveexportrules}->{rules}->{$rule}->{attribute};
 					my $servicepattern = $cfg->{slaveexportrules}->{rules}->{$rule}->{pattern};
+
+					# delete any service dependency found, this makes no sense on slaves
+					if ($opt->{slaveexportdependencies} == 0) {
+						if (defined($CLIENTS->{$client}->{SERVICES}->{$service}->{SERVICEDEPENDENCY})) {
+							delete($CLIENTS->{$client}->{SERVICES}->{$service}->{SERVICEDEPENDENCY});
+						}
+					}
+
 					# this could be optional, so check availibility first (e.g. lconfservicecustomvar)
 					if (defined($CLIENTS->{$client}->{SERVICES}->{$service}->{$serviceattribute})) {
 
@@ -355,7 +364,7 @@ print "fump: outputDir: $opt->{outputDir}\n";
 	open(FH, ">$opt->{tmpDir}/lconf.identify") || die "Can't write data: $opt->{tmpDir}/lconf.identify $!\n"; close(FH);
 	
 	# copy defaults localy
-        beVerbose("LOCAL COPY", "cp @SYSCONF_DIR@/default-templates.cfg $opt->{outputDir}/");
+    beVerbose("LOCAL COPY", "cp @SYSCONF_DIR@/default-templates.cfg $opt->{outputDir}/");
 	qx(cp @SYSCONF_DIR@/default-templates.cfg $opt->{outputDir}/);
 
 	# create dirs and write config

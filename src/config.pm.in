@@ -27,6 +27,9 @@ $cfg->{export}->{childs}                 = 2;
 $cfg->{export}->{treerewrite}            = 'None';
 #$cfg->{export}->{treerewrite}           = 'MainOverLink';
 
+# enable mid-master.pl to change master config in distributed envs
+$cfg->{export}->{enablemidmaster}       = 0;
+
 #
 # LConfSlaveSync.pl
 #
@@ -62,6 +65,7 @@ $cfg->{slavesync}->{debug}               = '0';
 #   },
 #   'settings' => {
 #       'slaveexportparents' => 0,
+#       'slaveexportdependencies' => 0,
 #   },
 #};
 

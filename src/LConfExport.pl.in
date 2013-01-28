@@ -200,6 +200,11 @@ if(!defined($cfg->{export}->{timestamp})) {
     $cfg->{export}->{timestamp} = $opt->{outputDir}.'/LConfExport.timestamp';
 }
 
+# set master config manipulation
+if(!defined($cfg->{export}->{enablemidmaster})) {
+    $cfg->{export}->{enablemidmaster} = 0;
+}
+
 # export already running?
 open(LOCK, ">$cfg->{export}->{lock}") or LeaveScript(2, "Cannot open $cfg->{export}->{lock}");
 flock(LOCK, LOCK_EX|LOCK_NB) or LeaveScript(2, "LConfExport locked! Someone is already using it!");
@@ -367,14 +372,37 @@ foreach my $client (keys %{$CLIENTS}) {
     %TREE = TreeBuilder($client, $CONFIG, \%TREE);
     $CLIENTS = BuildHostConfig($client, $CLIENTS, \%TREE);
 
+
     # run custom script (mid)
     if (-f '@EXPORT_SCRIPT_DIR@/mid.pl') {
         require '@EXPORT_SCRIPT_DIR@/mid.pl';
-        $CLIENTS = CustomMid($CLIENTS);
+        $CLIENTS = CustomMid($CLIENTS, $client);
     }
 
-    # create output dirs and generate config
-    genHostConfig($CLIENTS, $client);
+	# check if our mid.pl is allowed to change the master config
+	if ($cfg->{export}->{enablemidmaster} == 1) {
+		# create a copy of modified config just for the master
+		my $CLIENTS_MASTER_MOD = dclone($CLIENTS);
+
+	    # run custom master script
+	    if (-f '@EXPORT_SCRIPT_DIR@/mid-master.pl') {
+	        require '@EXPORT_SCRIPT_DIR@/mid-master.pl';
+	        $CLIENTS_MASTER_MOD = CustomMidMaster($CLIENTS_MASTER_MOD, $client);
+	    }
+
+	    # create output dirs and generate master config from modified content
+	    genHostConfig($CLIENTS_MASTER_MOD, $client);
+	
+		# leave $CLIENTS untouched from master config, and pass back to the parent process
+		# we do not need the modified master content anymore, it was dumped as icinga config already
+
+	}
+	# unchanged master config 
+	else {
+
+	    # create output dirs and generate master config
+	    genHostConfig($CLIENTS, $client);
+	}
 
     # finish child, give $client back to the parent
     $pm->finish(0, \%{$CLIENTS->{$client}});

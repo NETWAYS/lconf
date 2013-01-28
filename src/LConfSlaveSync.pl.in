@@ -326,149 +326,153 @@ sub processFilesSpoolDir {
     my $sleepExecThread = shift;
 
     while(1) {
+        my $counter = 999999999;
+
         # define array
         my @FILES;
 
+        # get files
+        opendir(DIR, $localDir) || die "can't open dir $localDir: $!";
+        while((my $val = readdir(DIR))) {
+            push(@FILES, $val);
+        }
+        closedir(DIR);
+
+        # sort stuff
+        @FILES = sort(@FILES);
+
         # how mouch in spool?
-        my $filecount = 0;
+        my $size_all = 0;
         opendir(DIR, $spoolDir) || die "can't open dir $spoolDir: $!";
         while((my $val = readdir(DIR))) {
             if ($val ne "." && $val ne "..") {
-                if ($val =~ /^c84UY/) {
-                    $filecount++;
-                }
+                my $size_file = -s "$spoolDir/$val";
+                $size_all = $size_all + $size_file;
             }
         }
         closedir(DIR);
-        beVerbose('FILECOUNT', "$filecount files in spool (from $localDir to $spoolDir)");
 
-        if ($filecount <= 0) {
-            # get files
-            opendir(DIR, $localDir) || die "can't open dir $localDir: $!";
-            while((my $val = readdir(DIR))) {
-                    if ($val ne '.' && $val ne '..') {
-                    push(@FILES, $val) if $val
-                }
-            }
-            closedir(DIR);
+        # re-calc
+        $size_all = $size_all/1024;
+        $size_all = $size_all/1024;
 
-            # sort stuff
-            @FILES = sort(@FILES);
-
-            my $counter = 0;
-            beVerbose('PROCESS_FILES', "start processing...");
-            foreach my $file (@FILES) {
-                if ($counter <= 20) {
-                    my $data;
-                    open(FH, "$localDir/$file" || die("Could not open file $localDir/$file"));
-                    while(<FH>) { $data .= $_ }
-                    close(FH);
-
-                    my @lines = split(/\n/, $data);
-                    foreach(@lines) {
-                        my $target_filename;
-
-                        if ($_ =~ /PROCESS_HOST_CHECK_RESULT/) {
-                            # get timestamp
-                            my ($timestamp) = split(/\s/, $_);
-                            $timestamp =~ m/([\d]+)/;
-                            $timestamp = $1;
-
-                            # get hostname and returncode
-                            my @val = split(/;/, $_);
-                            shift(@val); my $hostname = $val[0];
-                            shift(@val); my $returncode = $val[0];
-                            shift(@val);
-
-                            # get message and perfdata
-                            my $message = $val[0]; shift(@val);
-                            foreach(@val) { $message .= ';'.$_; }
-
-                            # map return code for hosts
-                            my $mapped_returncode = 0;
-                            $mapped_returncode = 2 if $returncode == 1;
-
-                            # prepare output for writing
-                            $data = '';
-                            $data .= "host_name=$hostname\n";
-                            $data .= "check_type=0\n";
-                            $data .= "check_options=0\n";
-                            $data .= "scheduled_check=0\n";
-                            $data .= "reschedule_check=0\n";
-                            $data .= "latency=0.000000\n";
-                            $data .= "start_time=$timestamp.0\n";
-                            $data .= "finish_time=$timestamp.0\n";
-                            $data .= "early_timeout=0\n";
-                            $data .= "exited_ok=1\n";
-                            $data .= "return_code=$mapped_returncode\n";
-                            $data .= "output=$message\n";
-                            $data .= "\n";
-
-                            # write file
-                            $counter = sprintf("%02d",$counter);
-                            $target_filename = "c84UY$counter";
-                        #   beVerbose("BLUBB", "$spoolDir/$target_filename");
-                            open (MYFILE, ">>$spoolDir/$target_filename");
-                            print MYFILE $data;
-                            close (MYFILE);
-
-                            # commit
-                            open (MYFILE, ">>$spoolDir/$target_filename.ok");
-                            close (MYFILE);
-                        }
-
-                        if ($_ =~ /PROCESS_SERVICE_CHECK_RESULT/) {
-                            # get timestamp
-                            my ($timestamp) = split(/\s/, $_);
-                            $timestamp =~ m/([\d]+)/;
-                            $timestamp = $1;
-
-                            # get hostname, servicename and returncode
-                            my @val = split(/;/, $_);
-                            shift(@val); my $hostname = $val[0];
-                            shift(@val); my $service = $val[0];
-                            shift(@val); my $returncode = $val[0];
-                            shift(@val);
-
-                            # get message and perfdata
-                            my $message = $val[0]; shift(@val);
-                            foreach(@val) { $message .= ';'.$_; }
-
-                            # prepare output for writing
-                            $data = '';
-                            $data .= "host_name=$hostname\n";
-                            $data .= "service_description=$service\n";
-                            $data .= "check_type=1\n";
-                            $data .= "scheduled_check=0\n";
-                            $data .= "reschedule_check=0\n";
-                            $data .= "latency=0.000000\n";
-                            $data .= "start_time=$timestamp.0\n";
-                            $data .= "finish_time=$timestamp.0\n";
-                            $data .= "return_code=$returncode\n";
-                            $data .= "output=$message\n";
-                            $data .= "\n";
-
-                            # write file
-                            $counter = sprintf("%02d",$counter);
-                            $target_filename = "c84UY$counter";
-                            #beVerbose("BLUBB", "$spoolDir/$target_filename");
-                            open (MYFILE, ">>$spoolDir/$target_filename") || die "Can't write: $!\n";
-                            print MYFILE $data;
-                            close (MYFILE);
-
-                            # commit
-                            open (MYFILE, ">>$spoolDir/$target_filename.ok");
-                            close (MYFILE);
-                        }
-                    }
-                        #tmp
-                        #qx(cp $localDir/$file /nagios/icinga/icinga-icinga/var/perfdata-to-test/);
-                    qx(rm $localDir/$file);
-                    $counter++;
-                }
-            }
+        # reset?
+        if ($size_all <= 1) {
+            $counter = 0;
+            beVerbose('PROCESS_FILES', 'reset counter => proceed!');
         }
+	
+		beVerbose('PROCESS_FILES', "start processing...");
+		foreach my $file (@FILES) {
+			if ($counter <= 30) {
+				my $data;
+				open(FH, "$localDir/$file" || die("Could not open file $localDir/$file"));
+				while(<FH>) { $data .= $_ }
+				close(FH);
 
+				my @lines = split(/\n/, $data);
+				foreach(@lines) {
+					my $target_filename;
+
+					if ($_ =~ /PROCESS_HOST_CHECK_RESULT/) {
+						# get timestamp
+						my ($timestamp) = split(/\s/, $_);
+						$timestamp =~ m/([\d]+)/;
+						$timestamp = $1;
+
+						# get hostname and returncode
+						my @val = split(/;/, $_);
+						shift(@val); my $hostname = $val[0];
+						shift(@val); my $returncode = $val[0];
+						shift(@val);
+
+						# get message and perfdata
+						my $message = $val[0]; shift(@val);
+						foreach(@val) { $message .= ';'.$_; }
+
+						# map return code for hosts
+						my $mapped_returncode = 0;
+						$mapped_returncode = 2 if $returncode == 1;
+
+						# prepare output for writing
+						$data = '';
+						$data .= "host_name=$hostname\n";
+						$data .= "check_type=0\n";
+						$data .= "check_options=0\n";
+						$data .= "scheduled_check=0\n";
+						$data .= "reschedule_check=0\n";
+						$data .= "latency=0.000000\n";
+						$data .= "start_time=$timestamp.0\n";
+						$data .= "finish_time=$timestamp.0\n";
+						$data .= "early_timeout=0\n";
+						$data .= "exited_ok=1\n";
+						$data .= "return_code=$mapped_returncode\n";
+						$data .= "output=$message\n";
+						$data .= "\n";
+
+						# write file
+						$counter = sprintf("%02d",$counter);
+						$target_filename = "c84UY$counter";
+						beVerbose("BLUBB", "$spoolDir/$target_filename");
+						open (MYFILE, ">>$spoolDir/$target_filename");
+						print MYFILE $data;
+						close (MYFILE);
+
+						# commit
+						open (MYFILE, ">>$spoolDir/$target_filename.ok");
+						close (MYFILE);
+					}
+
+					if ($_ =~ /PROCESS_SERVICE_CHECK_RESULT/) {
+						# get timestamp
+						my ($timestamp) = split(/\s/, $_);
+						$timestamp =~ m/([\d]+)/;
+						$timestamp = $1;
+
+						# get hostname, servicename and returncode
+						my @val = split(/;/, $_);
+						shift(@val); my $hostname = $val[0];
+						shift(@val); my $service = $val[0];
+						shift(@val); my $returncode = $val[0];
+						shift(@val);
+
+						# get message and perfdata
+						my $message = $val[0]; shift(@val);
+						foreach(@val) { $message .= ';'.$_; }
+
+						# prepare output for writing
+						$data = '';
+						$data .= "host_name=$hostname\n";
+						$data .= "service_description=$service\n";
+						$data .= "check_type=1\n";
+						$data .= "scheduled_check=0\n";
+						$data .= "reschedule_check=0\n";
+						$data .= "latency=0.000000\n";
+						$data .= "start_time=$timestamp.0\n";
+						$data .= "finish_time=$timestamp.0\n";
+						$data .= "return_code=$returncode\n";
+						$data .= "output=$message\n";
+						$data .= "\n";
+
+						# write file
+						$counter = sprintf("%02d",$counter);
+						$target_filename = "c84UY$counter";
+						#beVerbose("BLUBB", "$spoolDir/$target_filename");
+						open (MYFILE, ">>$spoolDir/$target_filename") || die "Can't write: $!\n";
+						print MYFILE $data;
+						close (MYFILE);
+
+						# commit
+						open (MYFILE, ">>$spoolDir/$target_filename.ok");
+						close (MYFILE);
+					}
+				}
+				#tmp
+				#qx(cp $localDir/$file /nagios/icinga/icinga-icinga/var/perfdata-to-test/);
+				qx(rm $localDir/$file);
+				$counter++;
+			}
+		}
         sleep $sleepExecThread;
     }
 }
