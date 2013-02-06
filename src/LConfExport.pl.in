@@ -327,7 +327,7 @@ if (-f '@EXPORT_SCRIPT_DIR@/pre.pl') {
     $CLIENTS = CustomPre($CLIENTS);
 }
 
-# build configuration
+# prepare directories for the .cfg files
 createDirs($cfg->{ldap}->{baseDN}, $opt->{outputDir});  # TODO: Umbauen damit er ohne LDAPsearch funktioniert??
 mkdir("$opt->{outputDir}/hostgroups/");
 mkdir("$opt->{outputDir}/servicegroups/");
@@ -335,7 +335,7 @@ mkdir("$opt->{outputDir}/serviceescalations/");
 mkdir("$opt->{outputDir}/hostescalations/");
 copyGeneric("@SYSCONF_DIR@/default-templates.cfg", $opt->{outputDir});
 
-# Fork the TreeBuilder, BuildHostConfig and genHostConfig subs for each client
+# Prepare Forkmanager
 my $pm = Parallel::ForkManager->new($cfg->{export}->{childs});
 
 # Callback from the childs
@@ -357,11 +357,15 @@ $pm -> run_on_finish (
             # we can also collect retrieved data structures for processing after all children have exited
             $retrieved_responses{$ident} = $data_structure_reference;
         } else {
-            print qq|Warning:Child did not send data to parent.\n\n|;
+            # uncomment the print if you want to have a warning if a child do
+            # not send data to the parent. Be aware, not every child has to send
+            # data to his parent!
+            # print qq|Warning:Child did not send data to parent.\n\n|;
         }
     }
 );
 
+## First fork start (TreeBuilder, BuildHostConfig) for each client
 foreach my $client (keys %{$CLIENTS}) {
 
     # create new child
@@ -372,50 +376,66 @@ foreach my $client (keys %{$CLIENTS}) {
     %TREE = TreeBuilder($client, $CONFIG, \%TREE);
     $CLIENTS = BuildHostConfig($client, $CLIENTS, \%TREE);
 
-
-    # run custom script (mid)
-    if (-f '@EXPORT_SCRIPT_DIR@/mid.pl') {
-        require '@EXPORT_SCRIPT_DIR@/mid.pl';
-        $CLIENTS = CustomMid($CLIENTS, $client);
-    }
-
-	# check if our mid.pl is allowed to change the master config
-	if ($cfg->{export}->{enablemidmaster} == 1) {
-		# create a copy of modified config just for the master
-		my $CLIENTS_MASTER_MOD = dclone($CLIENTS);
-
-	    # run custom master script
-	    if (-f '@EXPORT_SCRIPT_DIR@/mid-master.pl') {
-	        require '@EXPORT_SCRIPT_DIR@/mid-master.pl';
-	        $CLIENTS_MASTER_MOD = CustomMidMaster($CLIENTS_MASTER_MOD, $client);
-	    }
-
-	    # create output dirs and generate master config from modified content
-	    genHostConfig($CLIENTS_MASTER_MOD, $client);
-	
-		# leave $CLIENTS untouched from master config, and pass back to the parent process
-		# we do not need the modified master content anymore, it was dumped as icinga config already
-
-	}
-	# unchanged master config 
-	else {
-
-	    # create output dirs and generate master config
-	    genHostConfig($CLIENTS, $client);
-	}
-
     # finish child, give $client back to the parent
     $pm->finish(0, \%{$CLIENTS->{$client}});
 }
 
 # wait until all childs are finished
-#while(wait() == 0) {sleep(1)};
 $pm->wait_all_children;
 
 # get the data from the child back to $CLIENTS
 for (sort keys %retrieved_responses) {
     $CLIENTS->{$_} = $retrieved_responses{$_};
 }
+## First fork end
+
+# run custom script (mid)
+# it is important that the mid script runs after all childs are finished (after
+# TreeBuilder and BuildHostConfig), because some mid scripts need the whole
+# config.
+if (-f '@EXPORT_SCRIPT_DIR@/mid.pl') {
+    require '@EXPORT_SCRIPT_DIR@/mid.pl';
+    $CLIENTS = CustomMid($CLIENTS);
+}
+
+# Using $CLIENTS_REF as reference to $CLIENTS for generating the config
+# If midmasterscripts are allowed we bend the reference to a clone of $CLIENTS so
+# $CLIENTS itself is untoched and could be used for the dumpexport
+my $CLIENTS_REF = $CLIENTS;
+
+# run custom script mid-master, if allowed
+# check if our mid-master.pl is allowed to change the master config
+if ($cfg->{export}->{enablemidmaster} == 1) {
+
+    if (-f '@EXPORT_SCRIPT_DIR@/mid-master.pl') {
+        # create a copy of modified config just for the master
+        $CLIENTS_REF = dclone($CLIENTS);
+        require '@EXPORT_SCRIPT_DIR@/mid-master.pl';
+        $CLIENTS_REF = CustomMidMaster($CLIENTS_REF);
+    }
+}
+
+# Generating the .cfg files could be done in childs.
+# We are using $CLIENTS_REF instead of $CLIENTS!
+# $CLIENTS_REF could be a reference to $CLIENTS or to a clone of $CLIENTS (if
+# midmaster ist enable,see above)
+foreach my $client (keys %{$CLIENTS_REF}) {
+
+    # create new child
+    my $pid = $pm->start($client) and next;
+
+    # generate .cfg for one client 
+    genHostConfig($CLIENTS_REF, $client);
+
+    # finish child
+    $pm->finish(0);
+}
+$pm->wait_all_children;
+
+
+# we are using $CLIENTS NOT $CLIENTS_REF, because the *.cfg for the hosts are
+# already generated. This is important for the hashdump, because the hashdump is
+# used by LConfSlaveExport
 
 # generate the rest of the config.
 genTimeperiods($CONFIG);
