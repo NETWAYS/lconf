@@ -357,15 +357,12 @@ $pm -> run_on_finish (
             # we can also collect retrieved data structures for processing after all children have exited
             $retrieved_responses{$ident} = $data_structure_reference;
         } else {
-            # uncomment the print if you want to have a warning if a child do
-            # not send data to the parent. Be aware, not every child has to send
-            # data to his parent!
-            # print qq|Warning:Child did not send data to parent.\n\n|;
+             print qq|Warning:Child did not send data to parent.\n\n|;
         }
     }
 );
 
-## First fork start (TreeBuilder, BuildHostConfig) for each client
+## Fork start (TreeBuilder, BuildHostConfig) for each client
 foreach my $client (keys %{$CLIENTS}) {
 
     # create new child
@@ -387,7 +384,7 @@ $pm->wait_all_children;
 for (sort keys %retrieved_responses) {
     $CLIENTS->{$_} = $retrieved_responses{$_};
 }
-## First fork end
+## Fork end
 
 # run custom script (mid)
 # it is important that the mid script runs after all childs are finished (after
@@ -415,23 +412,15 @@ if ($cfg->{export}->{enablemidmaster} == 1) {
     }
 }
 
-# Generating the .cfg files could be done in childs.
-# We are using $CLIENTS_REF instead of $CLIENTS!
-# $CLIENTS_REF could be a reference to $CLIENTS or to a clone of $CLIENTS (if
-# midmaster ist enable,see above)
+# Generating the .cfg files could be done in childs but this is slower as
+# generate the .cfg files in the parent process! 
+# We are using $CLIENTS_REF instead of $CLIENTS! $CLIENTS_REF could be a
+# reference to $CLIENTS or a reference to a clone of $CLIENTS (if midmaster ist
+# enable,see above)
 foreach my $client (keys %{$CLIENTS_REF}) {
-
-    # create new child
-    my $pid = $pm->start($client) and next;
-
     # generate .cfg for one client 
     genHostConfig($CLIENTS_REF, $client);
-
-    # finish child
-    $pm->finish(0);
 }
-$pm->wait_all_children;
-
 
 # we are using $CLIENTS NOT $CLIENTS_REF, because the *.cfg for the hosts are
 # already generated. This is important for the hashdump, because the hashdump is
