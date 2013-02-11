@@ -2105,7 +2105,7 @@ $as_echo "$as_me: checking for perl $module... " >&6;}
     if test $? != 0; then as_fn_error $? " Could not find perl module '$module'; perl package is installed? " "$LINENO" 5; fi
 done
 
-forkmanager_min="0.76"
+forkmanager_min="0.7.6"
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for perl Parallel::ForkManager version... " >&5
 $as_echo "$as_me: checking for perl Parallel::ForkManager version... " >&6;}
 perl -MParallel::ForkManager -Mversion -e 'my $version = version->parse("$Parallel::ForkManager::VERSION"); my $iwant = version->parse("'$forkmanager_min'"); print "Version found: $version\n"; exit 1 unless $version >= $iwant;'

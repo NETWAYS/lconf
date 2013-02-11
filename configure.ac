@@ -96,7 +96,7 @@ for module in Net::LDAP Net::LDAP::Entry Parallel::ForkManager; do
     if test $? != 0; then AC_MSG_ERROR([ Could not find perl module '$module'; perl package is installed? ]); fi
 done
 
-forkmanager_min="0.76"
+forkmanager_min="0.7.6"
 AC_MSG_NOTICE([checking for perl Parallel::ForkManager version... ])
 perl -MParallel::ForkManager -Mversion -e 'my $version = version->parse("$Parallel::ForkManager::VERSION"); my $iwant = version->parse("'$forkmanager_min'"); print "Version found: $version\n"; exit 1 unless $version >= $iwant;'
 if test $? != 0; then AC_MSG_ERROR([ perl module 'Parallel::ForkManager' needs to be at least version $forkmanager_min ]); fi
