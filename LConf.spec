@@ -11,7 +11,7 @@
 Name:           LConf
 Summary:        LDAP based configuration tool for Icinga and Nagios
 Version:        1.3.0rc2
-Release:        1
+Release:        2
 Url:            https://www.netways.org/projects/lconf
 License:        GPL v2 or later
 Group:          System/Monitoring
@@ -97,29 +97,33 @@ rm -rf %buildroot
 %files
 # FIXME - README.SUSE with the schema explainations (changes to dc=local)????
 
-%defattr(644,root,root)
-%doc src/*.ldif contrib README doc/LICENSE doc/README.RHEL 
+%defattr(644,root,root,755)
+%doc src/*.schema src/*.ldif contrib README doc/LICENSE doc/README.RHEL
 %dir %{_libdir}/%{name}
 %{_libdir}/%{name}/
-%defattr(755,root,root)
+%defattr(755,root,root,755)
 %dir %{_libdir}/%{name}/custom
 #%config(noreplace) %{_libdir}/%{name}/custom/
-%defattr(755,root,root)
+%defattr(755,root,root,755)
 %{_bindir}/LConfExport.pl
 %{_bindir}/LConfSlaveExport.pl
 %{_bindir}/LConfSlaveExportRules.pl
 %{_bindir}/LConfSlaveSync.pl
 %{_bindir}/LConfImport.pl
-%defattr(644,icinga,icinga)
+%defattr(644,icinga,icinga,755)
 %dir %{_localstatedir}/%{name}
 %dir %{_localstatedir}/%{name}/lconf.tmp
 %{_localstatedir}/%{name}/lconf.tmp
 %dir %{_sysconfdir}/%{name}
 %dir %{_sysconfdir}/icinga/lconf
-%defattr(644,root,root)
+%defattr(644,root,root,755)
 %config(noreplace) %{_sysconfdir}/%{name}/*
 
 %changelog
+* Wed Feb 27 2013 Markus Frosch <markus.frosch@netways.de>
+- Fix directory permissions for SuSE
+- Added old schema to doc files
+
 * Thu Jan 28 2013 christian.dengler@netways.de
 - disable AutoReqProv; correct Requires
 
