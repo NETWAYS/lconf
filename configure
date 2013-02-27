@@ -2108,7 +2108,7 @@ done
 forkmanager_min="0.7.6"
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for perl Parallel::ForkManager version... " >&5
 $as_echo "$as_me: checking for perl Parallel::ForkManager version... " >&6;}
-perl -MParallel::ForkManager -Mversion -e 'my $version = version->parse("$Parallel::ForkManager::VERSION"); my $iwant = version->parse("'$forkmanager_min'"); print "Version found: $version\n"; exit 1 unless $version >= $iwant;'
+perl -MParallel::ForkManager -Mversion -e 'my $version = version->new($Parallel::ForkManager::VERSION); my $iwant = version->new('$forkmanager_min'); print "Version found: $version\n"; exit 1 unless $version >= $iwant;'
 if test $? != 0; then as_fn_error $? " perl module 'Parallel::ForkManager' needs to be at least version $forkmanager_min " "$LINENO" 5; fi
 
 
