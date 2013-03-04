@@ -332,7 +332,15 @@ sub TreeBuilder {
                         # set the new name
                         $forward{'SERVICES'}{$name}{'cn'} = $name;
                         # replace in checkcommand as well
-                        $forward{'SERVICES'}{$name}{'lconfcheckcommand'} =~ s/$search/$customvar_value/g;
+                        if (defined $cfg->{ldap}->{prefix}.'servicecheckcommand') {
+                            $forward{'SERVICES'}{$name}{$cfg->{ldap}->{prefix}.'servicecheckcommand'} =~ s/$search/$customvar_value/g;
+                        } elsif (defined $cfg->{ldap}->{prefix}.'checkcommand') {
+                            $forward{'SERVICES'}{$name}{$cfg->{ldap}->{prefix}.'checkcommand'} =~ s/$search/$customvar_value/g;
+                        } else {
+                            $exit->{code} = 2;
+                            $exit->{message} = "no checkcommand for $service!";
+                            goto EXIT;
+                        }
                     }
                     else {
                         $exit->{code} = 2;
