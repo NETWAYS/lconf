@@ -412,6 +412,11 @@ if ($cfg->{export}->{enablemidmaster} == 1) {
     }
 }
 
+# generating the host/servicegroups before genHostConfig, because these are
+# writing into $CLIENTS
+genHostgroups($CONFIG, $CLIENTS);
+genServicegroups($CONFIG, $CLIENTS);
+
 # Generating the .cfg files could be done in childs but this is slower as
 # generate the .cfg files in the parent process! 
 # We are using $CLIENTS_REF instead of $CLIENTS! $CLIENTS_REF could be a
@@ -431,8 +436,6 @@ genTimeperiods($CONFIG);
 genCommands($CONFIG);
 genContacts($CONFIG);
 genContactgroups($CONFIG);
-genHostgroups($CONFIG, $CLIENTS);
-genServicegroups($CONFIG, $CLIENTS);
 
 # run custom script (post)
 if (-f '@EXPORT_SCRIPT_DIR@/post.pl') {

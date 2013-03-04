@@ -82,7 +82,7 @@ sub test {
 	}
 	
 	# clean the ldap tree
-    testCleanLDAP($ldap);
+    #testCleanLDAP($ldap);
 	
 	# return testresult
 	return $testresult;
