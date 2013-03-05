@@ -1,0 +1,118 @@
+# kunden, main, IcingaConfig, LConf, netways.org
+dn: ou=kunden,ou=main,ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+ou: kunden
+objectClass: lconfStructuralObject
+
+# Templates, main, IcingaConfig, LConf, netways.org
+dn: ou=Templates,ou=main,ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+ou: Templates
+objectClass: lconfStructuralObject
+
+# customer-1, kunden, main, IcingaConfig, LConf, netways.org
+dn: ou=customer-1,ou=kunden,ou=main,ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+ou: customer-1
+objectClass: lconfStructuralObject
+lconfServiceContacts: customer-1_service_contact
+
+# example-host, customer-1, kunden, main, IcingaConfig, LConf, netways.org
+dn: cn=example-host,ou=customer-1,ou=kunden,ou=main,ou=IcingaConfig,ou=LConf,d
+ c=netways,dc=org
+cn: example-host
+lconfAddress: 1.1.1.1
+lconfAlias: example-host
+objectClass: lconfHost
+lconfHostgroups: example-host_hostgroup
+lconfHostContacts: +example-host_contact
+
+# template-1, Templates, main, IcingaConfig, LConf, netways.org
+dn: ou=template-1,ou=Templates,ou=main,ou=IcingaConfig,ou=LConf,dc=netways,dc=
+ org
+ou: template-1
+objectClass: lconfStructuralObject
+lconfHostgroups: template-1_host_group
+lconfHostContacts: +template-1_host_contact
+lconfServiceContacts: +template-1_service_contact
+
+# template-2, Templates, main, IcingaConfig, LConf, netways.org
+dn: ou=template-2,ou=Templates,ou=main,ou=IcingaConfig,ou=LConf,dc=netways,dc=
+ org
+ou: template-2
+objectClass: lconfStructuralObject
+lconfHostgroups: template-2_host_group
+lconfHostContacts: +template-2_host_contact
+lconfServiceContacts: +template-2_service_contact
+
+# template-3, Templates, main, IcingaConfig, LConf, netways.org
+dn: ou=template-3,ou=Templates,ou=main,ou=IcingaConfig,ou=LConf,dc=netways,dc=
+ org
+ou: template-3
+objectClass: lconfStructuralObject
+lconfHostgroups: template-3_host_group
+lconfHostContacts: +template-3_host_contact
+lconfServiceContacts: +template-3_service_contact
+
+# template-3, template-1, Templates, main, IcingaConfig, LConf, netways.org
+dn: ou=template-3,ou=template-1,ou=Templates,ou=main,ou=IcingaConfig,ou=LConf,
+ dc=netways,dc=org
+objectClass: extensibleObject
+objectClass: alias
+aliasedObjectName: ou=template-3,ou=Templates,ou=main,ou=IcingaConfig,ou=LConf
+ ,dc=netways,dc=org
+ou: template-3
+
+# service-1, template-1, Templates, main, IcingaConfig, LConf, netways.org
+dn: cn=service-1,ou=template-1,ou=Templates,ou=main,ou=IcingaConfig,ou=LConf,d
+ c=netways,dc=org
+objectClass: lconfService
+cn: service-1
+lconfServiceCheckcommand: service-1_cmd
+
+# service-3, template-3, Templates, main, IcingaConfig, LConf, netways.org
+dn: cn=service-3,ou=template-3,ou=Templates,ou=main,ou=IcingaConfig,ou=LConf,d
+ c=netways,dc=org
+objectClass: lconfService
+cn: service-3
+lconfServiceCheckcommand: service-3_cmd
+
+# service-4, example-host, customer-1, kunden, main, IcingaConfig, LConf, net
+ ways.org
+dn: cn=service-4,cn=example-host,ou=customer-1,ou=kunden,ou=main,ou=IcingaConf
+ ig,ou=LConf,dc=netways,dc=org
+lconfServiceCheckcommand: example-command
+cn: service-4
+objectClass: lconfService
+lconfServiceContacts: service-4_contact
+
+# service-2, template-2, Templates, main, IcingaConfig, LConf, netways.org
+dn: cn=service-2,ou=template-2,ou=Templates,ou=main,ou=IcingaConfig,ou=LConf,d
+ c=netways,dc=org
+objectClass: lconfService
+cn: service-2
+lconfServiceCheckcommand: service-2_cmd
+
+# service-2, example-host, customer-1, kunden, main, IcingaConfig, LConf, net
+ ways.org
+dn: ou=service-2,cn=example-host,ou=customer-1,ou=kunden,ou=main,ou=IcingaConf
+ ig,ou=LConf,dc=netways,dc=org
+objectClass: extensibleObject
+objectClass: alias
+aliasedObjectName: cn=service-2,ou=template-2,ou=Templates,ou=main,ou=IcingaCo
+ nfig,ou=LConf,dc=netways,dc=org
+ou: service-2
+
+# template-1, example-host, customer-1, kunden, main, IcingaConfig, LConf, ne
+ tways.org
+dn: ou=template-1,cn=example-host,ou=customer-1,ou=kunden,ou=main,ou=IcingaCon
+ fig,ou=LConf,dc=netways,dc=org
+objectClass: extensibleObject
+objectClass: alias
+aliasedObjectName: ou=template-1,ou=Templates,ou=main,ou=IcingaConfig,ou=LConf
+ ,dc=netways,dc=org
+ou: template-1
+
+# search result
+search: 2
+result: 0 Success
+
+# numResponses: 18
+# numEntries: 17
