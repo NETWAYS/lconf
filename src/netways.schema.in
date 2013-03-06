@@ -325,6 +325,17 @@ attributetype ( 1.3.6.1.4.1.26840.144.2.3.526 NAME '@LDAP_PREFIX@HostCheckcomman
     SUBSTR caseIgnoreSubstringsMatch
     SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
 
+attributetype ( 1.3.6.1.4.1.26840.144.2.3.527 NAME '@LDAP_PREFIX@HostNotes'
+        DESC 'Nagios / Icinga Notes directive to define an optional string'
+        EQUALITY caseIgnoreMatch
+        SUBSTR caseIgnoreSubstringsMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{512} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.3.528 NAME '@LDAP_PREFIX@HostDisplayName'
+        DESC 'Nagios / Icinga display_name directive to add an alternate name that should be displayed in the web interface'
+        EQUALITY caseIgnoreMatch
+        SUBSTR caseIgnoreSubstringsMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{512} SINGLE-VALUE )
 
 #
 # .2.4   | @LDAP_PREFIX@ attributes (service)
@@ -498,6 +509,18 @@ attributetype ( 1.3.6.1.4.1.26840.144.2.4.526 NAME '@LDAP_PREFIX@ServiceCheckcom
     SUBSTR caseIgnoreSubstringsMatch
     SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
 
+attributetype ( 1.3.6.1.4.1.26840.144.2.4.527 NAME '@LDAP_PREFIX@ServiceNotes'
+        DESC 'Nagios / Icinga Notes directive to define an optional string'
+        EQUALITY caseIgnoreMatch
+        SUBSTR caseIgnoreSubstringsMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{512} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.4.528 NAME '@LDAP_PREFIX@ServiceDisplayName'
+        DESC 'Nagios / Icinga display_name directive to add an alternate name that should be displayed in the web interface'
+        EQUALITY caseIgnoreMatch
+        SUBSTR caseIgnoreSubstringsMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{512} SINGLE-VALUE )
+
 
 #
 # .2.5   | @LDAP_PREFIX@ attributes (host escalations)
@@ -626,7 +649,7 @@ objectclass ( 1.3.6.1.4.1.26840.144.3.1 NAME '@LDAP_PREFIX@TemplateHost'
         @LDAP_PREFIX@HostNotesURL $ @LDAP_PREFIX@HostActionURL $ @LDAP_PREFIX@HostDisable $
         @LDAP_PREFIX@Parent $ @LDAP_PREFIX@HostCheckcommand $ @LDAP_PREFIX@Hostgroups $
         @LDAP_PREFIX@HostDependency $ @LDAP_PREFIX@HostDependencyExecutionFailureCriteria $ @LDAP_PREFIX@HostDependencyNotificationFailureCriteria $
-        @LDAP_PREFIX@HostCheckFreshness $ @LDAP_PREFIX@HostFreshnessThreshold ) )
+        @LDAP_PREFIX@HostCheckFreshness $ @LDAP_PREFIX@HostFreshnessThreshold $ @LDAP_PREFIX@HostNotes $ @LDAP_PREFIX@HostDisplayName) )
 
 objectclass ( 1.3.6.1.4.1.26840.144.3.2 NAME '@LDAP_PREFIX@TemplateService'
     DESC 'Tempalte for a Nagios / Icinga service'
@@ -639,7 +662,7 @@ objectclass ( 1.3.6.1.4.1.26840.144.3.2 NAME '@LDAP_PREFIX@TemplateService'
         @LDAP_PREFIX@ServiceNotesURL $ @LDAP_PREFIX@ServiceActionURL $ @LDAP_PREFIX@ServiceDisable $
         @LDAP_PREFIX@ServiceCheckcommand $ @LDAP_PREFIX@Servicegroups $
         @LDAP_PREFIX@ServiceDependency $ @LDAP_PREFIX@ServiceDependencyExecutionFailureCriteria $ @LDAP_PREFIX@ServiceDependencyNotificationFailureCriteria $
-        @LDAP_PREFIX@ServiceCheckFreshness $ @LDAP_PREFIX@ServiceFreshnessThreshold ) )
+        @LDAP_PREFIX@ServiceCheckFreshness $ @LDAP_PREFIX@ServiceFreshnessThreshold $ @LDAP_PREFIX@ServiceNotes $ @LDAP_PREFIX@ServiceDisplayname ) )
 
 
 #
@@ -659,7 +682,7 @@ objectclass ( 1.3.6.1.4.1.26840.144.4.1 NAME '@LDAP_PREFIX@StructuralObject'
         @LDAP_PREFIX@HostNotesURL $ @LDAP_PREFIX@HostActionURL $ @LDAP_PREFIX@HostDisable $
         @LDAP_PREFIX@Parent $ @LDAP_PREFIX@HostCheckcommand $ @LDAP_PREFIX@Hostgroups $
         @LDAP_PREFIX@HostDependency $ @LDAP_PREFIX@HostDependencyExecutionFailureCriteria $ @LDAP_PREFIX@HostDependencyNotificationFailureCriteria $
-        @LDAP_PREFIX@HostCheckFreshness $ @LDAP_PREFIX@HostFreshnessThreshold $
+        @LDAP_PREFIX@HostCheckFreshness $ @LDAP_PREFIX@HostFreshnessThreshold $ @LDAP_PREFIX@HostNotes $ @LDAP_PREFIX@HostDisplayName $
         @LDAP_PREFIX@ServiceCustomvar $ @LDAP_PREFIX@ServiceContacts $ @LDAP_PREFIX@ServiceContactgroups $
         @LDAP_PREFIX@ServiceNotificationOptions $ @LDAP_PREFIX@ServiceNotificationInterval $ @LDAP_PREFIX@ServiceNotificationPeriod $ @LDAP_PREFIX@ServiceNotificationsEnabled $
         @LDAP_PREFIX@ServiceCheckPeriod $ @LDAP_PREFIX@ServiceCheckInterval $ @LDAP_PREFIX@ServiceCheckRetryInterval $ @LDAP_PREFIX@ServiceCheckMaxCheckAttempts $
@@ -669,7 +692,7 @@ objectclass ( 1.3.6.1.4.1.26840.144.4.1 NAME '@LDAP_PREFIX@StructuralObject'
         @LDAP_PREFIX@ServiceCheckcommand $ @LDAP_PREFIX@Servicegroups $
         @LDAP_PREFIX@ServiceDependency $ @LDAP_PREFIX@ServiceDependencyExecutionFailureCriteria $ @LDAP_PREFIX@ServiceDependencyNotificationFailureCriteria $
         @LDAP_PREFIX@ServiceCheckFreshness $ @LDAP_PREFIX@ServiceFreshnessThreshold $
-        @LDAP_PREFIX@Checkcommand ) )
+        @LDAP_PREFIX@Checkcommand $ @LDAP_PREFIX@ServiceNotes $ @LDAP_PREFIX@ServiceDisplayName) )
 
 
 #
