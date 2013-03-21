@@ -40,7 +40,8 @@ $cfg->{slavesync}->{spoolDir}            = '/usr/local/icinga/var/spool/checkres
 $cfg->{slavesync}->{ExtCMD}              = '/usr/local/icinga/var/rw/icinga.cmd';
 $cfg->{slavesync}->{getInterval}         = '60';
 $cfg->{slavesync}->{pushInterval}        = '30';
-$cfg->{slavesync}->{directIO}            = '0';
+# 0 .. use extcmd, 1 .. use spooldir
+$cfg->{slavesync}->{directIO}            = '1';
 $cfg->{slavesync}->{pidFile}             = '@LOCALSTATE_DIR@/LConfSlaveSync.pid';
 $cfg->{slavesync}->{debugLog}            = '@LOCALSTATE_DIR@/LConfSlaveSync.debug';
 $cfg->{slavesync}->{debug}               = '0';
