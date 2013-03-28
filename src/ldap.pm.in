@@ -300,7 +300,15 @@ sub TreeBuilder {
                         if(defined $CONFIG->{$service}->{"$cfg->{ldap}->{prefix}servicedependency"}) {
                             $forward{'SERVICES'}{$CONFIG->{$service}->{cn}}{SERVICEDEPENDENCY}->{$CONFIG->{$service}->{"$cfg->{ldap}->{prefix}servicedependency"}}->{$val1} = $CONFIG->{$service}->{$val1};
                         }
+                    # multiple values are possible for description and
+                    # customvars
+                    } elsif($val1 =~ /$cfg->{ldap}->{prefix}hostcustomvar/ || $val1 =~ /$cfg->{ldap}->{prefix}servicecustomvar/ || $val1 =~ /description/) {
+                        # don't overwrite what is pushed from parent ($forward)
+                        foreach my $val2 (keys %{$CONFIG->{$service}->{$val1}}) {
+                            $forward{'SERVICES'}{$CONFIG->{$service}->{cn}}{$val1}{$val2} = $CONFIG->{$service}->{$val1}->{$val2};
+                        }
                     } else {
+                        # overwrite what is pushed from partent ($forward)
                         $forward{'SERVICES'}{$CONFIG->{$service}->{cn}}{$val1} = $CONFIG->{$service}->{$val1};
                     }
                 }
