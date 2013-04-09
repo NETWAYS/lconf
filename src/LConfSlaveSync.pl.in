@@ -171,6 +171,7 @@ GetOptions(
     "pidFile=s"      => \$cfg->{slavesync}->{pidFile},
     "d|debug=s"      => \$cfg->{slavesync}->{debug},
     "debugLog=s"     => \$cfg->{slavesync}->{debugLog},
+    "nocheck"        => \$cfg->{slavesync}->{nocheck},
     "h|help"         => \$opt->{help},
     "V|version"      => \$opt->{version}
 );
@@ -208,7 +209,9 @@ if ($ARGV[0] eq 'start') {
     $| = 1;
 
     # check few things
-    check($cfg->{slavesync}->{localDir}, $cfg->{slavesync}->{remoteDir}, @HOSTS);
+    if(!defined $cfg->{slavesync}->{nocheck}) {
+        check($cfg->{slavesync}->{localDir}, $cfg->{slavesync}->{remoteDir}, @HOSTS);
+    }
 
     # daemonize
     daemonize($cfg->{slavesync}->{pidFile});
