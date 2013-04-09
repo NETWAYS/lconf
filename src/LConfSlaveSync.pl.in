@@ -363,17 +363,17 @@ sub processFilesSpoolDir {
             beVerbose('PROCESS_FILES', 'reset counter => proceed!');
         }
 
-		beVerbose('PROCESS_FILES', "start processing...");
-		foreach my $file (@FILES) {
+        beVerbose('PROCESS_FILES', "start processing...");
+        foreach my $file (@FILES) {
             next if ! -f "$localDir/$file"; # only files
             next if $file =~ m/^\./; # no dot files
 
             beVerbose('PROCESS_FILES', "processing file $file ...");
-			if ($counter <= 30) { # only process X+1 spool files
-				my $data;
-				open(FH, "$localDir/$file" || die("Could not open file $localDir/$file"));
-				while(<FH>) { $data .= $_ }
-				close(FH);
+            if ($counter <= 30) { # only process X+1 spool files
+                my $data;
+                open(FH, "$localDir/$file" || die("Could not open file $localDir/$file"));
+                while(<FH>) { $data .= $_ }
+                close(FH);
 
                 # records counter (check results)
                 my $records = 0;
@@ -387,85 +387,85 @@ sub processFilesSpoolDir {
                 beVerbose("PROCESS_FILES", "opening resultfile $resultfile");
                 open (RESULT, ">>$spoolDir/$resultfile") or die "could not open resultfile: $!";
 
-				my @lines = split(/\n/, $data);
-				foreach(@lines) {
-					if ($_ =~ /PROCESS_HOST_CHECK_RESULT/) {
-						# get timestamp
-						my ($timestamp) = split(/\s/, $_);
-						$timestamp =~ m/([\d]+)/;
-						$timestamp = $1;
+                my @lines = split(/\n/, $data);
+                foreach(@lines) {
+                    if ($_ =~ /PROCESS_HOST_CHECK_RESULT/) {
+                        # get timestamp
+                        my ($timestamp) = split(/\s/, $_);
+                        $timestamp =~ m/([\d]+)/;
+                        $timestamp = $1;
 
-						# get hostname and returncode
-						my @val = split(/;/, $_);
-						shift(@val); my $hostname = $val[0];
-						shift(@val); my $returncode = $val[0];
-						shift(@val);
+                        # get hostname and returncode
+                        my @val = split(/;/, $_);
+                        shift(@val); my $hostname = $val[0];
+                        shift(@val); my $returncode = $val[0];
+                        shift(@val);
 
-						# get message and perfdata
-						my $message = $val[0]; shift(@val);
-						foreach(@val) { $message .= ';'.$_; }
+                        # get message and perfdata
+                        my $message = $val[0]; shift(@val);
+                        foreach(@val) { $message .= ';'.$_; }
 
-						# map return code for hosts
-						my $mapped_returncode = 0;
-						$mapped_returncode = 2 if $returncode == 1;
+                        # map return code for hosts
+                        my $mapped_returncode = 0;
+                        $mapped_returncode = 2 if $returncode == 1;
 
-						# prepare output for writing
-						$data = '';
-						$data .= "host_name=$hostname\n";
-						$data .= "check_type=0\n";
-						$data .= "check_options=0\n";
-						$data .= "scheduled_check=0\n";
-						$data .= "reschedule_check=0\n";
-						$data .= "latency=0.000000\n";
-						$data .= "start_time=$timestamp.0\n";
-						$data .= "finish_time=$timestamp.0\n";
-						$data .= "early_timeout=0\n";
-						$data .= "exited_ok=1\n";
-						$data .= "return_code=$mapped_returncode\n";
-						$data .= "output=$message\n";
-						$data .= "\n";
+                        # prepare output for writing
+                        $data = '';
+                        $data .= "host_name=$hostname\n";
+                        $data .= "check_type=0\n";
+                        $data .= "check_options=0\n";
+                        $data .= "scheduled_check=0\n";
+                        $data .= "reschedule_check=0\n";
+                        $data .= "latency=0.000000\n";
+                        $data .= "start_time=$timestamp.0\n";
+                        $data .= "finish_time=$timestamp.0\n";
+                        $data .= "early_timeout=0\n";
+                        $data .= "exited_ok=1\n";
+                        $data .= "return_code=$mapped_returncode\n";
+                        $data .= "output=$message\n";
+                        $data .= "\n";
 
-						# write to file
-						print RESULT $data;
+                        # write to file
+                        print RESULT $data;
                         $records++;
-					}
+                    }
 
-					if ($_ =~ /PROCESS_SERVICE_CHECK_RESULT/) {
-						# get timestamp
-						my ($timestamp) = split(/\s/, $_);
-						$timestamp =~ m/([\d]+)/;
-						$timestamp = $1;
+                    if ($_ =~ /PROCESS_SERVICE_CHECK_RESULT/) {
+                        # get timestamp
+                        my ($timestamp) = split(/\s/, $_);
+                        $timestamp =~ m/([\d]+)/;
+                        $timestamp = $1;
 
-						# get hostname, servicename and returncode
-						my @val = split(/;/, $_);
-						shift(@val); my $hostname = $val[0];
-						shift(@val); my $service = $val[0];
-						shift(@val); my $returncode = $val[0];
-						shift(@val);
+                        # get hostname, servicename and returncode
+                        my @val = split(/;/, $_);
+                        shift(@val); my $hostname = $val[0];
+                        shift(@val); my $service = $val[0];
+                        shift(@val); my $returncode = $val[0];
+                        shift(@val);
 
-						# get message and perfdata
-						my $message = $val[0]; shift(@val);
-						foreach(@val) { $message .= ';'.$_; }
+                        # get message and perfdata
+                        my $message = $val[0]; shift(@val);
+                        foreach(@val) { $message .= ';'.$_; }
 
-						# prepare output for writing
-						$data = '';
-						$data .= "host_name=$hostname\n";
-						$data .= "service_description=$service\n";
-						$data .= "check_type=1\n";
-						$data .= "scheduled_check=0\n";
-						$data .= "reschedule_check=0\n";
-						$data .= "latency=0.000000\n";
-						$data .= "start_time=$timestamp.0\n";
-						$data .= "finish_time=$timestamp.0\n";
-						$data .= "return_code=$returncode\n";
-						$data .= "output=$message\n";
-						$data .= "\n";
+                        # prepare output for writing
+                        $data = '';
+                        $data .= "host_name=$hostname\n";
+                        $data .= "service_description=$service\n";
+                        $data .= "check_type=1\n";
+                        $data .= "scheduled_check=0\n";
+                        $data .= "reschedule_check=0\n";
+                        $data .= "latency=0.000000\n";
+                        $data .= "start_time=$timestamp.0\n";
+                        $data .= "finish_time=$timestamp.0\n";
+                        $data .= "return_code=$returncode\n";
+                        $data .= "output=$message\n";
+                        $data .= "\n";
 
-						# write file
-						print RESULT $data;
+                        # write file
+                        print RESULT $data;
                         $records++;
-					}
-				}
+                    }
+                }
 
                 # closing result file
                 close (RESULT);
@@ -485,14 +485,14 @@ sub processFilesSpoolDir {
 
                 # remove spoolfile
                 unlink("$localDir/$file");
-				$counter++;
-			}
+                $counter++;
+            }
             else { # $counter <= X
                 # break out of spool processing
                 beVerbose("PROCESS_FILES", "stop processing for now - too many files");
                 last;
             }
-		}
+        }
         sleep $sleepExecThread;
     }
 }
