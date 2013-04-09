@@ -133,6 +133,7 @@ use Getopt::Long qw(:config no_ignore_case bundling);
 use POSIX qw(setsid);
 use LWP::Simple;
 use Pod::Usage;
+use File::Temp;
 use threads;
 
 # lconf includes
@@ -345,7 +346,7 @@ sub processFilesSpoolDir {
         my $size_all = 0;
         opendir(DIR, $spoolDir) || die "can't open dir $spoolDir: $!";
         while((my $val = readdir(DIR))) {
-            if ($val ne "." && $val ne "..") {
+            if (-f $val || $val =~ m/^c\w+$/) { # only count result files
                 my $size_file = -s "$spoolDir/$val";
                 $size_all = $size_all + $size_file;
             }
@@ -357,23 +358,37 @@ sub processFilesSpoolDir {
         $size_all = $size_all/1024;
 
         # reset?
-        if ($size_all <= 1) {
+        if ($size_all <= 1) { # 1MB
             $counter = 0;
             beVerbose('PROCESS_FILES', 'reset counter => proceed!');
         }
-	
+
 		beVerbose('PROCESS_FILES', "start processing...");
 		foreach my $file (@FILES) {
-			if ($counter <= 30) {
+            next if ! -f "$localDir/$file"; # only files
+            next if $file =~ m/^\./; # no dot files
+
+            beVerbose('PROCESS_FILES', "processing file $file ...");
+			if ($counter <= 30) { # only process X+1 spool files
 				my $data;
 				open(FH, "$localDir/$file" || die("Could not open file $localDir/$file"));
 				while(<FH>) { $data .= $_ }
 				close(FH);
 
+                # records counter (check results)
+                my $records = 0;
+
+                # create a tempfile name to write to
+                # one file per spool file
+                # using a file with "." to use another template as Icinga
+                my $resultfile = mktemp("c.XXXXX");
+
+                # opening file
+                beVerbose("PROCESS_FILES", "opening resultfile $resultfile");
+                open (RESULT, ">>$spoolDir/$resultfile") or die "could not open resultfile: $!";
+
 				my @lines = split(/\n/, $data);
 				foreach(@lines) {
-					my $target_filename;
-
 					if ($_ =~ /PROCESS_HOST_CHECK_RESULT/) {
 						# get timestamp
 						my ($timestamp) = split(/\s/, $_);
@@ -410,17 +425,9 @@ sub processFilesSpoolDir {
 						$data .= "output=$message\n";
 						$data .= "\n";
 
-						# write file
-						$counter = sprintf("%02d",$counter);
-						$target_filename = "c84UY$counter";
-						beVerbose("BLUBB", "$spoolDir/$target_filename");
-						open (MYFILE, ">>$spoolDir/$target_filename");
-						print MYFILE $data;
-						close (MYFILE);
-
-						# commit
-						open (MYFILE, ">>$spoolDir/$target_filename.ok");
-						close (MYFILE);
+						# write to file
+						print RESULT $data;
+                        $records++;
 					}
 
 					if ($_ =~ /PROCESS_SERVICE_CHECK_RESULT/) {
@@ -455,23 +462,36 @@ sub processFilesSpoolDir {
 						$data .= "\n";
 
 						# write file
-						$counter = sprintf("%02d",$counter);
-						$target_filename = "c84UY$counter";
-						#beVerbose("BLUBB", "$spoolDir/$target_filename");
-						open (MYFILE, ">>$spoolDir/$target_filename") || die "Can't write: $!\n";
-						print MYFILE $data;
-						close (MYFILE);
-
-						# commit
-						open (MYFILE, ">>$spoolDir/$target_filename.ok");
-						close (MYFILE);
+						print RESULT $data;
+                        $records++;
 					}
 				}
-				#tmp
-				#qx(cp $localDir/$file /nagios/icinga/icinga-icinga/var/perfdata-to-test/);
-				qx(rm $localDir/$file);
+
+                # closing result file
+                close (RESULT);
+
+                # if we have written data
+                if($records > 0) {
+                    beVerbose("PROCESS_FILES", "written $records records to $resultfile");
+                    # commit by writing .ok file
+                    open (MYFILE, ">>$spoolDir/$resultfile.ok");
+                    close (MYFILE);
+                }
+                else {
+                    # remove tempfile we had - cause its empty
+                    beVerbose("PROCESS_FILES", "removing empty $resultfile");
+                    unlink("$spoolDir/$resultfile");
+                }
+
+                # remove spoolfile
+                unlink("$localDir/$file");
 				$counter++;
 			}
+            else { # $counter <= X
+                # break out of spool processing
+                beVerbose("PROCESS_FILES", "stop processing for now - too many files");
+                last;
+            }
 		}
         sleep $sleepExecThread;
     }
