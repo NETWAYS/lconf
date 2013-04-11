@@ -1,0 +1,67 @@
+# extended LDIF
+#
+# LDAPv3
+# base <ou=LConf,dc=netways,dc=org> with scope subtree
+# filter: (objectclass=*)
+# requesting: ALL
+#
+
+# LConf, netways.org
+#dn: ou=LConf,dc=netways,dc=org
+#objectClass: top
+#objectClass: organizationalUnit
+#description: init by LConfTest.pl
+#ou: LConf
+#
+## IcingaConfig, LConf, netways.org
+#dn: ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+#ou: IcingaConfig
+#objectClass: lconfStructuralObject
+
+## main, IcingaConfig, LConf, netways.org
+#dn: ou=main,ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+#ou: main
+#objectClass: lconfStructuralObject
+#description: LCONF->EXPORT->SERVICE lconfservicechecksenabled 1
+#description: desc-1
+#lconfServiceCustomvar: _cv1 1
+
+# kunden, main, IcingaConfig, LConf, netways.org
+dn: ou=kunden,ou=main,ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+ou: kunden
+objectClass: lconfStructuralObject
+description: LCONF->EXPORT->MODIFY->SERVICE lconfserviceactivechecksenabled 1
+description: LCONF->EXPORT->HOST localhost
+description: desc-1
+lconfServiceCustomvar: _cv1 1
+lconfServiceActiveChecksEnabled: 0
+
+# customer-1, kunden, main, IcingaConfig, LConf, netways.org
+dn: ou=customer-1,ou=kunden,ou=main,ou=IcingaConfig,ou=LConf,dc=netways,dc=org
+ou: customer-1
+objectClass: lconfStructuralObject
+
+# example-host, customer-1, kunden, main, IcingaConfig, LConf, netways.org
+dn: cn=example-host,ou=customer-1,ou=kunden,ou=main,ou=IcingaConfig,ou=LConf,d
+ c=netways,dc=org
+lconfAddress: 1.1.1.1
+cn: example-host
+objectClass: lconfHost
+
+# service-1, example-host, customer-1, kunden, main, IcingaConfig, LConf, net
+ ways.org
+dn: cn=service-1,cn=example-host,ou=customer-1,ou=kunden,ou=main,ou=IcingaConf
+ ig,ou=LConf,dc=netways,dc=org
+lconfCheckcommand: cmd-1
+objectClass: lconfService
+cn: service-1
+description: desc-3
+description: desc-2
+lconfServiceCustomvar: _cv2 2
+
+# search result
+search: 2
+result: 0 Success
+
+# numResponses: 8
+# numEntries: 7

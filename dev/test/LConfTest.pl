@@ -113,6 +113,7 @@ use src::ldap;
 use lib::test_ldap;
 use lib::testConfigExport;
 use lib::testConfigReader;
+use lib::testSlaveExport;
 
 # version string
 my $version = '1.3-dev.4';
