@@ -605,6 +605,7 @@ icinga_config
 icinga_binpath
 icinga_user
 ldap_config_style
+ldap_person
 ldap_prefix
 ldap_bind_password
 ldap_bind_dn
@@ -666,6 +667,7 @@ with_ldap_dn
 with_ldap_bind_dn
 with_ldap_bind_password
 with_ldap_prefix
+with_ldap_person
 with_ldap_config_style
 with_icinga_user
 with_icinga_binpath
@@ -1308,6 +1310,8 @@ Optional Packages:
                           sets ldap bind password
   --with-ldap-prefix=<ldap prefix>
                           sets lconf's ldap prefix
+  --with-ldap-person=<AUXILIARY>
+                          sets lconf's ldap sup top auxiliary in schema
   --with-ldap-config-style=<new/old>
                           sets ldap config style; new -> cn=config; old ->
                           slapd.conf
@@ -2019,6 +2023,21 @@ _ACEOF
 
 
 
+# Check whether --with-ldap_person was given.
+if test "${with_ldap_person+set}" = set; then :
+  withval=$with_ldap_person; ldap_person=$withval
+else
+  ldap_person=''
+fi
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define DEFAULT_LDAP_PERSON "$ldap_person"
+_ACEOF
+
+
+
 # Check whether --with-ldap_config_style was given.
 if test "${with_ldap_config_style+set}" = set; then :
   withval=$with_ldap_config_style; ldap_config_style=$withval
@@ -2252,7 +2271,6 @@ fi
 if test x$SLAVESYNC_LOG_DIR = xno; then
         SLAVESYNC_LOG_DIR="$prefix/var"
 fi
-
 
 
 

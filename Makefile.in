@@ -79,6 +79,7 @@ LDAP_BIND_DN=@ldap_bind_dn@
 LDAP_BIND_PASSWORD=@ldap_bind_password@
 LDAP_PREFIX=@ldap_prefix@
 LDAP_CONFIG_STYLE=@ldap_config_style@
+LDAP_PERSON=@ldap_person@
 
 INSTALL=@INSTALL@
 INSTALL_OPTS=-o $(LCONF_CLI_USER) -g $(LCONF_CLI_GROUP)
@@ -206,9 +207,12 @@ all:
 	chmod 755 contrib/LConfDeployIcinga2.sh
 	# LDAP SCHEMA + BASE.LDIF
 		# netways.schema
-		cat src/netways.schema.in | sed -e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" > src/netways.schema
+		cat src/netways.schema.in | sed -e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" -e "s/@LDAP_PERSON@/$(LDAP_PERSON)/g" > src/netways.schema
 		# netways.schema.ldif
-		cat src/netways.schema.ldif.in | sed -e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" > src/netways.schema.ldif
+		cat src/netways.schema.ldif.in | sed \
+			-e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" \
+			-e "s/@LDAP_PERSON@/$(LDAP_PERSON)/g" \
+		> src/netways.schema.ldif
 		# base.ldif
 		cat src/base.ldif.in | sed \
 			-e "s/@LDAP_DN@/$(LDAP_DN)/g" \
@@ -255,6 +259,7 @@ info:
 	@echo "   ldap_bind_dn:           "$(LDAP_BIND_DN)
 	@echo "   ldap_bind_password:     "$(LDAP_BIND_PASSWORD)
 	@echo "   ldap_prefix:            "$(LDAP_PREFIX)
+	@echo "   ldap_person:            "$(LDAP_PERSON)
 	@echo ""
 	@echo "   ldap_config_style:      "$(LDAP_CONFIG_STYLE)
 	@echo ""

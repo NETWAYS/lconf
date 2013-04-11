@@ -758,19 +758,19 @@ objectclass ( 1.3.6.1.4.1.26840.144.4.1 NAME '@LDAP_PREFIX@StructuralObject'
 
 objectclass ( 1.3.6.1.4.1.26840.144.5.1 NAME '@LDAP_PREFIX@Timeperiod'
     DESC 'Nagios / Icinga Timeperiod'
-    SUP top
+    SUP top @LDAP_PERSON@
     MUST ( cn $ @LDAP_PREFIX@Alias )
     MAY ( description $ @LDAP_PREFIX@TimeperiodValue $ @LDAP_PREFIX@TimeperiodExclude) )
 
 objectclass ( 1.3.6.1.4.1.26840.144.5.2 NAME '@LDAP_PREFIX@Command'
     DESC 'Nagios / Icinga Command'
-    SUP top
+    SUP top @LDAP_PERSON@
     MUST ( cn $ @LDAP_PREFIX@Commandline )
     MAY ( description ) )
 
 objectclass ( 1.3.6.1.4.1.26840.144.5.3 NAME '@LDAP_PREFIX@Contact'
     DESC 'Nagios / IcingaContact'
-    SUP top
+    SUP top @LDAP_PERSON@
     MUST ( cn $ @LDAP_PREFIX@Alias )
     MAY ( description $ @LDAP_PREFIX@Email $ @LDAP_PREFIX@Pager $
         @LDAP_PREFIX@ContactServiceNotificationPeriod   $ @LDAP_PREFIX@ContactHostNotificationPeriod $
@@ -782,7 +782,7 @@ objectclass ( 1.3.6.1.4.1.26840.144.5.3 NAME '@LDAP_PREFIX@Contact'
 
 objectclass ( 1.3.6.1.4.1.26840.144.5.4 NAME '@LDAP_PREFIX@Contactgroup'
     DESC 'Nagios / Icinga Host Group'
-    SUP top
+    SUP top @LDAP_PERSON@
     MUST ( cn $ @LDAP_PREFIX@Alias )
     MAY ( description $ @LDAP_PREFIX@Members ) )
 
@@ -794,7 +794,7 @@ objectclass ( 1.3.6.1.4.1.26840.144.5.5 NAME '@LDAP_PREFIX@Host'
 
 objectclass ( 1.3.6.1.4.1.26840.144.5.6 NAME '@LDAP_PREFIX@Hostgroup'
     DESC 'Nagios / Icinga Hostgroup'
-    SUP top
+    SUP top @LDAP_PERSON@
     MUST ( cn $ @LDAP_PREFIX@Alias )
     MAY ( description $ @LDAP_PREFIX@Members $ @LDAP_PREFIX@HostgroupMembers ) )
 
@@ -806,19 +806,19 @@ objectclass ( 1.3.6.1.4.1.26840.144.5.7 NAME '@LDAP_PREFIX@Service'
 
 objectclass ( 1.3.6.1.4.1.26840.144.5.8 NAME '@LDAP_PREFIX@Servicegroup'
     DESC 'Nagios / Icinga Servicegroup'
-    SUP top
+    SUP top @LDAP_PERSON@
     MUST (cn $ @LDAP_PREFIX@Alias )
     MAY ( description $ @LDAP_PREFIX@Members ) )
 
 objectclass ( 1.3.6.1.4.1.26840.144.5.9 NAME '@LDAP_PREFIX@HostEscalation'
     DESC 'Nagios / Icinga Host Escalation'
-    SUP top
+    SUP top @LDAP_PERSON@
     MUST ( cn $ @LDAP_PREFIX@HostEscalationFirstNotification $ @LDAP_PREFIX@HostEscalationLastNotification $ @LDAP_PREFIX@HostEscalationNotificationInterval )
     MAY ( @LDAP_PREFIX@HostEscalationContacts $ @LDAP_PREFIX@HostEscalationContactgroups $ @LDAP_PREFIX@HostEscalationPeriod $ @LDAP_PREFIX@HostEscalationOptions $ @LDAP_PREFIX@HostEscalationHostGroups ) )
 
 objectclass ( 1.3.6.1.4.1.26840.144.5.10 NAME '@LDAP_PREFIX@ServiceEscalation'
     DESC 'Nagios / Icinga Service Escalation'
-    SUP top
+    SUP top @LDAP_PERSON@
     MUST ( cn $ @LDAP_PREFIX@ServiceEscalationFirstNotification $ @LDAP_PREFIX@ServiceEscalationLastNotification $ @LDAP_PREFIX@ServiceEscalationNotificationInterval )
     MAY ( @LDAP_PREFIX@ServiceEscalationContacts $ @LDAP_PREFIX@ServiceEscalationContactgroups $ @LDAP_PREFIX@ServiceEscalationPeriod $ @LDAP_PREFIX@ServiceEscalationOptions $ @LDAP_PREFIX@ServiceEscalationServiceGroups $ @LDAP_PREFIX@ServiceEscalationHostGroups) )
 
