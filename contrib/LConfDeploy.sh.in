@@ -8,7 +8,8 @@
 # preset satellits. any on cmd line given will be added
 #SATELLIT="satellit1 satellit2 satellit3"
 
-SATELLITS=""
+# use the satellits from the LConf config.pm as default
+SATELLITS="$(perl -e 'BEGIN { unshift @INC, "/etc/LConf"; unshift @INC, "/usr/local/LConf"; } require config; print split /,/, $cfg->{slavesync}->{HOSTS};')"
 for SH_ARG in $@; do
 SATELLITS="$SATELLITS $SH_ARG"
 done
@@ -78,6 +79,7 @@ $SUDOCOMMAND \
 $LCONFBINPATH/LConfSlaveExport.pl -H $HOST \
 -D $LCONFTMP/LConfExport.hashdump \
 -t $LCONFDIR -v )
+( $SUDOCOMMAND rm -rf "$LCONFTMP/$HOST" )
 done
 
 # copy the final config in place

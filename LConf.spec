@@ -11,7 +11,7 @@
 Name:           LConf
 Summary:        LDAP based configuration tool for Icinga and Nagios
 Version:        1.3.0rc2
-Release:        2
+Release:        3%{?dist}%{?custom}
 Url:            https://www.netways.org/projects/lconf
 License:        GPL v2 or later
 Group:          System/Monitoring
@@ -34,13 +34,14 @@ Recommends:     rsync
 Recommends:	icinga
 %endif
 Source0:        %name-%version.tar.gz
+
 BuildArch:      noarch
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 
 Requires:       perl(Net::LDAP)
 Requires:	perl(Parallel::ForkManager) >= 0.7.6
 BuildRequires:  perl(Net::LDAP)
-BuildRequires:  perl(Parallel::ForkManager)
+BuildRequires:  perl(Parallel::ForkManager) >= 0.7.6
 
 
 %description
@@ -78,8 +79,36 @@ make
     INSTALL_OPTS="" \
     INIT_OPTS=""
 
-# FIXME sed all required paths
-#install -m0755 contrib/LConfDeploy.sh "%{buildroot}%{_bindir}/LConfDeploy.sh"
+# LConfDeploy
+install -m0755 contrib/LConfDeploy.sh "%{buildroot}%{_bindir}/LConfDeploy.sh"
+sed -i -e 's|^ICINGABIN="/usr/local/icinga/bin/icinga"|ICINGABIN="%{_bindir}/icinga"|' \
+    -e 's|^LCONFDIR="/usr/local/icinga/etc/lconf"|LCONFDIR="%{_sysconfdir}/icinga/lconf"|' \
+    -e 's|^LCONFTMP="/usr/local/icinga/lconf.tmp"|LCONFTMP="%{_localstatedir}/spool/%{name}/lconf.tmp"|' \
+    -e 's|^ICINGACONFIG=/usr/local/icinga/etc/icinga.cfg|ICINGACONFIG=%{_sysconfdir}/icinga/icinga.cfg|' \
+    -e 's|^ICINGATMPCONFIG=/usr/local/icinga/etc/icinga.tmp.cfg|ICINGATMPCONFIG=%{_localstatedir}/spool/%{name}/icinga.tmp.cfg|' \
+	"%{buildroot}%{_bindir}/LConfDeploy.sh"
+rm contrib/LConfDeploy.sh{,.in}
+mkdir -p %{buildroot}%{_localstatedir}/spool/icinga/perfdata-local
+mkdir -p %{buildroot}%{_sysconfdir}/icinga/lconf
+mkdir -p %{buildroot}%{_localstatedir}/spool/%{name}/lconf.tmp
+# user has not right to write in /var/run directly
+mkdir -p %{buildroot}%{_localstatedir}/run/%{name}
+# init-script
+mkdir "%{buildroot}%{_sysconfdir}/init.d"
+install -m0755 contrib/lconf-slavesync "%{buildroot}%{_sysconfdir}/init.d/lconf-slavesync"
+rm contrib/lconf-slavesync{,.in}
+sed -i -e 's|^DAEMON=/usr/local/LConf/LConfSlaveSync.pl|DAEMON=%{_bindir}/LConfSlaveSync.pl|' \
+	"%{buildroot}%{_sysconfdir}/init.d/lconf-slavesync"
+# change config for master-slave setups
+sed -i -e 's|/var/LConf/lconf.tmp|%{_localstatedir}/spool/%{name}/lconf.tmp|' \
+    -e 's|/usr/local/icinga/var/perfdata-local|/var/spool/icinga/perfdata-local|' \
+    -e 's|/usr/local/icinga/var/perfdata-remote|/var/spool/icinga/perfdata-remote|' \
+    -e 's|/usr/local/icinga/var/spool/checkresults|/var/spool/icinga/checkresults|' \
+    -e 's|/usr/local/icinga/var/rw/icinga.cmd|/var/spool/icinga/cmd/icinga.cmd|' \
+    -e 's|/var/LConfSlaveSync.pid|/var/run/Lconf/LConfSlaveSync.pid|' \
+    -e 's|/var/LConfSlaveSync.debug|/var/log/icinga/LConfSlaveSync.debug|' \
+	"%{buildroot}%{_sysconfdir}/%{name}/config.pm"
+
 
 touch %{buildroot}/var/%{name}/lconf.tmp/lconf.identify
 mkdir -p %{buildroot}%{_sysconfdir}/icinga/lconf
@@ -98,31 +127,36 @@ rm -rf %buildroot
 # FIXME - README.SUSE with the schema explainations (changes to dc=local)????
 
 %defattr(644,root,root,755)
-%doc src/*.schema src/*.ldif contrib README doc/LICENSE doc/README.RHEL
+%doc src/*.schema src/*.ldif contrib README doc/LICENSE doc/README.RHEL 
 %dir %{_libdir}/%{name}
 %{_libdir}/%{name}/
 %defattr(755,root,root,755)
 %dir %{_libdir}/%{name}/custom
 #%config(noreplace) %{_libdir}/%{name}/custom/
-%defattr(755,root,root,755)
-%{_bindir}/LConfExport.pl
-%{_bindir}/LConfSlaveExport.pl
-%{_bindir}/LConfSlaveExportRules.pl
-%{_bindir}/LConfSlaveSync.pl
-%{_bindir}/LConfImport.pl
+%defattr(755,root,root)
+%{_bindir}/*
 %defattr(644,icinga,icinga,755)
-%dir %{_localstatedir}/%{name}
-%dir %{_localstatedir}/%{name}/lconf.tmp
-%{_localstatedir}/%{name}/lconf.tmp
 %dir %{_sysconfdir}/%{name}
 %dir %{_sysconfdir}/icinga/lconf
-%defattr(644,root,root,755)
+%dir %{_localstatedir}/spool/icinga/perfdata-local
+%dir %{_localstatedir}/spool/%{name}
+%dir %{_localstatedir}/spool/%{name}/lconf.tmp
+%dir %{_localstatedir}/run/%{name}
+
+
+%defattr(644,root,root)
 %config(noreplace) %{_sysconfdir}/%{name}/*
+%defattr(755,root,root)
+%config(noreplace) %{_sysconfdir}/init.d/lconf-slavesync
 
 %changelog
+* Tue Mar 26 2013 christian.dengler@netways.de
+- install scripts for slave export and sync correctly
+- remove them from the docs
+
 * Wed Feb 27 2013 Markus Frosch <markus.frosch@netways.de>
 - Fix directory permissions for SuSE
-- Added old schema to doc files
+- Added old schema to doc file
 
 * Thu Jan 28 2013 christian.dengler@netways.de
 - disable AutoReqProv; correct Requires
