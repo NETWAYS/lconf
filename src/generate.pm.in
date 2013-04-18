@@ -201,7 +201,11 @@ sub genHostgroups {
                 my $tmp_hash = HashGrep($CLIENTS, 'objectclass', $cfg->{ldap}->{prefix}.'Host');
                 my $hostsearch = HashGrep($tmp_hash, 'dn', '^cn='.$host.',');
                 foreach my $val1 (keys %{$hostsearch}) {
-                    $CLIENTS->{$val1}->{$cfg->{ldap}->{prefix}.'hostgroups'} .= ','.$result->{$hostgroup}->{cn};
+                    if (defined $CLIENTS->{$val1}->{$cfg->{ldap}->{prefix}.'hostgroups'}) {
+                        $CLIENTS->{$val1}->{$cfg->{ldap}->{prefix}.'hostgroups'} .= ','.$result->{$hostgroup}->{cn};
+                    } else {
+                        $CLIENTS->{$val1}->{$cfg->{ldap}->{prefix}.'hostgroups'} .= $result->{$hostgroup}->{cn};
+                    }
                 }
             }
         }
