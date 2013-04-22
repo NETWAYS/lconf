@@ -113,7 +113,9 @@ sed -i -e 's|/var/LConf/lconf.tmp|%{_localstatedir}/spool/%{name}/lconf.tmp|' \
 	"%{buildroot}%{_sysconfdir}/%{name}/config.pm"
 
 
+%if "%{_vendor}" == "suse"
 touch %{buildroot}/var/%{name}/lconf.tmp/lconf.identify
+%endif
 mkdir -p %{buildroot}%{_sysconfdir}/icinga/lconf
 
 
