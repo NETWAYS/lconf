@@ -11,7 +11,7 @@
 Name:           LConf
 Summary:        LDAP based configuration tool for Icinga and Nagios
 Version:        1.3.0rc2
-Release:        3%{?dist}%{?custom}
+Release:        4%{?dist}%{?custom}
 Url:            https://www.netways.org/projects/lconf
 License:        GPL v2 or later
 Group:          System/Monitoring
@@ -67,7 +67,10 @@ work independent from the LDAP during runtime.
 	--with-ldap-server=localhost \
 	--with-ldap-dn="dc=local" \
 	--with-ldap-bind-dn="cn=Manager,dc=local" \
-	--with-ldap-config-style=old
+	--with-ldap-config-style=old \
+	--with-icinga-user=icinga \
+	--with-icinga-config="%{_sysconfdir}/icinga" \
+	--with-icinga-binpath="%{_bindir}"
 
 # replace dn and bind-dn later? FIXME
 
@@ -150,6 +153,9 @@ rm -rf %buildroot
 %config(noreplace) %{_sysconfdir}/init.d/lconf-slavesync
 
 %changelog
+* Mon Apr 22 2013 christian.dengler@netways.de
+- add additional configure options
+
 * Tue Mar 26 2013 christian.dengler@netways.de
 - install scripts for slave export and sync correctly
 - remove them from the docs
