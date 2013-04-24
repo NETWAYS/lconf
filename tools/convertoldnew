@@ -1,0 +1,41 @@
+#!/bin/bash
+
+HOMEDIR=`pwd`
+TMPDIR="$HOMEDIR/tmp"
+echo "HOME: $HOMEDIR TMP: $TMPDIR"
+
+cd ../
+make clean
+./configure --with-ldap-config-style=new
+make
+
+cd tools
+
+cp ../src/netways.schema $TMPDIR
+sudo /usr/sbin/slaptest -f test.conf -F $TMPDIR
+sudo chown -R $USER:$GROUP $TMPDIR
+
+cd $TMPDIR
+
+cp cn\=config/cn\=schema/cn\=\{1\}netways.ldif netways.schema.ldif.in
+
+# put modular prefix in place
+sed -i 's/lconf/\@LDAP_PREFIX\@/g' netways.schema.ldif.in
+
+# cut footer
+head -n -7 netways.schema.ldif.in > tmp.txt
+mv tmp.txt netways.schema.ldif.in
+
+# cut header
+tail -n +3 netways.schema.ldif.in > tmp.txt
+mv tmp.txt netways.schema.ldif.in
+
+# preserve dn/cn
+sed -i 's/cn: {1}netways/cn: netways/g' netways.schema.ldif.in
+sed -i 's/dn: cn={1}netways/dn: cn=netways,cn=schema,cn=config/g' netways.schema.ldif.in
+
+# copy in place
+cd ..
+cp $TMPDIR/netways.schema.ldif.in ../src/netways.schema.ldif.in
+
+

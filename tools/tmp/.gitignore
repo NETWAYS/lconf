@@ -1,0 +1,4 @@
+netways.schema
+*.ldif
+*.ldif.in
+*cn=config
