@@ -70,6 +70,12 @@ attributetype ( 1.3.6.1.4.1.26840.144.2.1.5 NAME '@LDAP_PREFIX@HostgroupMembers'
     SUBSTR caseIgnoreSubstringsMatch
     SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{512} SINGLE-VALUE )
 
+attributetype ( 1.3.6.1.4.1.26840.144.2.1.6 NAME '@LDAP_PREFIX@TimeperiodExclude'
+    DESC 'Nagios / Icinga Hostgroup Memebers (hostgroup_members hg1,hg2,hg3)'
+    EQUALITY caseIgnoreMatch
+    SUBSTR caseIgnoreSubstringsMatch
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} SINGLE-VALUE )
+
 
 #
 # .2.2   | @LDAP_PREFIX@ attributes (contact)
@@ -741,7 +747,7 @@ objectclass ( 1.3.6.1.4.1.26840.144.5.1 NAME '@LDAP_PREFIX@Timeperiod'
     DESC 'Nagios / Icinga Timeperiod'
     SUP top
     MUST ( cn $ @LDAP_PREFIX@Alias )
-    MAY ( description $ @LDAP_PREFIX@TimeperiodValue ) )
+    MAY ( description $ @LDAP_PREFIX@TimeperiodValue $ @LDAP_PREFIX@TimeperiodExclude) )
 
 objectclass ( 1.3.6.1.4.1.26840.144.5.2 NAME '@LDAP_PREFIX@Command'
     DESC 'Nagios / Icinga Command'
