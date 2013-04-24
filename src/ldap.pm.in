@@ -311,7 +311,7 @@ sub TreeBuilder {
             # e.g. http_$_SERVICEAPACHEPORT$
             if ($CONFIG->{$service}->{cn} =~ /\$_/) {
                 # get customvar's name and value
-                if($CONFIG->{$service}->{cn} =~ m/(\$_.+\$)/) {
+                if($CONFIG->{$service}->{cn} =~ m/(\$_[a-z0-9_\-]+\$)/i) {
                     my $customvar = $1;
                     my $customvar_attribute = $customvar;
                     $customvar_attribute =~ s/^\$_SERVICE(.*)\$$/_$1/;
