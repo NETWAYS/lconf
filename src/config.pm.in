@@ -9,6 +9,9 @@ $cfg->{ldap}->{binddn}                   = '@LDAP_BIND_DN@';
 $cfg->{ldap}->{bindpw}                   = '@LDAP_BIND_PASSWORD@';
 $cfg->{ldap}->{rootNode}                 = 'LConf';
 $cfg->{ldap}->{rootDN}                   = 'ou='.$cfg->{ldap}->{rootNode}.',@LDAP_DN@';
+#$cfg->{ldap}->{tls}->{verify}           = 'require';
+#$cfg->{ldap}->{tls}->{cafile}           = '/etc/openldap/CA.crt';
+#$cfg->{ldap}->{tls}->{sslversion}       = 'tlsv1';
 
 #
 # LConfExport.pl

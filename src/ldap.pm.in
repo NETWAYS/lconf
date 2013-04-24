@@ -7,10 +7,18 @@ sub LDAPconnect {
     if (defined $login) {
         # do ldap connect with login
         $ldap = Net::LDAP->new($cfg->{ldap}->{server}) or die "Can't connect to LDAP Server '$cfg->{ldap}->{server}'";
+
+        if ( $cfg->{ldap}->{tls} ) {
+	        $startTLSmesg = $ldap->start_tls( %{$cfg->{ldap}->{tls}} );
+            LeaveScript(2, "StartTLS failed. Server supports extension START_TLS?") if $startTLSmesg->is_error;
+	    }
+
         my $mesg=$ldap->bind("$cfg->{ldap}->{binddn}", password => "$cfg->{ldap}->{bindpw}" );
         beVerbose("LDAP CONNECT", "connect to host: $cfg->{ldap}->{server}, User: $cfg->{ldap}->{binddn}, Pass: ******");
-        LeaveScript(2, "Can't connect to ldap server! Wrong user and/or password?") if $mesg->{resultCode};
+        LeaveScript(2, "Can't connect to ldap server! Wrong user and/or password? Disabled TLS, but server requires it?") if $mesg->{resultCode};
     } else {
+	    # no anonymous bind with TLS
+	    LeaveScript(2, "We do not support TLS with anonymous bind") if $cfg->{ldap}->{tls};
         # anonymous bind
         beVerbose("LDAP CONNECT", "connect to Host: $cfg->{ldap}->{server} with anonymous bind");
         $ldap = Net::LDAP->new ($cfg->{ldap}->{server}) or die "Can't connect to LDAP Server $cfg->{ldap}->{server}: $!";
