@@ -4,17 +4,25 @@ HOMEDIR=`pwd`
 TMPDIR="$HOMEDIR/tmp"
 echo "HOME: $HOMEDIR TMP: $TMPDIR"
 
+# cleanup
+cd $TMPDIR
+rm -rf cn\=config*
+rm netways.schema*
+cd ..
+
+# generate new files
 cd ../
 make clean
 ./configure --with-ldap-config-style=new
 make
-
 cd tools
 
+# convert old to new
 cp ../src/netways.schema $TMPDIR
 sudo /usr/sbin/slaptest -f test.conf -F $TMPDIR
 sudo chown -R $USER:$GROUP $TMPDIR
 
+# prepare output
 cd $TMPDIR
 
 cp cn\=config/cn\=schema/cn\=\{1\}netways.ldif netways.schema.ldif.in
