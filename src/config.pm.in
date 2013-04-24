@@ -135,6 +135,7 @@ $cfg->{test}->{output}                   = "/tmp/lconf-test-out";
     @LDAP_PREFIX@hostnotes		                        => 'notes',
     @LDAP_PREFIX@hostlowflapthreshold                         => 'low_flap_threshold',
     @LDAP_PREFIX@hosthighflapthreshold                        => 'high_flap_threshold',
+    @LDAP_PREFIX@hostisvolatile                               => 'is_volatile',
 
     # .2.4 | lconf attributes (service)
     @LDAP_PREFIX@checkcommand                                 => 'check_command',
@@ -170,6 +171,7 @@ $cfg->{test}->{output}                   = "/tmp/lconf-test-out";
     @LDAP_PREFIX@servicenotes			                => 'notes',
     @LDAP_PREFIX@servicelowflapthreshold                      => 'low_flap_threshold',
     @LDAP_PREFIX@servicehighflapthreshold                     => 'high_flap_threshold',
+    @LDAP_PREFIX@serviceisvolatile                            => 'is_volatile',
 
     # .2.5 | lconf attributes (host escalations)
     @LDAP_PREFIX@hostescalationfirstnotification              => 'first_notification',
