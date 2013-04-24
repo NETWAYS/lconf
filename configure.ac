@@ -79,6 +79,17 @@ AC_ARG_WITH(ldap_config_style,AC_HELP_STRING([--with-ldap-config-style=<new/old>
 AC_SUBST(ldap_config_style)
 AC_DEFINE_UNQUOTED(DEFAULT_LDAP_CONFIG_STYLE,"$ldap_config_style",[sets ldap config style])
 
+AC_ARG_WITH(icinga_user,AC_HELP_STRING([--with-icinga-user=<user id of icinga>],[sets the user id of the icinga process]),icinga_user=$withval,icinga_user=icinga) 
+AC_SUBST(icinga_user)
+AC_DEFINE_UNQUOTED(DEFAULT_ICINGA_USER,"$icinga_user",[sets the user id of the icinga process])
+
+AC_ARG_WITH(icinga_binpath,AC_HELP_STRING([--with-icinga-binpath=path to the icinga binary>],[sets the path to the icinga binary]),icinga_binpath=$withval,icinga_binpath=/usr/local/icinga/bin) 
+AC_SUBST(icinga_binpath)
+AC_DEFINE_UNQUOTED(DEFAULT_ICINGA_BINPATH,"$icinga_binpath",[sets the path to the icinga binary])
+
+AC_ARG_WITH(icinga_config,AC_HELP_STRING([--with-icinga-config=icinga configuration directory>],[sets the path to the icinga config directory]),icinga_config=$withval,icinga_config=/usr/local/icinga/etc) 
+AC_SUBST(icinga_config)
+AC_DEFINE_UNQUOTED(DEFAULT_ICINGA_CONFIG,"$icinga_config",[icinga configuration directory])
 
 
 # check requirements

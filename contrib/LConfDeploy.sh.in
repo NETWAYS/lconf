@@ -8,27 +8,28 @@
 # preset satellits. any on cmd line given will be added
 #SATELLIT="satellit1 satellit2 satellit3"
 
-SATELLITS=""
+# use the satellits from the LConf config.pm as default
+SATELLITS="$(perl -e 'BEGIN { unshift @INC, "@SYSCONF_DIR@"; } require config; print split /,/, $cfg->{slavesync}->{HOSTS};')"
 for SH_ARG in $@; do
 SATELLITS="$SATELLITS $SH_ARG"
 done
 # Define where your icinga binary lies
-ICINGABIN="/usr/local/icinga/bin/icinga"
+ICINGABIN="@ICINGA_BINPATH@/icinga"
 # Path of your LConf installation
 LCONFBINPATH="@BIN_DIR@"
 # Define where to export the config to
-LCONFDIR="/usr/local/icinga/etc/lconf"
+LCONFDIR="@ICINGA_CONFIG@/lconf"
 # Define where to export the temporary config to
-LCONFTMP="/usr/local/icinga/lconf.tmp"
+LCONFTMP="@ICINGA_CONFIG@/lconf.tmp"
 # Define where your icinga config lies
-ICINGACONFIG=/usr/local/icinga/etc/icinga.cfg
+ICINGACONFIG="@ICINGA_CONFIG@/icinga.cfg"
 # Define where your temporary created icinga config should lie
-ICINGATMPCONFIG=/usr/local/icinga/etc/icinga.tmp.cfg
+ICINGATMPCONFIG="@ICINGA_CONFIG@/icinga.tmp.cfg"
 
-ICINGAUSER="icinga"
-ICINGAGROUP="icinga"
+ICINGAUSER="@ICINGA_USER@"
+ICINGAGROUP="@ICINGA_USER@"
 if [ ! -x $ICINGABIN ] ; then
-ICINGABIN=/usr/local/icinga/bin/icinga
+ICINGABIN="@ICINGA_BINPATH@/icinga"
 if [ ! -x $ICINGABIN ] ; then
 echo "ERROR: Could not find icinga binary to check the config!"
 exit 2
@@ -78,6 +79,7 @@ $SUDOCOMMAND \
 $LCONFBINPATH/LConfSlaveExport.pl -H $HOST \
 -D $LCONFTMP/LConfExport.hashdump \
 -t $LCONFDIR -v )
+( $SUDOCOMMAND rm -rf "$LCONFTMP/$HOST" )
 done
 
 # copy the final config in place

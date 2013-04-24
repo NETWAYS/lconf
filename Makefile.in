@@ -32,6 +32,13 @@ TMP_DIR_QUOTED=`echo $(TMP_DIR) | sed s/\\\\//\\\\\\\\\\\\//g`
 EXPORT_SCRIPT_DIR=@EXPORTSCRIPTDIR@
 EXPORT_SCRIPT_DIR_QUOTED=`echo $(EXPORT_SCRIPT_DIR) | sed s/\\\\//\\\\\\\\\\\\//g`
 
+# icinga config
+ICINGA_BINPATH=@icinga_binpath@
+ICINGA_BINPATH_QUOTED=`echo $(ICINGA_BINPATH) | sed s/\\\\//\\\\\\\\\\\\//g`
+ICINGA_CONFIG=@icinga_config@
+ICINGA_CONFIG_QUOTED=`echo $(ICINGA_CONFIG) | sed s/\\\\//\\\\\\\\\\\\//g`
+ICINGA_USER=@icinga_user@
+
 # lconf settings
 LCONF_CLI_USER=@lconf_cli_user@
 LCONF_CLI_GROUP=@lconf_cli_group@
@@ -141,6 +148,9 @@ all:
 				-e "s/@BIN_DIR@/$(BIN_DIR_QUOTED)/g" \
 				-e "s/@LIB_DIR@/$(LIB_DIR_QUOTED)/g" \
 				-e "s/@VERSION@/$(VERSION)/g" \
+				-e "s/@ICINGA_BINPATH@/$(ICINGA_BINPATH_QUOTED)/g" \
+				-e "s/@ICINGA_CONFIG@/$(ICINGA_CONFIG_QUOTED)/g" \
+				-e "s/@ICINGA_USER@/$(ICINGA_USER)/g" \
 				> contrib/LConfDeploy.sh
 			chmod 755 contrib/LConfDeploy.sh
 		# LDAP SCHEMA + BASE.LDIF
