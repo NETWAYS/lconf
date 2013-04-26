@@ -1,6 +1,7 @@
 --------------------------------------------------------
 
-LConf
+About LConf
+===========
 
 NETWAYS LConf is a LDAP based configuration tool for Icinga
 and Nagios. All configuration elements are stored on a LDAP
@@ -11,12 +12,21 @@ independent from the LDAP during runtime.
 For detailed information about installation, legal and all
 other, please take a look into ./doc
 
+http://www.netways.org
+
+
+LConf Support
+=============
+
 Visit the LConf homepage at http://www.netways.org for online
 documentation, new releases, bug reports, etc.
 
-http://www.netways.org
+There's also an LConf section at the monitoring community portal
+http://www.monitoring-portal.org/wbb/index.php?page=Board&boardID=108
+
 
 Upgrading LConf
+===============
 
 Please look into doc/UPGRADING for details.
 
