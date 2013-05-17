@@ -10,5 +10,5 @@ dnl dnl this name.
 dnl dnl
 dnl
 m4_define([LCONF_VERSION], [1.3.0])
-m4_define([LCONF_RELEASE_DATE], [2013-05-20])
+m4_define([LCONF_RELEASE_DATE], [2013-05-27])
 
