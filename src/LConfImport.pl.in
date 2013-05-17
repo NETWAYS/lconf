@@ -485,7 +485,7 @@ sub getItems {
                 my ($val1, $val2);
 
                 if ($mode eq 'timeperiod') {
-                    if ($OBJECTSCACHE[$counter] =~ /timeperiod_name/ || $OBJECTSCACHE[$counter] =~ /alias/) {
+                    if ($OBJECTSCACHE[$counter] =~ /timeperiod_name/ || $OBJECTSCACHE[$counter] =~ /alias/ || $OBJECTSCACHE[$counter] =~ /exclude/) {
                         $OBJECTSCACHE[$counter] =~ m/([\w]+)\s*(.*)/;
                         $val1 = $1; $val2 = $2;
                     } else {
