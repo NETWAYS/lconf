@@ -288,6 +288,10 @@ if ($opt->{objectsCache}) {
                                     $entry->add(values %{$newItemMap->{$_}} => "$CONTACTS->{$contact}->{$_}") if values %{$newItemMap->{$_}};
                                 }
 
+                                if(!defined($CONTACTS->{$contact}->{'alias'})) {
+                                    $entry->add("lconfalias" => "$CONTACTS->{$contact}->'contact_name'");
+                                }
+
                                 # update ldap
                                 my $result = $entry->update($ldap);
                                 if ($result->code != 0) {
@@ -316,6 +320,10 @@ if ($opt->{objectsCache}) {
                                     $entry->add(values %{$newItemMap->{$_}} => "$CONTACTGROUPS->{$contactgroup}->{$_}") if values %{$newItemMap->{$_}};
                                 }
 
+                                if(!defined($CONTACTGROUPS->{$contactgroup}->{'alias'})) {
+                                    $entry->add("lconfalias" => "$CONTACTGROUPS->{$contactgroup}->'contactgroup_name'");
+                                }
+
                                 # update ldap
                                 my $result = $entry->update($ldap);
                                 if ($result->code != 0) {
@@ -342,6 +350,10 @@ if ($opt->{objectsCache}) {
 
                                 foreach(keys %{$HOSTGROUPS->{$hostgroup}}) {
                                     $entry->add(values %{$newItemMap->{$_}} => "$HOSTGROUPS->{$hostgroup}->{$_}") if values %{$newItemMap->{$_}};
+                                }
+
+                                if(!defined($HOSTGROUPS->{$hostgroup}->{'alias'})) {
+                                    $entry->add("lconfalias" => "$HOSTGROUPS->{$hostgroup}->'hostgroup_name'");
                                 }
 
                                 # update ldap
