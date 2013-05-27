@@ -60,8 +60,21 @@ FIXES
 * create Changelog #2030
 
 CHANGES
-* create doc/ and add README,. move LICENSE there #1834
+* perl module Parallel::ForkManager (>= 0.7.6) is needed
+* create doc/ and add README, move LICENSE there #1834
 * move *.pl to $prefix/bin #1836
+* contrib/lconf_deploy.sh is renamed to contrib/LConfDeploy.sh
+* changed/new config.pm options, check doc/UPGRADING
+* lconfcheckcommand is deprecated. use lconf{host,service}checkcommand instead.
+* new configure options for easier packaging #1788 #1864 #2090
+	** --with-export-script-dir
+	** --with-temp-dir
+	** --with-slavesync-local-dir
+	** --with-slavesync-remote-dir
+	** --with-slavesync-checkresult-spool-dir
+	** --with-slavesync-extcmd-pipe-path
+	** --with-slavesync-pid-file
+	** --with-slavesync-log-dir
 
 
 1.2.0 - 18/11/2011
