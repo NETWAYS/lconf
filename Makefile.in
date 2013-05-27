@@ -292,4 +292,8 @@ clean:
 	rm -f contrib/lconf-slavesync
 	rm -f contrib/LConfDeploy.sh
 
+create-tarball:
+	./make-tarball --prefix LConf-${VERSION}/
+
+
 # vi: ts=4 sw=4 noexpandtab :
