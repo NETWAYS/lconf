@@ -43,6 +43,18 @@ Requires:	perl(Parallel::ForkManager) >= 0.7.6
 BuildRequires:  perl(Net::LDAP)
 BuildRequires:  perl(Parallel::ForkManager) >= 0.7.6
 
+%if "%{_vendor}" == "suse"
+%define slavesynccmdpipepath %{_localstatedir}/run/icinga/icinga.cmd
+%endif
+%if "%{_vendor}" == "redhat"
+%define slavesynccmdpipepath %{_localstatedir}/spool/icinga/cmd/icinga.cmd
+%endif
+
+%define slavesynclocaldir %{_localstatedir}/spool/icinga/perfdata-local
+%define slavesyncremotedir %{_localstatedir}/spool/icinga/perfdata-remote
+%define slavesynccrspooldir %{_localstatedir}/spool/icinga/checkresults
+%define slavesyncpid %{_localstatedir}/run/LConfSlaveSync.pid
+%define slavesynclogdir %{_localstatedir}/log/icinga/LConfSlaveSync.debug
 
 %description
 LConf is a LDAP based configuration tool for Icinga® and Nagios®. All
@@ -61,7 +73,7 @@ work independent from the LDAP during runtime.
 	--datarootdir="%{_datadir}/%{name}" \
 	--sysconfdir="%{_sysconfdir}/%{name}" \
 	--libdir="%{_libdir}/%{name}" \
-	--with-temp-dir="%{_localstatedir}/%{name}/lconf.tmp" \
+	--with-temp-dir="%{_localstatedir}/spool/%{name}/lconf.tmp" \
 	--with-export-script-dir="%{_libdir}/%{name}/custom" \
 	--with-lconf-cli-user=icinga \
 	--with-lconf-cli-group=icinga \
@@ -71,11 +83,15 @@ work independent from the LDAP during runtime.
 	--with-ldap-config-style=new \
 	--with-icinga-user=icinga \
 	--with-icinga-config="%{_sysconfdir}/icinga" \
-	--with-icinga-binpath="%{_bindir}"
+	--with-icinga-binpath="%{_bindir}" \
+	--with-slavesync-local-dir="%{slavesynclocaldir}" \
+	--with-slavesync-remote-dir="%{slavesyncremotedir}" \
+	--with-slavesync-checkresult-spool-dir="%{slavesynccrspooldir}" \
+	--with-slavesync-extcmd-pipe-path="%{slavesynccmdpipepath}" \
+	--with-slavesync-log-dir="%{slavesynclogdir}" \
+	--with-slavesync-pid-file="%{slavesyncpid}"
 
-# replace dn and bind-dn later? FIXME
-
-make
+%{__make}
 
 %install
 %{__rm} -rf %{buildroot}
@@ -108,31 +124,8 @@ rm contrib/lconf-slavesync{,.in}
 sed -i -e 's|^DAEMON=/usr/local/LConf/LConfSlaveSync.pl|DAEMON=%{_bindir}/LConfSlaveSync.pl|' \
 	"%{buildroot}%{_sysconfdir}/init.d/lconf-slavesync"
 
-# change config for master-slave setups
 %if "%{_vendor}" == "suse"
-sed -i -e 's|/var/LConf/lconf.tmp|%{_localstatedir}/spool/%{name}/lconf.tmp|' \
-    -e 's|/usr/local/icinga/var/perfdata-local|%{_localstatedir}/spool/icinga/perfdata-local|' \
-    -e 's|/usr/local/icinga/var/perfdata-remote|%{_localstatedir}/spool/icinga/perfdata-remote|' \
-    -e 's|/usr/local/icinga/var/spool/checkresults|%{_localstatedir}/spool/icinga/checkresults|' \
-    -e 's|/usr/local/icinga/var/rw/icinga.cmd|%{_localstatedir}/run/icinga/icinga.cmd|' \
-    -e 's|/var/LConfSlaveSync.pid|%{_localstatedir}/run/Lconf/LConfSlaveSync.pid|' \
-    -e 's|/var/LConfSlaveSync.debug|%{_localstatedir}/log/icinga/LConfSlaveSync.debug|' \
-	"%{buildroot}%{_sysconfdir}/%{name}/config.pm"
-%endif
-%if "%{_vendor}" == "redhat"
-sed -i -e 's|/var/LConf/lconf.tmp|%{_localstatedir}/spool/%{name}/lconf.tmp|' \
-    -e 's|/usr/local/icinga/var/perfdata-local|%{_localstatedir}/spool/icinga/perfdata-local|' \
-    -e 's|/usr/local/icinga/var/perfdata-remote|%{_localstatedir}/spool/icinga/perfdata-remote|' \
-    -e 's|/usr/local/icinga/var/spool/checkresults|%{_localstatedir}/spool/icinga/checkresults|' \
-    -e 's|/usr/local/icinga/var/rw/icinga.cmd|%{_localstatedir}/spool/icinga/cmd/icinga.cmd|' \
-    -e 's|/var/LConfSlaveSync.pid|%{_localstatedir}/run/Lconf/LConfSlaveSync.pid|' \
-    -e 's|/var/LConfSlaveSync.debug|%{_localstatedir}/log/icinga/LConfSlaveSync.debug|' \
-	"%{buildroot}%{_sysconfdir}/%{name}/config.pm"
-%endif
-
-
-%if "%{_vendor}" == "suse"
-touch %{buildroot}/var/%{name}/lconf.tmp/lconf.identify
+touch %{buildroot}%{_localstatedir}/spool/%{name}/lconf.tmp/lconf.identify
 %endif
 mkdir -p %{buildroot}%{_sysconfdir}/icinga/lconf
 
@@ -165,21 +158,22 @@ mkdir -p %{buildroot}%{_sysconfdir}/icinga/lconf
 %dir %{_localstatedir}/spool/%{name}/lconf.tmp
 %dir %{_localstatedir}/run/%{name}
 
-
 %defattr(644,root,root)
 %config(noreplace) %{_sysconfdir}/%{name}/*
 %defattr(755,root,root)
 %config(noreplace) %{_sysconfdir}/init.d/lconf-slavesync
 
 %changelog
-* Fri May 17 2013 Michael Friedrich <michael.friedrich@netways.de>
+* Mon May 27 2013 Michael Friedrich <michael.friedrich@netways.de>
 - update to 1.3.0
 - add doc/CHANGELOG to docs
+- use correct temp dir
+- remove sed orgy on slavesync and use upstream configure options
 
-* Mon Apr 22 2013 christian.dengler@netways.de
+* Mon Apr 22 2013 Christian Dengler <christian.dengler@netways.de>
 - add additional configure options
 
-* Tue Mar 26 2013 christian.dengler@netways.de
+* Tue Mar 26 2013 Christian Dengler <christian.dengler@netways.de>
 - install scripts for slave export and sync correctly
 - remove them from the docs
 
@@ -187,14 +181,14 @@ mkdir -p %{buildroot}%{_sysconfdir}/icinga/lconf
 - Fix directory permissions for SuSE
 - Added old schema to doc file
 
-* Thu Jan 28 2013 christian.dengler@netways.de
+* Thu Jan 28 2013 Christian Dengler <christian.dengler@netways.de>
 - disable AutoReqProv; correct Requires
 
-* Thu Jan 17 2013 christian.dengler@netways.de
+* Thu Jan 17 2013 Christian Dengler <christian.dengler@netways.de>
 - adjust version number, add additional BuildRequires, fix broken macro definition
 
-* Mon Jan 07 2013 michael.friedrich@netways.de
+* Mon Jan 07 2013 Michael Friedrich <michael.friedrich@netways.de>
 - updated using latest git changes, add rhel support
 
-* Tue Dec 11 2012 michael.friedrich@netways.de
+* Tue Dec 11 2012 Michael Friedrich <michael.friedrich@netways.de>
 - initial version for 1.3rc, suse
