@@ -149,7 +149,7 @@ mkdir -p %{buildroot}%{_sysconfdir}/icinga/lconf
 
 %files
 %defattr(644,root,root,755)
-%doc src/*.schema src/*.ldif contrib README doc/LICENSE doc/README.RHEL 
+%doc src/*.schema src/*.ldif contrib README doc/LICENSE doc/README.RHEL doc/CHANGELOG
 %dir %{_libdir}/%{name}
 %{_libdir}/%{name}/
 %defattr(755,root,root,755)
@@ -174,6 +174,7 @@ mkdir -p %{buildroot}%{_sysconfdir}/icinga/lconf
 %changelog
 * Fri May 17 2013 Michael Friedrich <michael.friedrich@netways.de>
 - update to 1.3.0
+- add doc/CHANGELOG to docs
 
 * Mon Apr 22 2013 christian.dengler@netways.de
 - add additional configure options
