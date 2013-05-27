@@ -25,26 +25,10 @@ test "$exec_prefix" = "NONE" && exec_prefix='${prefix}'
 # set special stuff
 exec_dir=`pwd`;
 comma=,
+icinga_prefix='/usr/local/icinga'
 
 # configure options
 AC_SUBST(exec_dir,[$exec_dir])
-
-dnl Location of export script path
-EXPORTSCRIPTDIR=no
-AC_ARG_WITH(export-script-dir,AC_HELP_STRING([--with-export-script-dir=<path>],[sets path to lconf export script (pre,mid,post.pl)]),EXPORTSCRIPTDIR=$withval,EXPORTSCRIPTDIR=no)
-if test x$EXPORTSCRIPTDIR = xno; then
-        EXPORTSCRIPTDIR="$prefix/custom"
-fi
-AC_SUBST(EXPORTSCRIPTDIR)
-
-dnl Location of temp path
-TMPDIR=no
-AC_ARG_WITH(temp-dir,AC_HELP_STRING([--with-temp-dir=<path>],[sets path to temp directory path]),TMPDIR=$withval,TMPDIR=no)
-if test x$TMPDIR = xno; then
-        TMPDIR="$prefix/tmp"
-fi
-AC_SUBST(TMPDIR)
-
 
 AC_ARG_WITH(lconf_cli_user,AC_HELP_STRING([--with-lconf-cli-user=<user>],[sets user name to run lconf on cli]),lconf_cli_user=$withval,lconf_cli_user=lconf) 
 AC_SUBST(lconf_cli_user)
@@ -83,13 +67,65 @@ AC_ARG_WITH(icinga_user,AC_HELP_STRING([--with-icinga-user=<user id of icinga>],
 AC_SUBST(icinga_user)
 AC_DEFINE_UNQUOTED(DEFAULT_ICINGA_USER,"$icinga_user",[sets the user id of the icinga process])
 
-AC_ARG_WITH(icinga_binpath,AC_HELP_STRING([--with-icinga-binpath=path to the icinga binary>],[sets the path to the icinga binary]),icinga_binpath=$withval,icinga_binpath=/usr/local/icinga/bin) 
+AC_ARG_WITH(icinga_binpath,AC_HELP_STRING([--with-icinga-binpath=<path to the icinga binary>],[sets the path to the icinga binary]),icinga_binpath=$withval,icinga_binpath=/usr/local/icinga/bin) 
 AC_SUBST(icinga_binpath)
 AC_DEFINE_UNQUOTED(DEFAULT_ICINGA_BINPATH,"$icinga_binpath",[sets the path to the icinga binary])
 
-AC_ARG_WITH(icinga_config,AC_HELP_STRING([--with-icinga-config=icinga configuration directory>],[sets the path to the icinga config directory]),icinga_config=$withval,icinga_config=/usr/local/icinga/etc) 
+AC_ARG_WITH(icinga_config,AC_HELP_STRING([--with-icinga-config=<icinga configuration directory>],[sets the path to the icinga config directory]),icinga_config=$withval,icinga_config=/usr/local/icinga/etc) 
 AC_SUBST(icinga_config)
 AC_DEFINE_UNQUOTED(DEFAULT_ICINGA_CONFIG,"$icinga_config",[icinga configuration directory])
+
+dnl Location of export script path
+EXPORTSCRIPTDIR=no
+AC_ARG_WITH(export-script-dir,AC_HELP_STRING([--with-export-script-dir=<path>],[sets path to lconf export script (pre,mid,post.pl)]),EXPORTSCRIPTDIR=$withval,EXPORTSCRIPTDIR=no)
+if test x$EXPORTSCRIPTDIR = xno; then
+        EXPORTSCRIPTDIR="$prefix/custom"
+fi
+AC_SUBST(EXPORTSCRIPTDIR)
+
+dnl Location of temp path
+TMPDIR=no
+AC_ARG_WITH(temp-dir,AC_HELP_STRING([--with-temp-dir=<path>],[sets path to temp directory path]),TMPDIR=$withval,TMPDIR=no)
+if test x$TMPDIR = xno; then
+        TMPDIR="$prefix/tmp"
+fi
+AC_SUBST(TMPDIR)
+
+
+dnl Slave Sync
+
+dnl Location of slave sync local dir
+SLAVESYNC_LOCAL_DIR=no
+AC_ARG_WITH(slavesync-local-dir,AC_HELP_STRING([--with-slavesync-local-dir=<path>],[sets path to slavesync local directory path]),SLAVESYNC_LOCAL_DIR=$withval,SLAVESYNC_LOCAL_DIR=no)
+if test x$SLAVESYNC_LOCAL_DIR = xno; then
+        SLAVESYNC_LOCAL_DIR="$icinga_prefix/var/perfdata-local"
+fi
+AC_SUBST(SLAVESYNC_LOCAL_DIR)
+
+dnl Location of slave sync remote dir
+SLAVESYNC_REMOTE_DIR=no
+AC_ARG_WITH(slavesync-remote-dir,AC_HELP_STRING([--with-slavesync-remote-dir=<path>],[sets path to slavesync remote directory path]),SLAVESYNC_REMOTE_DIR=$withval,SLAVESYNC_REMOTE_DIR=no)
+if test x$SLAVESYNC_REMOTE_DIR = xno; then
+        SLAVESYNC_REMOTE_DIR="$icinga_prefix/var/perfdata-remote"
+fi
+AC_SUBST(SLAVESYNC_REMOTE_DIR)
+
+dnl Location of slave sync checkresult spool dir
+SLAVESYNC_CHECKRESULT_SPOOL_DIR=no
+AC_ARG_WITH(slavesync-checkresult-spool-dir,AC_HELP_STRING([--with-slavesync-checkresult-spool-dir=<path>],[sets path to slavesync checkresult spool directory path]),SLAVESYNC_CHECKRESULT_SPOOL_DIR=$withval,SLAVESYNC_CHECKRESULT_SPOOL_DIR=no)
+if test x$SLAVESYNC_CHECKRESULT_SPOOL_DIR = xno; then
+        SLAVESYNC_CHECKRESULT_SPOOL_DIR="$icinga_prefix/var/spool/checkresults"
+fi
+AC_SUBST(SLAVESYNC_CHECKRESULT_SPOOL_DIR)
+
+dnl Location of slave sync external command pipe
+SLAVESYNC_EXTCMD_PIPE_PATH=no
+AC_ARG_WITH(slavesync-extcmd-pipe-path,AC_HELP_STRING([--with-slavesync-extcmd-pipe-path=<path>],[sets path to slavesync extcmd pipe path]),SLAVESYNC_EXTCMD_PIPE_PATH=$withval,SLAVESYNC_EXTCMD_PIPE_PATH=no)
+if test x$SLAVESYNC_EXTCMD_PIPE_PATH = xno; then
+        SLAVESYNC_EXTCMD_PIPE_PATH="$icinga_prefix/var/rw/icinga.cmd"
+fi
+AC_SUBST(SLAVESYNC_EXTCMD_PIPE_PATH)
+
 
 
 # check requirements

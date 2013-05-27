@@ -28,6 +28,18 @@ LOCALSTATE_DIR_QUOTED=`echo $(LOCALSTATE_DIR) | sed s/\\\\//\\\\\\\\\\\\//g`
 TMP_DIR=@TMPDIR@
 TMP_DIR_QUOTED=`echo $(TMP_DIR) | sed s/\\\\//\\\\\\\\\\\\//g`
 
+SLAVESYNC__LOCAL_DIR=@SLAVESYNC_LOCAL_DIR@
+SLAVESYNC__LOCAL_DIR_QUOTED=`echo $(SLAVESYNC__LOCAL_DIR) | sed s/\\\\//\\\\\\\\\\\\//g`
+
+SLAVESYNC__REMOTE_DIR=@SLAVESYNC_REMOTE_DIR@
+SLAVESYNC__REMOTE_DIR_QUOTED=`echo $(SLAVESYNC__REMOTE_DIR) | sed s/\\\\//\\\\\\\\\\\\//g`
+
+SLAVESYNC__CHECKRESULT_SPOOL_DIR=@SLAVESYNC_CHECKRESULT_SPOOL_DIR@
+SLAVESYNC__CHECKRESULT_SPOOL_DIR_QUOTED=`echo $(SLAVESYNC__CHECKRESULT_SPOOL_DIR) | sed s/\\\\//\\\\\\\\\\\\//g`
+
+SLAVESYNC__EXTCMD_PIPE_PATH=@SLAVESYNC_EXTCMD_PIPE_PATH@
+SLAVESYNC__EXTCMD_PIPE_PATH_QUOTED=`echo $(SLAVESYNC__EXTCMD_PIPE_PATH) | sed s/\\\\//\\\\\\\\\\\\//g`
+
 
 EXPORT_SCRIPT_DIR=@EXPORTSCRIPTDIR@
 EXPORT_SCRIPT_DIR_QUOTED=`echo $(EXPORT_SCRIPT_DIR) | sed s/\\\\//\\\\\\\\\\\\//g`
@@ -125,6 +137,10 @@ all:
 				-e "s/@LIB_DIR@/$(LIB_DIR_QUOTED)/g" \
 				-e "s/@TMP_DIR@/$(TMP_DIR_QUOTED)/g" \
 				-e "s/@LOCALSTATE_DIR@/$(LOCALSTATE_DIR_QUOTED)/g" \
+				-e "s/@SLAVESYNC__LOCAL_DIR@/$(SLAVESYNC__LOCAL_DIR_QUOTED)/g" \
+				-e "s/@SLAVESYNC__REMOTE_DIR@/$(SLAVESYNC__REMOTE_DIR_QUOTED)/g" \
+				-e "s/@SLAVESYNC__CHECKRESULT_SPOOL_DIR@/$(SLAVESYNC__CHECKRESULT_SPOOL_DIR_QUOTED)/g" \
+				-e "s/@SLAVESYNC__EXTCMD_PIPE_PATH@/$(SLAVESYNC__EXTCMD_PIPE_PATH_QUOTED)/g" \
 				> src/config.pm
 			# default-templates.cfg.in
 			cat src/default-templates.cfg.in > src/default-templates.cfg
@@ -179,23 +195,27 @@ info:
 	@echo ""
 	@echo " * * * Current Settings * * *"
 	@echo ""
-	@echo "   config dir:           "$(SYSCONF_DIR)
-	@echo "   lib dir:              "$(LIB_DIR)
-	@echo "   bin dir:              "$(BIN_DIR)
-	@echo "   tmp dir:              "$(TMP_DIR)
-	@echo "   localstate dir:       "$(LOCALSTATE_DIR)
-	@echo "   export script dir:    "$(EXPORT_SCRIPT_DIR)
+	@echo "   config dir:             "$(SYSCONF_DIR)
+	@echo "   lib dir:                "$(LIB_DIR)
+	@echo "   bin dir:                "$(BIN_DIR)
+	@echo "   tmp dir:                "$(TMP_DIR)
+	@echo "   localstate dir:         "$(LOCALSTATE_DIR)
+	@echo "   export script dir:      "$(EXPORT_SCRIPT_DIR)
+	@echo "   slavesync local dir:    "$(SLAVESYNC__LOCAL_DIR)
+	@echo "   slavesync remote dir:   "$(SLAVESYNC__REMOTE_DIR)
+	@echo "   slavesync cr spool dir: "$(SLAVESYNC__CHECKRESULT_SPOOL_DIR)
+	@echo "   slavesync extcmd pipe:  "$(SLAVESYNC__EXTCMD_PIPE_PATH)
 	@echo ""
-	@echo "   lconf_cli_user:       "$(LCONF_CLI_USER)
-	@echo "   lconf_cli_group:      "$(LCONF_CLI_GROUP)
+	@echo "   lconf_cli_user:         "$(LCONF_CLI_USER)
+	@echo "   lconf_cli_group:        "$(LCONF_CLI_GROUP)
 	@echo ""
-	@echo "   ldap_server:          "$(LDAP_SERVER)
-	@echo "   ldap_dn:              "$(LDAP_DN)
-	@echo "   ldap_bind_dn:         "$(LDAP_BIND_DN)
-	@echo "   ldap_bind_password:   "$(LDAP_BIND_PASSWORD)
-	@echo "   ldap_prefix:          "$(LDAP_PREFIX)
+	@echo "   ldap_server:            "$(LDAP_SERVER)
+	@echo "   ldap_dn:                "$(LDAP_DN)
+	@echo "   ldap_bind_dn:           "$(LDAP_BIND_DN)
+	@echo "   ldap_bind_password:     "$(LDAP_BIND_PASSWORD)
+	@echo "   ldap_prefix:            "$(LDAP_PREFIX)
 	@echo ""
-	@echo "   ldap_config_style:    "$(LDAP_CONFIG_STYLE)
+	@echo "   ldap_config_style:      "$(LDAP_CONFIG_STYLE)
 	@echo ""
 
 install:

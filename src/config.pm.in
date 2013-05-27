@@ -44,10 +44,10 @@ $cfg->{export}->{enablemidmaster}       = 0;
 # LConfSlaveSync.pl
 #
 $cfg->{slavesync}->{HOSTS}               = 'host1, host2, host3';
-$cfg->{slavesync}->{localDir}            = '/usr/local/icinga/var/perfdata-local';
-$cfg->{slavesync}->{remoteDir}           = '/usr/local/icinga/var/perfdata-remote';
-$cfg->{slavesync}->{spoolDir}            = '/usr/local/icinga/var/spool/checkresults';
-$cfg->{slavesync}->{ExtCMD}              = '/usr/local/icinga/var/rw/icinga.cmd';
+$cfg->{slavesync}->{localDir}            = '@SLAVESYNC__LOCAL_DIR@';
+$cfg->{slavesync}->{remoteDir}           = '@SLAVESYNC__REMOTE_DIR@';
+$cfg->{slavesync}->{spoolDir}            = '@SLAVESYNC__CHECKRESULT_SPOOL_DIR@';
+$cfg->{slavesync}->{ExtCMD}              = '@SLAVESYNC__EXTCMD_PIPE_PATH@';
 $cfg->{slavesync}->{getInterval}         = '60';
 $cfg->{slavesync}->{pushInterval}        = '30';
 # 0 .. use extcmd, 1 .. use spooldir

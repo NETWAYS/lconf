@@ -23,6 +23,7 @@ ENHANCEMENTS
 * make path to default-templates.cfg configurable #1802
 * rename contrib/lconf_deploy.sh to contrib/LConfDeploy.sh; add make install option #1828
 * add service parameter flap_threshold #1856
+* SlaveSync: allow icinga perfdata* dirs and command pipe to be set through configure #1864
 * distributed passive master: enable master config change on export (cfg option), introduce mid-master.pl #1866
 * LConfSlaveExportRules: do not export parents/dependencies (opt-in cfg option) #1872
 * LConfExport: redesign export strategy in regard of external scripts (mid.pl etc) #1874
