@@ -1,5 +1,8 @@
 #!/usr/bin/perl -w
 
+# please refer to the official documentation for details
+# https://www.netways.org/projects/lconf/wiki/Wiki#Configuration
+
 #
 # LDAP connection
 #
@@ -13,6 +16,7 @@ $cfg->{ldap}->{rootDN}                   = 'ou='.$cfg->{ldap}->{rootNode}.',@LDA
 #$cfg->{ldap}->{tls}->{cafile}           = '/etc/openldap/CA.crt';
 #$cfg->{ldap}->{tls}->{sslversion}       = 'tlsv1';
 
+
 #
 # LConfExport.pl
 #
@@ -22,16 +26,19 @@ $cfg->{export}->{tmpdir}                 = '@TMP_DIR@';
 $cfg->{export}->{onlydiffs}              = 0;
 $cfg->{export}->{childs}                 = 2;
 
-# moved to output dir, but can be overridden here
+# set Tree Rewrite, use with care! For details, please refer to the docs
+# https://www.netways.org/projects/lconf/wiki/Wiki#TreeRewrite
+$cfg->{export}->{treerewrite}            = 'None';
+#$cfg->{export}->{treerewrite}           = 'MainOverLink';
+
+# moved to output dir (./LConfExport.pl -o outputdir), but can be overridden here
 #$cfg->{export}->{lock}                  = '@LOCALSTATE_DIR@/LConfExport.lock';
 #$cfg->{export}->{hashdump}              = '@LOCALSTATE_DIR@/LConfExport.hashdump';
 #$cfg->{export}->{timestamp}             = '@LOCALSTATE_DIR@/LConfExport.timestamp';
 
-$cfg->{export}->{treerewrite}            = 'None';
-#$cfg->{export}->{treerewrite}           = 'MainOverLink';
-
 # enable mid-master.pl to change master config in distributed envs
 $cfg->{export}->{enablemidmaster}       = 0;
+
 
 #
 # LConfSlaveSync.pl
@@ -44,7 +51,7 @@ $cfg->{slavesync}->{ExtCMD}              = '/usr/local/icinga/var/rw/icinga.cmd'
 $cfg->{slavesync}->{getInterval}         = '60';
 $cfg->{slavesync}->{pushInterval}        = '30';
 # 0 .. use extcmd, 1 .. use spooldir
-$cfg->{slavesync}->{directIO}            = '1';
+$cfg->{slavesync}->{directIO}            = '1'; # use master checkresult spool dir by default
 $cfg->{slavesync}->{pidFile}             = '@LOCALSTATE_DIR@/LConfSlaveSync.pid';
 $cfg->{slavesync}->{debugLog}            = '@LOCALSTATE_DIR@/LConfSlaveSync.debug';
 $cfg->{slavesync}->{debug}               = '0';
@@ -52,6 +59,9 @@ $cfg->{slavesync}->{debug}               = '0';
 
 #
 # LConfSlaveExportRules.pl
+#
+# Optional. Please check the documentation or doc/UPGRADING for details!
+# https://www.netways.org/projects/lconf/wiki/Wiki#LConf-Slave-Export-by-Rules
 #
 #$cfg->{slaveexportrules} = {
 #   'rules' => {
