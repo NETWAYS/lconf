@@ -52,8 +52,8 @@ $cfg->{slavesync}->{getInterval}         = '60';
 $cfg->{slavesync}->{pushInterval}        = '30';
 # 0 .. use extcmd, 1 .. use spooldir
 $cfg->{slavesync}->{directIO}            = '1'; # use master checkresult spool dir by default
-$cfg->{slavesync}->{pidFile}             = '@LOCALSTATE_DIR@/LConfSlaveSync.pid';
-$cfg->{slavesync}->{debugLog}            = '@LOCALSTATE_DIR@/LConfSlaveSync.debug';
+$cfg->{slavesync}->{pidFile}             = '@SLAVESYNC__PID_FILE@';
+$cfg->{slavesync}->{debugLog}            = '@SLAVESYNC__LOG_DIR@/LConfSlaveSync.debug';
 $cfg->{slavesync}->{debug}               = '0';
 
 

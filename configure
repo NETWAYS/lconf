@@ -605,6 +605,8 @@ ac_subst_vars='LTLIBOBJS
 LIBOBJS
 LDAPADD
 LDAPSEARCH
+SLAVESYNC_LOG_DIR
+SLAVESYNC_PID_FILE
 SLAVESYNC_EXTCMD_PIPE_PATH
 SLAVESYNC_CHECKRESULT_SPOOL_DIR
 SLAVESYNC_REMOTE_DIR
@@ -685,6 +687,8 @@ with_slavesync_local_dir
 with_slavesync_remote_dir
 with_slavesync_checkresult_spool_dir
 with_slavesync_extcmd_pipe_path
+with_slavesync_pid_file
+with_slavesync_log_dir
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1344,6 +1348,10 @@ Optional Packages:
                           path
   --with-slavesync-extcmd-pipe-path=<path>
                           sets path to slavesync extcmd pipe path
+  --with-slavesync-pid-file=<path>
+                          sets path to slavesync pid file
+  --with-slavesync-log-dir=<path>
+                          sets path to slavesync log dir
 
 Report bugs to <support@netways.de>.
 _ACEOF
@@ -2183,6 +2191,34 @@ fi
 
 if test x$SLAVESYNC_EXTCMD_PIPE_PATH = xno; then
         SLAVESYNC_EXTCMD_PIPE_PATH="$icinga_prefix/var/rw/icinga.cmd"
+fi
+
+
+SLAVESYNC_PID_FILE=no
+
+# Check whether --with-slavesync-pid-file was given.
+if test "${with_slavesync_pid_file+set}" = set; then
+  withval=$with_slavesync_pid_file; SLAVESYNC_PID_FILE=$withval
+else
+  SLAVESYNC_PID_FILE=no
+fi
+
+if test x$SLAVESYNC_PID_FILE = xno; then
+        SLAVESYNC_PID_FILE="$prefix/var/LConfSlaveSync.pid"
+fi
+
+
+SLAVESYNC_LOG_DIR=no
+
+# Check whether --with-slavesync-log-dir was given.
+if test "${with_slavesync_log_dir+set}" = set; then
+  withval=$with_slavesync_log_dir; SLAVESYNC_LOG_DIR=$withval
+else
+  SLAVESYNC_LOG_DIR=no
+fi
+
+if test x$SLAVESYNC_LOG_DIR = xno; then
+        SLAVESYNC_LOG_DIR="$prefix/var"
 fi
 
 

@@ -126,6 +126,22 @@ if test x$SLAVESYNC_EXTCMD_PIPE_PATH = xno; then
 fi
 AC_SUBST(SLAVESYNC_EXTCMD_PIPE_PATH)
 
+dnl Location of slave sync pid file
+SLAVESYNC_PID_FILE=no
+AC_ARG_WITH(slavesync-pid-file,AC_HELP_STRING([--with-slavesync-pid-file=<path>],[sets path to slavesync pid file]),SLAVESYNC_PID_FILE=$withval,SLAVESYNC_PID_FILE=no)
+if test x$SLAVESYNC_PID_FILE = xno; then
+        SLAVESYNC_PID_FILE="$prefix/var/LConfSlaveSync.pid"
+fi
+AC_SUBST(SLAVESYNC_PID_FILE)
+
+dnl Location of slave debug log
+SLAVESYNC_LOG_DIR=no
+AC_ARG_WITH(slavesync-log-dir,AC_HELP_STRING([--with-slavesync-log-dir=<path>],[sets path to slavesync log dir]),SLAVESYNC_LOG_DIR=$withval,SLAVESYNC_LOG_DIR=no)
+if test x$SLAVESYNC_LOG_DIR = xno; then
+        SLAVESYNC_LOG_DIR="$prefix/var"
+fi
+AC_SUBST(SLAVESYNC_LOG_DIR)
+
 
 
 # check requirements

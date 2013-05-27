@@ -40,6 +40,12 @@ SLAVESYNC__CHECKRESULT_SPOOL_DIR_QUOTED=`echo $(SLAVESYNC__CHECKRESULT_SPOOL_DIR
 SLAVESYNC__EXTCMD_PIPE_PATH=@SLAVESYNC_EXTCMD_PIPE_PATH@
 SLAVESYNC__EXTCMD_PIPE_PATH_QUOTED=`echo $(SLAVESYNC__EXTCMD_PIPE_PATH) | sed s/\\\\//\\\\\\\\\\\\//g`
 
+SLAVESYNC__PID_FILE=@SLAVESYNC_PID_FILE@
+SLAVESYNC__PID_FILE_QUOTED=`echo $(SLAVESYNC__PID_FILE) | sed s/\\\\//\\\\\\\\\\\\//g`
+
+SLAVESYNC__LOG_DIR=@SLAVESYNC_LOG_DIR@
+SLAVESYNC__LOG_DIR_QUOTED=`echo $(SLAVESYNC__LOG_DIR) | sed s/\\\\//\\\\\\\\\\\\//g`
+
 
 EXPORT_SCRIPT_DIR=@EXPORTSCRIPTDIR@
 EXPORT_SCRIPT_DIR_QUOTED=`echo $(EXPORT_SCRIPT_DIR) | sed s/\\\\//\\\\\\\\\\\\//g`
@@ -141,6 +147,8 @@ all:
 				-e "s/@SLAVESYNC__REMOTE_DIR@/$(SLAVESYNC__REMOTE_DIR_QUOTED)/g" \
 				-e "s/@SLAVESYNC__CHECKRESULT_SPOOL_DIR@/$(SLAVESYNC__CHECKRESULT_SPOOL_DIR_QUOTED)/g" \
 				-e "s/@SLAVESYNC__EXTCMD_PIPE_PATH@/$(SLAVESYNC__EXTCMD_PIPE_PATH_QUOTED)/g" \
+				-e "s/@SLAVESYNC__PID_FILE@/$(SLAVESYNC__PID_FILE_QUOTED)/g" \
+				-e "s/@SLAVESYNC__LOG_DIR@/$(SLAVESYNC__LOG_DIR_QUOTED)/g" \
 				> src/config.pm
 			# default-templates.cfg.in
 			cat src/default-templates.cfg.in > src/default-templates.cfg
@@ -205,6 +213,8 @@ info:
 	@echo "   slavesync remote dir:   "$(SLAVESYNC__REMOTE_DIR)
 	@echo "   slavesync cr spool dir: "$(SLAVESYNC__CHECKRESULT_SPOOL_DIR)
 	@echo "   slavesync extcmd pipe:  "$(SLAVESYNC__EXTCMD_PIPE_PATH)
+	@echo "   slavesync pid file:     "$(SLAVESYNC__PID_FILE)
+	@echo "   slavesync log dir:      "$(SLAVESYNC__LOG_DIR)
 	@echo ""
 	@echo "   lconf_cli_user:         "$(LCONF_CLI_USER)
 	@echo "   lconf_cli_group:        "$(LCONF_CLI_GROUP)
