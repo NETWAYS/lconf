@@ -261,7 +261,7 @@ install:
 		@echo "  2) restart your ldap server"
 		@echo "  3) add the base ldif file to your ldap tree"
 		@echo ""
-		@echo "So... what's to do?"
+		@echo "So... what's next?"
 		@echo ""
 		@echo "  1) "$(LDAP_ADD_SCHEMA)
 		@echo "  2) /etc/init.d/slapd restart"
