@@ -155,7 +155,9 @@ mkdir -p %{buildroot}%{_sysconfdir}/icinga/lconf
 %dir %{_localstatedir}/spool/%{name}/lconf.tmp
 %dir %{_localstatedir}/run/%{name}
 
+%if ! ( "%{_vendor}" == "redhat" || 0%{?rhel} < 6 ) || ! ( "%{_vendor}" == "suse" || 0%{?sles_version} <= 1101 )
 %ghost %attr(644,icinga,icinga)%{_localstatedir}/spool/%{name}/lconf.tmp/lconf.identify
+%endif
 
 %defattr(644,root,root)
 %config(noreplace) %{_sysconfdir}/%{name}/*
