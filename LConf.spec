@@ -124,9 +124,6 @@ rm contrib/lconf-slavesync{,.in}
 sed -i -e 's|^DAEMON=/usr/local/LConf/LConfSlaveSync.pl|DAEMON=%{_bindir}/LConfSlaveSync.pl|' \
 	"%{buildroot}%{_sysconfdir}/init.d/lconf-slavesync"
 
-%if "%{_vendor}" == "suse"
-touch %{buildroot}%{_localstatedir}/spool/%{name}/lconf.tmp/lconf.identify
-%endif
 mkdir -p %{buildroot}%{_sysconfdir}/icinga/lconf
 
 
