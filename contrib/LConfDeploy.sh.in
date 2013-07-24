@@ -13,6 +13,10 @@ SATELLITS="$(perl -e 'BEGIN { unshift @INC, "@SYSCONF_DIR@"; } require config; p
 for SH_ARG in $@; do
 SATELLITS="$SATELLITS $SH_ARG"
 done
+
+#any satellit should only be once in the list
+SATELLITS=$(echo $SATELLITS| xargs -n1|sort -u| xargs)
+
 # Define where your icinga binary lies
 ICINGABIN="@ICINGA_BINPATH@/icinga"
 # Path of your LConf installation
