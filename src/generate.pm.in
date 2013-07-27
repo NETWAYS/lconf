@@ -244,6 +244,27 @@ sub genHostgroups {
             } else {
                 $result->{$CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostgroups"}}->{cn} = $CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostgroups"};
             }
+
+            # look for host's hostgroups and their services (seperated logic)
+            my @hhgs = split(/\s*,\s*/, $CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostgroups"});
+            foreach my $hg (@hhgs) {
+                # find the right hostgroup
+                my $hostgroup = HashGrep($result, 'dn', '^cn='.$hg.',');
+                # only one, but we'll get a hash anyways
+                foreach my $hostgroupdn (keys %{$hostgroup}) {
+                    DebugOutput("GENERATE HOSTGROUPCONFIG", "Generate host services for hostgroup '$hg'");
+                    # look for services below hostgroup
+                    my $hg_result = HashGrep($CONFIG, 'dn', '^[\w]+=[._\w\/\d\s:-]+,'.$hostgroupdn);
+                    my $HOSTGROUPSERVICES = HashGrep($hg_result, 'objectclass', $cfg->{ldap}->{prefix}.'Service$');
+                    foreach my $service (keys %{$HOSTGROUPSERVICES}) {
+                        DebugOutput("GENERATE HOSTGROUPCONFIG", " HostDN: '$client'");
+                        DebugOutput("GENERATE HOSTGROUPCONFIG", " ServiceDN: '$service'");
+                        # we'll override all host SERVICES if there are duplicates
+                        $CLIENTS->{$client}->{SERVICES}->{$HOSTGROUPSERVICES->{$service}->{'cn'}} = $HOSTGROUPSERVICES->{$service};
+                    }
+                }
+
+            }
         }
     }
 
