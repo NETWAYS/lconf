@@ -10,7 +10,7 @@
 
 Name:           LConf
 Summary:        LDAP based configuration tool for Icinga and Nagios
-Version:        1.3.0
+Version:        1.3.1
 Release:        1%{?dist}%{?custom}
 Url:            https://www.netways.org/projects/lconf
 License:        GPL v2 or later
@@ -124,9 +124,6 @@ rm contrib/lconf-slavesync{,.in}
 sed -i -e 's|^DAEMON=/usr/local/LConf/LConfSlaveSync.pl|DAEMON=%{_bindir}/LConfSlaveSync.pl|' \
 	"%{buildroot}%{_sysconfdir}/init.d/lconf-slavesync"
 
-%if "%{_vendor}" == "suse"
-touch %{buildroot}%{_localstatedir}/spool/%{name}/lconf.tmp/lconf.identify
-%endif
 mkdir -p %{buildroot}%{_sysconfdir}/icinga/lconf
 
 
@@ -146,7 +143,7 @@ mkdir -p %{buildroot}%{_sysconfdir}/icinga/lconf
 %dir %{_libdir}/%{name}
 %{_libdir}/%{name}/
 %defattr(755,root,root,755)
-%dir %{_libdir}/%{name}/custom
+#%dir %{_libdir}/%{name}/custom
 #%config(noreplace) %{_libdir}/%{name}/custom/
 %defattr(755,root,root)
 %{_bindir}/*
@@ -158,12 +155,20 @@ mkdir -p %{buildroot}%{_sysconfdir}/icinga/lconf
 %dir %{_localstatedir}/spool/%{name}/lconf.tmp
 %dir %{_localstatedir}/run/%{name}
 
+%if ! ( "%{_vendor}" == "redhat" || 0%{?rhel} < 6 ) || ! ( "%{_vendor}" == "suse" || 0%{?sles_version} <= 1101 )
+%ghost %attr(644,icinga,icinga)%{_localstatedir}/spool/%{name}/lconf.tmp/lconf.identify
+%endif
+
 %defattr(644,root,root)
 %config(noreplace) %{_sysconfdir}/%{name}/*
 %defattr(755,root,root)
 %config(noreplace) %{_sysconfdir}/init.d/lconf-slavesync
 
 %changelog
+* Mon Jun 24 2013 Christian Dengler <christian.dengler@netways.de>
+- update to 1.3.1
+- add ghost-file (file only exists if LConf-Export is running
+
 * Mon May 27 2013 Michael Friedrich <michael.friedrich@netways.de>
 - update to 1.3.0
 - add doc/CHANGELOG to docs
