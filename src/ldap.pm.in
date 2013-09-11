@@ -1,5 +1,7 @@
 #!/usr/bin/perl -w
 
+use Data::Dumper;
+
 sub LDAPconnect {
     my $login = shift;
     my $ldap;
@@ -125,8 +127,15 @@ sub TreeBuilder {
     my $CONFIG   = shift;
     my $searchDN = $cfg->{ldap}->{rootDN};
     my %forward  = %{shift()};
+    my $tree_builder_level = shift;
 
-    DebugOutput('TREE BUILDER', "Process level $target");
+    # backwards compatibility (old LConfExport not passing the level)
+    $tree_builder_level = 0 if (!defined $tree_builder_level);
+
+    # increase processing level
+    $tree_builder_level += 1;
+
+    DebugOutput('TREE BUILDER', "Start (Level=$tree_builder_level): Process level $target", 1);
 
     # remove basedn from target dn
     $target =~ s/,$cfg->{ldap}->{rootDN}//;
@@ -138,7 +147,7 @@ sub TreeBuilder {
     # process host's tree and store all needed attributes
     foreach my $level (@search) {
         $searchDN = $level.",".$searchDN;
-        DebugOutput('TREE BUILDER',"searchDN: $searchDN\n");
+        DebugOutput('TREE BUILDER',"searchDN: $searchDN\n", 1);
 
         # get aliases
         my $result = HashGrep($CONFIG, 'dn', '^ou=[._\w\/\d\s:-]+,'.$searchDN);
@@ -149,11 +158,11 @@ sub TreeBuilder {
         # save only services
         if (defined $cfg->{export}->{treerewrite} && $cfg->{export}->{treerewrite} =~ /None/i) {
             foreach my $alias (keys %{$ALIASES}) {
-                DebugOutput('TREE BUILDER', "Found link $ALIASES->{$alias}->{ou} --> follow to target $ALIASES->{$alias}->{aliasedobjectname}");
+                DebugOutput('TREE BUILDER', "Found link $ALIASES->{$alias}->{ou} --> follow to target $ALIASES->{$alias}->{aliasedobjectname}", 1);
 
                 # give an empty hash to TreeBuilder to avoid to mix up forwards from different subtrees 
                 my %empty_hash = ();
-                my %tmp_forward = TreeBuilder($ALIASES->{$alias}->{aliasedobjectname}, $CONFIG,  \%empty_hash);
+                my %tmp_forward = TreeBuilder($ALIASES->{$alias}->{aliasedobjectname}, $CONFIG,  \%empty_hash, $tree_builder_level);
 
                 # process services on links main area
                 foreach my $service (keys %{$tmp_forward{SERVICES}}) {
@@ -183,9 +192,9 @@ sub TreeBuilder {
                 # special handling for customvars and descriptions --> multiple definitions possible
                 if ($val1 =~ /$cfg->{ldap}->{prefix}hostcustomvar/ || $val1 =~ /$cfg->{ldap}->{prefix}servicecustomvar/ || $val1 =~ /description/ || $val1 eq 'cn') {
                     foreach my $val2 (keys %{$CONFIG->{$searchDN}->{$val1}}) {
-                        DebugOutput('TREE BUILDER', "Found attribute '$val2' with value '$CONFIG->{$searchDN}->{$val1}->{$val2}' => store!");
+                        DebugOutput('TREE BUILDER', "Found attribute hash '$val1\{$val2\}' with value '$CONFIG->{$searchDN}->{$val1}->{$val2}' => store!", 1);
                         $forward{$val1}{$val2} = $CONFIG->{$searchDN}->{$val1}->{$val2};
-                        DebugOutput('TREE BUILDER',"Main targets attributes: Added to $val1 -> $val2 $forward{$val1}{$val2}\n");
+                        DebugOutput('TREE BUILDER',"Main targets attributes: Added to $val1 -> $val2 $forward{$val1}{$val2}\n", 1);
                     }
                 # an other special handling for hostdependencies...
                 } elsif ($val1 =~ /$cfg->{ldap}->{prefix}hostdependency/) {
@@ -198,33 +207,42 @@ sub TreeBuilder {
                         $forward{'SERVICEDEPENDENCY'}{$CONFIG->{$searchDN}->{"$cfg->{ldap}->{prefix}servicedependency"}}->{$val1} = $CONFIG->{$searchDN}->{$val1};
                     }
                 } else {
-                    DebugOutput('TREE BUILDER', "Found attribute '$val1' with value '$CONFIG->{$searchDN}->{$val1}' => store!");
+                    DebugOutput('TREE BUILDER', "Found attribute '$val1' with value '$CONFIG->{$searchDN}->{$val1}' => store!", 1);
                     # additive inheritance?
                     if ($CONFIG->{$searchDN}->{$val1} && $CONFIG->{$searchDN}->{$val1} =~ /^\s*\+/) {
                         my $tmp_var = $CONFIG->{$searchDN}->{$val1}; $tmp_var =~ s/\+//;
                         $forward{$val1} .= ','.$tmp_var;
                     } else {
                         $forward{$val1} = $CONFIG->{$searchDN}->{$val1};
-                        DebugOutput('TREE BUILDER', "Added $val1 = $forward{$val1} to forward.");
+                        DebugOutput('TREE BUILDER', "Added $val1 = $forward{$val1} to forward.", 1);
                     }
                 }
             } else {
-                DebugOutput('TREE BUILDER', "Found attribute '$val1' with value '$CONFIG->{$searchDN}->{$val1}' => drop!");
+                DebugOutput('TREE BUILDER', "Found attribute '$val1' with value '$CONFIG->{$searchDN}->{$val1}' => drop!", 1);
             }
         }
+
+        DebugOutput('TREE BUILDER', "Forward Hash contains" .Dumper(%forward), 2);
 
         # save TreeBuilder results depending on TreeRewrite setting
         # TreeRewrite is MainOverLink; push all attributes from main target to linked objects
         if (defined $cfg->{export}->{treerewrite} && $cfg->{export}->{treerewrite} =~ /MainOverLink/i) {
             foreach my $alias (keys %{$ALIASES}) {
-                DebugOutput('TREE BUILDER', "Found link $ALIASES->{$alias}->{ou} --> follow to target $ALIASES->{$alias}->{aliasedobjectname}\n");
+                DebugOutput('TREE BUILDER', "Found link $ALIASES->{$alias}->{ou} --> follow to target $ALIASES->{$alias}->{aliasedobjectname}\n", 1);
 
-                #my %tmp_forward = TreeBuilder($ALIASES->{$alias}->{aliasedobjectname}, $CONFIG,  {%{$forward}});
-                my %tmp_forward = TreeBuilder($ALIASES->{$alias}->{aliasedobjectname}, $CONFIG,  dclone(\%forward));
+                # XXX special debug output
+                DebugOutput('TREE BUILDER', "Calling TreeBuilder recursivly with " . Dumper(%forward),2);
+                #my %tmp_forward = TreeBuilder($ALIASES->{$alias}->{aliasedobjectname}, $CONFIG,  {%{$forward}}, $tree_builder_level);
+                my %tmp_forward = TreeBuilder($ALIASES->{$alias}->{aliasedobjectname}, $CONFIG,  dclone(\%forward), $tree_builder_level);
 
                 # process services on links main area
                 foreach my $service (keys %{$tmp_forward{SERVICES}}) {
                     foreach my $val1 (keys %{$tmp_forward{SERVICES}{$service}}) {
+
+                        # ist das link ziel da?
+                        if(!defined $CONFIG->{$ALIASES->{$alias}->{aliasedobjectname}}->{objectclass}) {
+                            die "alias broken: $ALIASES->{$alias}->{dn}!";
+                        }
 
                         #link ist direkt auf service
                         if($CONFIG->{$ALIASES->{$alias}->{aliasedobjectname}}->{objectclass} eq $cfg->{ldap}->{prefix}.'Service') {
@@ -238,9 +256,9 @@ sub TreeBuilder {
                 }
 
                 # process attributes from link forward
-                DebugOutput('TreeBuilder', "Process attributes from link");
+                DebugOutput('TreeBuilder', "Process attributes from link", 1);
                 foreach my $attribute (keys %tmp_forward) {
-                    DebugOutput('TreeBuilder', "Found attribute from link: $attribute");
+                    DebugOutput('TreeBuilder', "Found attribute from link: $attribute", 1);
 
                     # Only forward a attribute from a link if this attribute is not set in
                     # the main target or if the attribute in the link has a + sign.
@@ -256,6 +274,7 @@ sub TreeBuilder {
 
                     # the attribute from the link is not set so far
                     if(!defined $forward{$attribute}) {
+                        next if $attribute eq "SERVICES";
                         $forward{$attribute} = $tmp_forward{$attribute};
                     } else {
                         # the attribute from the link is already set, if the linked attribute
@@ -266,16 +285,20 @@ sub TreeBuilder {
                              $forward{$attribute} .= ','.$tmp_var;
                         }
                     }
-                  DebugOutput('TreeBuilder', "Added attribute from link: $attribute = $tmp_forward{$attribute}");
+
+                    DebugOutput('TreeBuilder', "Added attribute from link: $attribute = $tmp_forward{$attribute}", 1);
+                    DebugOutput('TREE BUILDER', "Added attribute from link: $attribute = ". Dumper($tmp_forward{$attribute}), 2);
                 }
             }
         }
+
+        DebugOutput('TREE BUILDER', "Forward Hash contains" .Dumper(%forward), 2);
 
         # process main targets services
         $result = HashGrep($CONFIG, 'dn', '^[\w]+=[\$._\w\/\d\s:-]+,'.$searchDN);
         my $SERVICES = HashGrep($result, 'objectclass', $cfg->{ldap}->{prefix}.'Service$');
         foreach my $service (keys %{$SERVICES}) {
-            DebugOutput('TREE BUILDER', "\nFound service\t $service");
+            DebugOutput('TREE BUILDER', "\nFound service\t $service", 1);
 
             # First search for  service escalations below the service target
             # Ugly but necessary
@@ -289,15 +312,29 @@ sub TreeBuilder {
                 }
             }
 
+            DebugOutput('TREE BUILDER', "Forward Hash contains " .Dumper(%forward), 2);
             # create service and push every parent attribute to the service
             foreach my $val1 (keys %{forward}) {
                 if (ref($forward{$val1}) eq "HASH") {
-                    $forward{'SERVICES'}{$CONFIG->{$service}->{cn}}{$val1} = {%{$forward{$val1}}};
+                    # if val1 is an ADDITIONAL service hash (containing multiple services)
+                    # we must ignore it. a service can't affect another one here.
+                    if ($val1 eq 'SERVICES') {
+                        DebugOutput('TREE BUILDER', "Ignoring '$val1' attribute for service to forward: $CONFIG->{$service}->{cn}", 1);
+                        next;
+                    }
+                    # if val1 is something else, we just add the attribute to the existing service itsself
+                    else {
+                        $forward{'SERVICES'}{$CONFIG->{$service}->{cn}}{$val1} = {%{$forward{$val1}}};
+                        DebugOutput('TREE BUILDER', "Added service hash from '$val1' attribute to forward: $CONFIG->{$service}->{cn}", 1);
+                    }
+                    DebugOutput('TREE BUILDER', "Forward Hash contains " .Dumper(%forward),2);
                 } else {
                     $forward{'SERVICES'}{$CONFIG->{$service}->{cn}}{$val1} = $forward{$val1};
-                    DebugOutput('TREE BUILDER', "Added service to forward: $CONFIG->{$service}->{cn}");
+                    DebugOutput('TREE BUILDER', "Added service from '$val1' attribute to forward: $CONFIG->{$service}->{cn}", 1);
+                    DebugOutput('TREE BUILDER', "Forward Hash contains " .Dumper(%forward), 2);
                 }
             }
+            DebugOutput('TREE BUILDER', "Forward Hash contains " .Dumper(%forward), 2);
 
             # push services own attributes
             foreach my $val1 (keys %{$CONFIG->{$service}}) {
@@ -419,7 +456,7 @@ sub TreeBuilder {
                 # start a new TreeBuilder (avoids infinity loops). The structuralObjects
                 # will be processed anyway in the parent of the actual TreeBuilder
                 if ($target_level ne $struct_level) {
-                    my %tmp_forward = TreeBuilder($struct, $CONFIG,  dclone(\%forward));
+                    my %tmp_forward = TreeBuilder($struct, $CONFIG,  dclone(\%forward), $tree_builder_level);
                     foreach my $service (keys %{$tmp_forward{SERVICES}}) {
                         foreach my $val1 (keys %{$tmp_forward{SERVICES}{$service}}) {
                             $forward{'SERVICES'}{$service}{$val1} = $tmp_forward{SERVICES}{$service}{$val1};
@@ -429,8 +466,12 @@ sub TreeBuilder {
             }
         }
     }
+    DebugOutput('TREE BUILDER', "Forward Hash contains" .Dumper(%forward), 2);
 
-    DebugOutput('TREE BUILDER',"End of Treebuilder\n\n");
+    DebugOutput('TREE BUILDER',"Stop (Level=$tree_builder_level): End of Treebuilder\n\n", 1);
+    $tree_builder_level -= 1;
+
+
     return %forward;
 }
 
@@ -439,12 +480,12 @@ sub BuildHostConfig {
     my $CLIENTS = shift;
     my $TREE    = shift;
 
-    DebugOutput('CONFIG BUILDER', "Build config for: $client");
+    DebugOutput('CONFIG BUILDER', "Build config for: $client", 1);
     # add host attributes
     foreach my $val1 (keys %{$TREE}) {
         if ($val1 =~ /$cfg->{ldap}->{prefix}host/ || $val1 eq "$cfg->{ldap}->{prefix}address" || $val1 eq "$cfg->{ldap}->{prefix}parent" || $val1 eq "$cfg->{ldap}->{prefix}alias" || $val1 eq 'description' || $val1 eq 'cn' || $val1 =~ /objectclass/i) {
             $CLIENTS->{$client}->{$val1} = $TREE->{$val1};
-            DebugOutput('CONFIG BUILDER', "Added attribute $val1 = $CLIENTS->{$client}->{$val1}");
+            DebugOutput('CONFIG BUILDER', "Added attribute $val1 = $CLIENTS->{$client}->{$val1}", 1);
         }
     }
 
@@ -465,11 +506,11 @@ sub BuildHostConfig {
 
     # add services
     foreach my $service (keys %{$TREE->{SERVICES}}) {
-        DebugOutput('CONFIG BUILDER', "Found service: $service");
+        DebugOutput('CONFIG BUILDER', "Found service: $service", );
         foreach my $val1 (keys %{$TREE->{SERVICES}->{$service}}) {
             if ($val1 =~ /$cfg->{ldap}->{prefix}service/ || $val1 eq "$cfg->{ldap}->{prefix}checkcommand" || $val1 eq 'description' || $val1 eq 'cn' || $val1 =~ /objectclass/i) {
                 $CLIENTS->{$client}->{SERVICES}->{$service}->{$val1} = $TREE->{SERVICES}->{$service}->{$val1};
-                DebugOutput('CONFIG BUILDER', "Added service attribute: $client $service $val1");
+                DebugOutput('CONFIG BUILDER', "Added service attribute: $client $service $val1", );
 
                 # service-/customvar re-write
                 # replace HOSTNAME in servicedescription with the name of the assigned host

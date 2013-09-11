@@ -252,13 +252,13 @@ sub genHostgroups {
                 my $hostgroup = HashGrep($result, 'dn', '^cn='.$hg.',');
                 # only one, but we'll get a hash anyways
                 foreach my $hostgroupdn (keys %{$hostgroup}) {
-                    DebugOutput("GENERATE HOSTGROUPCONFIG", "Generate host services for hostgroup '$hg'");
+                    DebugOutput("GENERATE HOSTGROUPCONFIG", "Generate host services for hostgroup '$hg'", 1);
                     # look for services below hostgroup
                     my $hg_result = HashGrep($CONFIG, 'dn', '^[\w]+=[._\w\/\d\s:-]+,'.$hostgroupdn);
                     my $HOSTGROUPSERVICES = HashGrep($hg_result, 'objectclass', $cfg->{ldap}->{prefix}.'Service$');
                     foreach my $service (keys %{$HOSTGROUPSERVICES}) {
-                        DebugOutput("GENERATE HOSTGROUPCONFIG", " HostDN: '$client'");
-                        DebugOutput("GENERATE HOSTGROUPCONFIG", " ServiceDN: '$service'");
+                        DebugOutput("GENERATE HOSTGROUPCONFIG", " HostDN: '$client'", 1);
+                        DebugOutput("GENERATE HOSTGROUPCONFIG", " ServiceDN: '$service'", 1);
                         # we'll override all host SERVICES if there are duplicates
                         $CLIENTS->{$client}->{SERVICES}->{$HOSTGROUPSERVICES->{$service}->{'cn'}} = $HOSTGROUPSERVICES->{$service};
                     }
@@ -402,7 +402,7 @@ sub genHostConfig {
     # set output dir
     if (defined $dir) { $outputDir = $dir; } else { $outputDir = $opt->{outputDir}; }
 
-    DebugOutput("$$ GENERATE HOSTCONFIG", "Generate config for $client");
+    DebugOutput("$$ GENERATE HOSTCONFIG", "Generate config for $client", 1);
     if (defined $CLIENTS->{$client}->{dn}) {
         # only gen config if lconfhostdisable is not set
         if (!defined $CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostdisable"}) {
@@ -443,7 +443,7 @@ sub genHostConfig {
             # SERVICES
             #
             foreach my $service (keys %{$CLIENTS->{$client}->{'SERVICES'}}) {
-                DebugOutput("$$ GENERATE HOSTCONFIG", "Found service $service");
+                DebugOutput("$$ GENERATE HOSTCONFIG", "Found service $service", 1);
                 # only gen service if lconfservicedisable is not set
                 if (!defined $CLIENTS->{$client}->{'SERVICES'}->{$service}->{"$cfg->{ldap}->{prefix}servicedisable"}) {
                     print FH "define service {\n";

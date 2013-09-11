@@ -140,6 +140,7 @@ GetOptions(
     "e|exportdn=s"  => \$opt->{exportDN},
     "v|verbose:s"   => \$opt->{verbose},
     "d|debug:s"     => \$opt->{debug},
+    "debug-verbosity:s"     => \$opt->{debug_verbosity},
     "full-export:s" => \$opt->{fullExport},
     "f|filter=s"    => \$opt->{filter},
     "y|yes"         => \$opt->{yes},
@@ -164,6 +165,8 @@ if ($opt->{help} || !$opt->{outputDir}) { pod2usage(1); }
 # define vars
 use vars qw($cfg %itemMap);
 our $exit; $exit->{code} = 0; $exit->{message} = 'No errors';
+
+$opt->{debug_verbosity} = 1 if(!defined $opt->{debug_verbosity});
 
 # override exportDN when set via commandline
 if(defined $opt->{exportDN}) {
@@ -210,7 +213,7 @@ open(LOCK, ">$cfg->{export}->{lock}") or LeaveScript(2, "Cannot open $cfg->{expo
 flock(LOCK, LOCK_EX|LOCK_NB) or LeaveScript(2, "LConfExport locked! Someone is already using it!");
 
 # clean old output dir
-DebugOutput('REMOVE OLD CONFIG', "start - folder: $opt->{outputDir}");
+DebugOutput('REMOVE OLD CONFIG', "start - folder: $opt->{outputDir}", 1);
 
 # check if output dir is already labeled?
 if (!-f "$opt->{outputDir}/lconf.incomplete" && !-f "$opt->{outputDir}/lconf.identify" && !defined $opt->{yes}) {
@@ -224,7 +227,7 @@ if (!-f "$opt->{outputDir}/lconf.incomplete" && !-f "$opt->{outputDir}/lconf.ide
 
 # delete everything inside the outputDir
 qx(rm -r $opt->{outputDir}/* 2>/dev/null);
-DebugOutput('REMOVE OLD CONFIG', "finished - folder: $opt->{outputDir}");
+DebugOutput('REMOVE OLD CONFIG', "finished - folder: $opt->{outputDir}", 1);
 
 # create identifier for incomplete exports
 open(FH, ">$opt->{outputDir}/lconf.incomplete") || die "Can't write data: $opt->{outputDir}/lconf.incomplete $!\n"; close(FH);
@@ -370,7 +373,8 @@ foreach my $client (keys %{$CLIENTS}) {
 
     beVerbose("$$ CFG BUILD", "Host $client");
     my %TREE = ();
-    %TREE = TreeBuilder($client, $CONFIG, \%TREE);
+    # start with level 0
+    %TREE = TreeBuilder($client, $CONFIG, \%TREE, 0);
     $CLIENTS = BuildHostConfig($client, $CLIENTS, \%TREE);
 
     # finish child, give $client back to the parent

@@ -37,8 +37,14 @@ sub beVerbose {
 sub DebugOutput {
     my $type = shift;
     my $text = shift;
+    my $dbg_verbosity = shift;
+
+    # default to lowest verbosity
+    $dbg_verbosity = 1 if (!defined $dbg_verbosity);
 
     if (defined $opt->{debug}) {
+        return if ($opt->{debug_verbosity} < $dbg_verbosity);
+
         # generate message
         my $message = localtime(time)." | Debug: $type: $text\n";
 
