@@ -100,16 +100,6 @@ work independent from the LDAP during runtime.
     INSTALL_OPTS="" \
     INIT_OPTS=""
 
-# LConfDeploy
-install -m0755 contrib/LConfDeploy.sh "%{buildroot}%{_bindir}/LConfDeploy.sh"
-sed -i -e 's|^ICINGABIN="/usr/local/icinga/bin/icinga"|ICINGABIN="%{_bindir}/icinga"|' \
-    -e 's|^LCONFDIR="/usr/local/icinga/etc/lconf"|LCONFDIR="%{_sysconfdir}/icinga/lconf"|' \
-    -e 's|^LCONFTMP="/usr/local/icinga/lconf.tmp"|LCONFTMP="%{_localstatedir}/spool/%{name}/lconf.tmp"|' \
-    -e 's|^ICINGACONFIG=/usr/local/icinga/etc/icinga.cfg|ICINGACONFIG=%{_sysconfdir}/icinga/icinga.cfg|' \
-    -e 's|^ICINGATMPCONFIG=/usr/local/icinga/etc/icinga.tmp.cfg|ICINGATMPCONFIG=%{_localstatedir}/spool/%{name}/icinga.tmp.cfg|' \
-	"%{buildroot}%{_bindir}/LConfDeploy.sh"
-rm contrib/LConfDeploy.sh{,.in}
-
 mkdir -p %{buildroot}%{_localstatedir}/spool/icinga/perfdata-local
 mkdir -p %{buildroot}%{_sysconfdir}/icinga/lconf
 mkdir -p %{buildroot}%{_localstatedir}/spool/%{name}/lconf.tmp
@@ -139,7 +129,7 @@ mkdir -p %{buildroot}%{_sysconfdir}/icinga/lconf
 
 %files
 %defattr(644,root,root,755)
-%doc src/*.schema src/*.ldif contrib README doc/LICENSE doc/README.RHEL doc/CHANGELOG
+%doc src/*.schema src/*.ldif contrib README doc/LICENSE doc/README.RHEL doc/CHANGELOG contrib/LConfDeploy.sh
 %dir %{_libdir}/%{name}
 %{_libdir}/%{name}/
 %defattr(755,root,root,755)
@@ -165,6 +155,9 @@ mkdir -p %{buildroot}%{_sysconfdir}/icinga/lconf
 %config(noreplace) %{_sysconfdir}/init.d/lconf-slavesync
 
 %changelog
+* Wed Sep 11 2013 Michael Friedrich <michael.friedrich@netways.de>
+- don't install LConfDeploy automatically
+
 * Mon Jun 24 2013 Christian Dengler <christian.dengler@netways.de>
 - update to 1.3.1
 - add ghost-file (file only exists if LConf-Export is running
