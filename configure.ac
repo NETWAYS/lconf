@@ -91,6 +91,14 @@ if test x$TMPDIR = xno; then
 fi
 AC_SUBST(TMPDIR)
 
+dnl TreeRewrite Method (default: None, Alternative: MainOverLink)
+TREEREWRITEMETHOD=no
+AC_ARG_WITH(treerewrite-method,AC_HELP_STRING([--with-treerewrite-method=<None|MainOverLink>],[sets treerewrite method (default: None)]),TREEREWRITEMETHOD=$withval,TREEREWRITEMETHOD=no)
+if test x$TREEREWRITEMETHOD = xno; then
+        TREEREWRITEMETHOD="None"
+fi
+AC_SUBST(TREEREWRITEMETHOD)
+
 
 dnl Slave Sync
 

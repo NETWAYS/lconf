@@ -28,6 +28,9 @@ LOCALSTATE_DIR_QUOTED=`echo $(LOCALSTATE_DIR) | sed s/\\\\//\\\\\\\\\\\\//g`
 TMP_DIR=@TMPDIR@
 TMP_DIR_QUOTED=`echo $(TMP_DIR) | sed s/\\\\//\\\\\\\\\\\\//g`
 
+TREE_REWRITE_METHOD=@TREEREWRITEMETHOD@
+TREE_REWRITE_METHOD_QUOTED=`echo $(TREE_REWRITE_METHOD) | sed s/\\\\//\\\\\\\\\\\\//g`
+
 SLAVESYNC__LOCAL_DIR=@SLAVESYNC_LOCAL_DIR@
 SLAVESYNC__LOCAL_DIR_QUOTED=`echo $(SLAVESYNC__LOCAL_DIR) | sed s/\\\\//\\\\\\\\\\\\//g`
 
@@ -142,6 +145,7 @@ all:
 				-e "s/@BIN_DIR@/$(BIN_DIR_QUOTED)/g" \
 				-e "s/@LIB_DIR@/$(LIB_DIR_QUOTED)/g" \
 				-e "s/@TMP_DIR@/$(TMP_DIR_QUOTED)/g" \
+				-e "s/@TREE_REWRITE_METHOD@/$(TREE_REWRITE_METHOD_QUOTED)/g" \
 				-e "s/@LOCALSTATE_DIR@/$(LOCALSTATE_DIR_QUOTED)/g" \
 				-e "s/@SLAVESYNC__LOCAL_DIR@/$(SLAVESYNC__LOCAL_DIR_QUOTED)/g" \
 				-e "s/@SLAVESYNC__REMOTE_DIR@/$(SLAVESYNC__REMOTE_DIR_QUOTED)/g" \

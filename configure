@@ -595,6 +595,7 @@ SLAVESYNC_EXTCMD_PIPE_PATH
 SLAVESYNC_CHECKRESULT_SPOOL_DIR
 SLAVESYNC_REMOTE_DIR
 SLAVESYNC_LOCAL_DIR
+TREEREWRITEMETHOD
 TMPDIR
 EXPORTSCRIPTDIR
 icinga_config
@@ -668,6 +669,7 @@ with_icinga_binpath
 with_icinga_config
 with_export_script_dir
 with_temp_dir
+with_treerewrite_method
 with_slavesync_local_dir
 with_slavesync_remote_dir
 with_slavesync_checkresult_spool_dir
@@ -1312,6 +1314,8 @@ Optional Packages:
   --with-export-script-dir=<path>
                           sets path to lconf export script (pre,mid,post.pl)
   --with-temp-dir=<path>  sets path to temp directory path
+  --with-treerewrite-method=<None|MainOverLink>
+                          sets treerewrite method (default: None)
   --with-slavesync-local-dir=<path>
                           sets path to slavesync local directory path
   --with-slavesync-remote-dir=<path>
@@ -2090,6 +2094,20 @@ if test x$TMPDIR = xno; then
 fi
 
 
+TREEREWRITEMETHOD=no
+
+# Check whether --with-treerewrite-method was given.
+if test "${with_treerewrite_method+set}" = set; then :
+  withval=$with_treerewrite_method; TREEREWRITEMETHOD=$withval
+else
+  TREEREWRITEMETHOD=no
+fi
+
+if test x$TREEREWRITEMETHOD = xno; then
+        TREEREWRITEMETHOD="None"
+fi
+
+
 
 
 SLAVESYNC_LOCAL_DIR=no
@@ -2277,7 +2295,7 @@ forkmanager_min="0.7.6"
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for perl Parallel::ForkManager version... " >&5
 $as_echo "$as_me: checking for perl Parallel::ForkManager version... " >&6;}
 #perl -MParallel::ForkManager -Mversion -e 'my $version = version->new($Parallel::ForkManager::VERSION); my $iwant = version->new('$forkmanager_min'); print "Version found: $version\n"; exit 1 unless $version >= $iwant;'
-perl -e "use  Parallel::ForkManager $forkmanager_min" 
+perl -e "use  Parallel::ForkManager $forkmanager_min"
 if test $? != 0; then as_fn_error $? " perl module 'Parallel::ForkManager' needs to be at least version $forkmanager_min " "$LINENO" 5; fi
 
 

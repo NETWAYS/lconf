@@ -26,8 +26,7 @@ $cfg->{export}->{childs}                 = 2;
 
 # set Tree Rewrite, use with care! For details, please refer to the docs
 # https://www.netways.org/projects/lconf/wiki/Wiki#TreeRewrite
-$cfg->{export}->{treerewrite}            = 'None';
-#$cfg->{export}->{treerewrite}           = 'MainOverLink';
+$cfg->{export}->{treerewrite}            = '@TREE_REWRITE_METHOD@';
 
 # moved to output dir (./LConfExport.pl -o outputdir), but can be overridden here
 #$cfg->{export}->{lock}                  = '@LOCALSTATE_DIR@/LConfExport.lock';

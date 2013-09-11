@@ -8,6 +8,7 @@ upgrade information!
 
 ENHANCEMENTS
 * re-add services below hostgroup linked to hosts #2136
+* add --with-treerewrite-method=MainOverLink|None to configure #2286
 
 1.3.0 - 27/05/2013
 
