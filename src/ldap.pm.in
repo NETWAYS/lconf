@@ -260,6 +260,12 @@ sub TreeBuilder {
                 foreach my $attribute (keys %tmp_forward) {
                     DebugOutput('TreeBuilder', "Found attribute from link: $attribute", 1);
 
+                    # SERVICES are seperatedly copied
+                    if ($attribute eq 'SERVICES') {
+                        DebugOutput('TreeBuilder', "Forward services attribute ".Dumper($tmp_forward{$attribute}), 2);
+                        $forward{$attribute} = $tmp_forward{$attribute};
+                    }
+
                     # Only forward a attribute from a link if this attribute is not set in
                     # the main target or if the attribute in the link has a + sign.
                     # Templates/Links should not use attributes where a + is possible (?),
@@ -273,7 +279,8 @@ sub TreeBuilder {
                     # for services,
 
                     # the attribute from the link is not set so far
-                    if(!defined $forward{$attribute}) {
+                    elsif(!defined $forward{$attribute} && $attribute ne 'SERVICES') {
+                        DebugOutput('TreeBuilder', "Forward $attribute attribute ".Dumper($tmp_forward{$attribute}), 2);
                         $forward{$attribute} = $tmp_forward{$attribute};
                     } else {
                         # the attribute from the link is already set, if the linked attribute
