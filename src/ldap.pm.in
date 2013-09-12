@@ -274,7 +274,6 @@ sub TreeBuilder {
 
                     # the attribute from the link is not set so far
                     if(!defined $forward{$attribute}) {
-                        next if $attribute eq "SERVICES";
                         $forward{$attribute} = $tmp_forward{$attribute};
                     } else {
                         # the attribute from the link is already set, if the linked attribute
@@ -506,11 +505,11 @@ sub BuildHostConfig {
 
     # add services
     foreach my $service (keys %{$TREE->{SERVICES}}) {
-        DebugOutput('CONFIG BUILDER', "Found service: $service", );
+        DebugOutput('CONFIG BUILDER', "Found service: $service", 1);
         foreach my $val1 (keys %{$TREE->{SERVICES}->{$service}}) {
             if ($val1 =~ /$cfg->{ldap}->{prefix}service/ || $val1 eq "$cfg->{ldap}->{prefix}checkcommand" || $val1 eq 'description' || $val1 eq 'cn' || $val1 =~ /objectclass/i) {
                 $CLIENTS->{$client}->{SERVICES}->{$service}->{$val1} = $TREE->{SERVICES}->{$service}->{$val1};
-                DebugOutput('CONFIG BUILDER', "Added service attribute: $client $service $val1", );
+                DebugOutput('CONFIG BUILDER', "Added service attribute: $client $service $val1", 1);
 
                 # service-/customvar re-write
                 # replace HOSTNAME in servicedescription with the name of the assigned host
