@@ -255,45 +255,20 @@ sub TreeBuilder {
                     }
                 }
 
-                # process attributes from link forward
-                DebugOutput('TreeBuilder', "Process attributes from link", 1);
+                # process services from link forward
+                DebugOutput('TreeBuilder', "Process services from link", 1);
                 foreach my $attribute (keys %tmp_forward) {
-                    DebugOutput('TreeBuilder', "Found attribute from link: $attribute", 1);
+                    DebugOutput('TreeBuilder', "Found service from link: $attribute", 1);
 
-                    # SERVICES are seperatedly copied
+                    # SERVICES must be forwarded, with all their attributes resolved
+                    # linked tree attributes cannot be forwarded into main tree causing
+                    # trouble with many links and their different order
+                    # additive logic for service attributes with attributes from main
+                    # still apply (details https://www.netways.org/issues/2268#note-5)
                     if ($attribute eq 'SERVICES') {
                         DebugOutput('TreeBuilder', "Forward services attribute ".Dumper($tmp_forward{$attribute}), 2);
                         $forward{$attribute} = $tmp_forward{$attribute};
                     }
-
-                    # Only forward a attribute from a link if this attribute is not set in
-                    # the main target or if the attribute in the link has a + sign.
-                    # Templates/Links should not use attributes where a + is possible (?),
-                    # because we could not recognize if the attribute from main target
-                    # allows a additional value (the + sign gets stripped off) . That's why
-                    # we add attributes from links with a + sign and we do nothing if the
-                    # attribute has no + sign (and hope this is what the user expect).
-
-                    # The host-object is always processed as last step, therefor the host
-                    # object's attributes can always overwrite the attributes. Also valid
-                    # for services,
-
-                    # the attribute from the link is not set so far
-                    elsif(!defined $forward{$attribute} && $attribute ne 'SERVICES') {
-                        DebugOutput('TreeBuilder', "Forward $attribute attribute ".Dumper($tmp_forward{$attribute}), 2);
-                        $forward{$attribute} = $tmp_forward{$attribute};
-                    } else {
-                        # the attribute from the link is already set, if the linked attribute
-                        # begins with +, add the value, else do nothing
-                        if ($tmp_forward{$attribute} =~ /^\s*\+/) {
-                            my $tmp_var = $tmp_forward{$attribute};
-                            $tmp_var =~ s/\+//;
-                             $forward{$attribute} .= ','.$tmp_var;
-                        }
-                    }
-
-                    DebugOutput('TreeBuilder', "Added attribute from link: $attribute = $tmp_forward{$attribute}", 1);
-                    DebugOutput('TREE BUILDER', "Added attribute from link: $attribute = ". Dumper($tmp_forward{$attribute}), 2);
                 }
             }
         }
