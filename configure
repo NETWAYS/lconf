@@ -598,6 +598,9 @@ SLAVESYNC_LOCAL_DIR
 TREEREWRITEMETHOD
 TMPDIR
 EXPORTSCRIPTDIR
+icinga2_config
+icinga2_binpath
+icinga2_user
 icinga_config
 icinga_binpath
 icinga_user
@@ -667,6 +670,9 @@ with_ldap_config_style
 with_icinga_user
 with_icinga_binpath
 with_icinga_config
+with_icinga2_user
+with_icinga2_binpath
+with_icinga2_config
 with_export_script_dir
 with_temp_dir
 with_treerewrite_method
@@ -1311,6 +1317,12 @@ Optional Packages:
                           sets the path to the icinga binary
   --with-icinga-config=<icinga configuration directory>
                           sets the path to the icinga config directory
+  --with-icinga2-user=<user id of icinga>
+                          sets the user id of the icinga 2 process
+  --with-icinga2-binpath=<path to the icinga 2 binary>
+                          sets the path to the icinga 2 binary
+  --with-icinga2-config=<icinga 2 configuration directory>
+                          sets the path to the icinga 2 config directory
   --with-export-script-dir=<path>
                           sets path to lconf export script (pre,mid,post.pl)
   --with-temp-dir=<path>  sets path to temp directory path
@@ -1960,7 +1972,7 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-ldap_bind_dn='cn=admin'$comma$ldap_dn
+ldap_bind_dn='cn=Manager'$comma$ldap_dn
 
 # Check whether --with-ldap_bind_dn was given.
 if test "${with_ldap_bind_dn+set}" = set; then :
@@ -2022,6 +2034,7 @@ _ACEOF
 
 
 
+
 # Check whether --with-icinga_user was given.
 if test "${with_icinga_user+set}" = set; then :
   withval=$with_icinga_user; icinga_user=$withval
@@ -2064,6 +2077,53 @@ fi
 cat >>confdefs.h <<_ACEOF
 #define DEFAULT_ICINGA_CONFIG "$icinga_config"
 _ACEOF
+
+
+
+
+# Check whether --with-icinga2_user was given.
+if test "${with_icinga2_user+set}" = set; then :
+  withval=$with_icinga2_user; icinga2_user=$withval
+else
+  icinga2_user=icinga
+fi
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define DEFAULT_ICINGA2_USER "$icinga2_user"
+_ACEOF
+
+
+
+# Check whether --with-icinga2_binpath was given.
+if test "${with_icinga2_binpath+set}" = set; then :
+  withval=$with_icinga2_binpath; icinga2_binpath=$withval
+else
+  icinga2_binpath=/usr/sbin
+fi
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define DEFAULT_ICINGA2_BINPATH "$icinga2_binpath"
+_ACEOF
+
+
+
+# Check whether --with-icinga2_config was given.
+if test "${with_icinga2_config+set}" = set; then :
+  withval=$with_icinga2_config; icinga2_config=$withval
+else
+  icinga2_config=/etc/icinga2
+fi
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define DEFAULT_ICINGA2_CONFIG "$icinga2_config"
+_ACEOF
+
 
 
 EXPORTSCRIPTDIR=no

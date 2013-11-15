@@ -19,6 +19,7 @@ src/base.ldif.[0-9]
 src/config.pm
 src/config.pm.[0-9]
 src/default-templates.cfg
+src/default-templates.conf
 src/generate.pm
 src/ldap.pm
 src/misc.pm

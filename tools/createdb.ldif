@@ -1,7 +1,7 @@
 dn: olcDatabase=hdb,cn=config
 objectClass: olcDatabaseConfig
 objectClass: olcHdbConfig
-olcDatabase: {3}hdb
+olcDatabase: {2}hdb
 olcDbDirectory: /var/lib/ldap
 olcSuffix: dc=test01,dc=org
 olcRootDN: cn=Manager,dc=test01,dc=org

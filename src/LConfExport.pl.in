@@ -60,6 +60,7 @@ LConfExport.pl   -o <output dir>
                 [-V]
                 [-y]
                 [--full-export]
+                [--format]
 
 Export a Nagios / Icinga config from LConf
 
@@ -86,6 +87,10 @@ Debug mode. If no logfile specified, debug output will be printed to STDOUT
 =item --full-export
 
 Overwrite the diff export parameter and do a full export
+
+=item --format <1|2>
+
+Overwrite config export format. 1 for Icinga 1.x / Nagios 3.x, 2 for Icinga 2.x
 
 =item -f|--filter <hostname>
 
@@ -122,6 +127,7 @@ use Parallel::ForkManager;
 use lib '@SYSCONF_DIR@';
 use config;
 
+
 use lib '@LIB_DIR@';
 use ldap;
 use generate;
@@ -142,6 +148,7 @@ GetOptions(
     "d|debug:s"     => \$opt->{debug},
     "debug-verbosity:s"     => \$opt->{debug_verbosity},
     "full-export:s" => \$opt->{fullExport},
+    "format:s"      => \$opt->{format},
     "f|filter=s"    => \$opt->{filter},
     "y|yes"         => \$opt->{yes},
     "h|help"        => \$opt->{help},
@@ -168,10 +175,16 @@ our $exit; $exit->{code} = 0; $exit->{message} = 'No errors';
 
 $opt->{debug_verbosity} = 1 if(!defined $opt->{debug_verbosity});
 
+# override format when set via commandline
+if(defined $opt->{format}) {
+    $cfg->{export}->{format} = $opt->{format};
+}
+
 # override exportDN when set via commandline
 if(defined $opt->{exportDN}) {
     $cfg->{export}->{exportDN} = $opt->{exportDN};
 }
+
 $cfg->{ldap}->{baseDN} = $cfg->{export}->{exportDN}.','.$cfg->{ldap}->{rootDN};
 
 # fist of all... check if we're ready to run
@@ -207,6 +220,7 @@ if(!defined($cfg->{export}->{timestamp})) {
 if(!defined($cfg->{export}->{enablemidmaster})) {
     $cfg->{export}->{enablemidmaster} = 0;
 }
+
 
 # export already running?
 open(LOCK, ">$cfg->{export}->{lock}") or LeaveScript(2, "Cannot open $cfg->{export}->{lock}");
@@ -336,7 +350,12 @@ mkdir("$opt->{outputDir}/hostgroups/");
 mkdir("$opt->{outputDir}/servicegroups/");
 mkdir("$opt->{outputDir}/serviceescalations/");
 mkdir("$opt->{outputDir}/hostescalations/");
-copyGeneric("@SYSCONF_DIR@/default-templates.cfg", $opt->{outputDir});
+
+if(defined($cfg->{export}->{format}) && $cfg->{export}->{format} == 2) {
+    copyGeneric("@SYSCONF_DIR@/default-templates.conf", $opt->{outputDir});
+} else {
+    copyGeneric("@SYSCONF_DIR@/default-templates.cfg", $opt->{outputDir});
+}
 
 # Prepare Forkmanager
 my $pm = Parallel::ForkManager->new($cfg->{export}->{childs});
@@ -428,7 +447,7 @@ if ($cfg->{export}->{enablemidmaster} == 1) {
 # enable,see above)
 foreach my $client (keys %{$CLIENTS_REF}) {
     # generate .cfg for one client 
-    genHostConfig($CLIENTS_REF, $client);
+    genHostConfig($CONFIG, $CLIENTS_REF, $client);
 }
 
 # we are using $CLIENTS NOT $CLIENTS_REF, because the *.cfg for the hosts are
@@ -436,6 +455,7 @@ foreach my $client (keys %{$CLIENTS_REF}) {
 # used by LConfSlaveExport
 
 # generate the rest of the config.
+# genHostConfig may add aditional commands for notifications/eventhandlers
 genTimeperiods($CONFIG);
 genCommands($CONFIG);
 genContacts($CONFIG);
