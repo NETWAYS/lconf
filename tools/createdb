@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# rootDN: cn=Manager,dc=test01,dc=org
+# rootPW: icinga
+DBCOUNT=3
+# fiddle with createdb.ldif
+#`sed -i 's/olcDatabase: {\d+}hdb/olcDatabase: {$DBCOUNT}hdb/g' createdb.ldif`
+echo "sed -i 's/olcDatabase: {\d+}hdb/olcDatabase: {$DBCOUNT}hdb/g' createdb.ldif"
+echo "sudo ldapadd -Y EXTERNAL -H ldapi:/// -f createdb.ldif"
+echo "cd .."
+echo "./configure --with-ldap-dn=dc=test01,dc=org --with-lconf-cli-user=icinga --with-lconf-cli-group=icinga  --with-treerewrite-method=MainOverLink"
+echo "make"
+echo "sudo service slapd stop"
+echo "sudo slapadd -n $DBCOUNT -l src/base.ldif"
+echo "Debian: sudo chown openldap:openldap /var/lib/ldap/*"
+echo "CentOS: sudo chown ldap:ldap /var/lib/ldap/*"
+echo "sudo service slapd start"
+echo ""

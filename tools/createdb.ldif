@@ -1,0 +1,20 @@
+dn: olcDatabase=hdb,cn=config
+objectClass: olcDatabaseConfig
+objectClass: olcHdbConfig
+olcDatabase: {3}hdb
+olcDbDirectory: /var/lib/ldap
+olcSuffix: dc=test01,dc=org
+olcRootDN: cn=Manager,dc=test01,dc=org
+olcRootPW: {SSHA}e8QuJL407+JAR46SA9ir26NxWBRbIaJo
+olcAccess: {0}to attrs=userPassword,shadowLastChange by dn="cn=Manager,dc=test01,dc=org" write by anonymous auth by self write by * none
+olcAccess: {1}to dn.base="" by * read
+olcAccess: {2}to * by dn="cn=Manager,dc=test01,dc=org" write by * read
+olcLastMod: TRUE
+olcDbCheckpoint: 512 30
+olcDbConfig: {0}set_cachesize 0 2097152 0
+olcDbConfig: {1}set_lk_max_objects 1500
+olcDbConfig: {2}set_lk_max_locks 1500
+olcDbConfig: {3}set_lk_max_lockers 1500
+olcDbIndex: uid pres,eq
+olcDbIndex: cn,sn,mail pres,eq,approx,sub
+olcDbIndex: objectClass eq
