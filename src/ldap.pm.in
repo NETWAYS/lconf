@@ -268,7 +268,7 @@ sub TreeBuilder {
             }
         }
 
-        DebugOutput('TREE BUILDER', "Forward Hash contains" .Dumper(%forward), 2);
+        #DebugOutput('TREE BUILDER', "Forward Hash contains" .Dumper(%forward), 2);
 
         # save TreeBuilder results depending on TreeRewrite setting
         # TreeRewrite is MainOverLink; push all attributes from main target to linked objects
@@ -277,7 +277,7 @@ sub TreeBuilder {
                 DebugOutput('TREE BUILDER', "Found link $ALIASES->{$alias}->{ou} --> follow to target $ALIASES->{$alias}->{aliasedobjectname}\n", 1);
 
                 # XXX special debug output
-                DebugOutput('TREE BUILDER', "Calling TreeBuilder recursivly with " . Dumper(%forward),2);
+                #DebugOutput('TREE BUILDER', "Calling TreeBuilder recursivly with " . Dumper(%forward),2);
                 #my %tmp_forward = TreeBuilder($ALIASES->{$alias}->{aliasedobjectname}, $CONFIG,  {%{$forward}}, $tree_builder_level);
                 my %tmp_forward = TreeBuilder($ALIASES->{$alias}->{aliasedobjectname}, $CONFIG,  dclone(\%forward), $tree_builder_level);
 
@@ -312,14 +312,14 @@ sub TreeBuilder {
                     # additive logic for service attributes with attributes from main
                     # still apply (details https://www.netways.org/issues/2268#note-5)
                     if ($attribute eq 'SERVICES') {
-                        DebugOutput('TreeBuilder', "Forward services attribute ".Dumper($tmp_forward{$attribute}), 2);
+                        #DebugOutput('TreeBuilder', "Forward services attribute ".Dumper($tmp_forward{$attribute}), 2);
                         $forward{$attribute} = $tmp_forward{$attribute};
                     }
                 }
             }
         }
 
-        DebugOutput('TREE BUILDER', "Forward Hash contains" .Dumper(%forward), 2);
+        #DebugOutput('TREE BUILDER', "Forward Hash contains" .Dumper(%forward), 2);
 
         # process main targets services
         $result = HashGrep($CONFIG, 'dn', '^[\w]+=[\$._\w\/\d\s:-]+,'.$searchDN);
@@ -339,7 +339,7 @@ sub TreeBuilder {
                 }
             }
 
-            DebugOutput('TREE BUILDER', "Forward Hash contains " .Dumper(%forward), 2);
+            #DebugOutput('TREE BUILDER', "Forward Hash contains " .Dumper(%forward), 2);
             # create service and push every parent attribute to the service
             foreach my $val1 (keys %{forward}) {
                 if (ref($forward{$val1}) eq "HASH") {
@@ -361,7 +361,7 @@ sub TreeBuilder {
                     DebugOutput('TREE BUILDER', "Forward Hash contains " .Dumper(%forward), 2);
                 }
             }
-            DebugOutput('TREE BUILDER', "Forward Hash contains " .Dumper(%forward), 2);
+            #DebugOutput('TREE BUILDER', "Forward Hash contains " .Dumper(%forward), 2);
 
             # push services own attributes
             foreach my $val1 (keys %{$CONFIG->{$service}}) {
@@ -493,7 +493,7 @@ sub TreeBuilder {
             }
         }
     }
-    DebugOutput('TREE BUILDER', "Forward Hash contains" .Dumper(%forward), 2);
+    #DebugOutput('TREE BUILDER', "Forward Hash contains" .Dumper(%forward), 2);
 
     DebugOutput('TREE BUILDER',"Stop (Level=$tree_builder_level): End of Treebuilder\n\n", 1);
     $tree_builder_level -= 1;
