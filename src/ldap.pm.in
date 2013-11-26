@@ -391,42 +391,23 @@ sub TreeBuilder {
             # service-/customvar re-write
             # allow usage of customvars in the CN of a service
             # e.g. http_$_SERVICEAPACHEPORT$
-            if ($CONFIG->{$service}->{cn} =~ /\$_/) {
-                # get customvar's name and value
-                if($CONFIG->{$service}->{cn} =~ m/(\$_[a-z0-9_\-]+\$)/i) {
+
+            if ($CONFIG->{$service}->{cn} =~ /\$_[a-z0-9_\-]+\$/i) {
+                # get the name, and safe the old name for later
+                my $name = $CONFIG->{$service}->{cn};
+                my $oldname = $name;
+
+                while($name =~ /(\$_[a-z0-9_\-]+\$)/i) {
                     my $customvar = $1;
+
                     my $customvar_attribute = $customvar;
                     $customvar_attribute =~ s/^\$_SERVICE(.*)\$$/_$1/;
-
-                    # prepare a regexp safe search
-                    my $search = $customvar;
-                    $search =~ s/\$/\\\$/g;
 
                     # look for the customvar
                     my $customvar_value = $forward{'SERVICES'}{$CONFIG->{$service}->{cn}}{'lconfservicecustomvar'}{$customvar_attribute};
                     if(defined $customvar_value) {
-                        # new service name
-                        my $name = $CONFIG->{$service}->{cn};
-                        my $oldname = $name; # save the original servicename
-                        $name =~ s/$search/$customvar_value/g;
-
-                        # store the new object
-                        $forward{'SERVICES'}{$name} = $forward{'SERVICES'}{$CONFIG->{$service}->{cn}};
-                        # set the new name
-                        $forward{'SERVICES'}{$name}{'cn'} = $name;
-                        # replace in checkcommand as well
-                        if (defined $cfg->{ldap}->{prefix}.'servicecheckcommand') {
-                            $forward{'SERVICES'}{$name}{$cfg->{ldap}->{prefix}.'servicecheckcommand'} =~ s/$search/$customvar_value/g;
-                        } elsif (defined $cfg->{ldap}->{prefix}.'checkcommand') {
-                            $forward{'SERVICES'}{$name}{$cfg->{ldap}->{prefix}.'checkcommand'} =~ s/$search/$customvar_value/g;
-                        } else {
-                            $exit->{code} = 2;
-                            $exit->{message} = "no checkcommand for $service!";
-                            goto EXIT;
-                        }
-
-                        # delete the original service (with $_SERVICEXXX$ in it)
-                        delete $forward{'SERVICES'}{$oldname};
+                        # exchange macro with customvar value
+                        $name =~ s/\Q$customvar\E/$customvar_value/g;
                     }
                     else {
                         $exit->{code} = 2;
@@ -434,11 +415,14 @@ sub TreeBuilder {
                         goto EXIT;
                     }
                 }
-                else {
-                    $exit->{code} = 2;
-                    $exit->{message} = "CN of service looks wrong: $service";
-                    goto EXIT;
-                }
+
+                # store the new object
+                $forward{'SERVICES'}{$name} = $forward{'SERVICES'}{$oldname};
+                # set the new name
+                $forward{'SERVICES'}{$name}{'cn'} = $name;
+
+                # delete the original service (with $_SERVICEXXX$ in it)
+                delete $forward{'SERVICES'}{$oldname};
             }
         }
 
