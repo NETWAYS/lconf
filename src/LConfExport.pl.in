@@ -404,6 +404,11 @@ if (-f '@EXPORT_SCRIPT_DIR@/mid.pl') {
 # $CLIENTS itself is untoched and could be used for the dumpexport
 my $CLIENTS_REF = $CLIENTS;
 
+# generating the {host,service}groups before genHostConfig and midmaster, because
+# they are manipulating the $CLIENTS has
+genHostgroups($CONFIG, $CLIENTS);
+genServicegroups($CONFIG, $CLIENTS);
+
 # run custom script mid-master, if allowed
 # check if our mid-master.pl is allowed to change the master config
 if ($cfg->{export}->{enablemidmaster} == 1) {
@@ -415,11 +420,6 @@ if ($cfg->{export}->{enablemidmaster} == 1) {
         $CLIENTS_REF = CustomMidMaster($CLIENTS_REF);
     }
 }
-
-# generating the host/servicegroups before genHostConfig, because these are
-# writing into $CLIENTS
-genHostgroups($CONFIG, $CLIENTS);
-genServicegroups($CONFIG, $CLIENTS);
 
 # Generating the .cfg files could be done in childs but this is slower as
 # generate the .cfg files in the parent process! 
