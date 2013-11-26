@@ -407,6 +407,7 @@ sub TreeBuilder {
                     if(defined $customvar_value) {
                         # new service name
                         my $name = $CONFIG->{$service}->{cn};
+                        my $oldname = $name; # save the original servicename
                         $name =~ s/$search/$customvar_value/g;
 
                         # store the new object
@@ -423,6 +424,9 @@ sub TreeBuilder {
                             $exit->{message} = "no checkcommand for $service!";
                             goto EXIT;
                         }
+
+                        # delete the original service (with $_SERVICEXXX$ in it)
+                        delete $forward{'SERVICES'}{$oldname};
                     }
                     else {
                         $exit->{code} = 2;
