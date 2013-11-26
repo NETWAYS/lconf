@@ -306,7 +306,8 @@ sub genHostgroups {
                         DebugOutput("GENERATE HOSTGROUPCONFIG", " HostDN: '$client'", 1);
                         DebugOutput("GENERATE HOSTGROUPCONFIG", " ServiceDN: '$service'", 1);
                         # we'll override all host SERVICES if there are duplicates
-                        $CLIENTS->{$client}->{SERVICES}->{$HOSTGROUPSERVICES->{$service}->{'cn'}} = $HOSTGROUPSERVICES->{$service};
+                        # clone the hash to prevent wrong references on dumping host services
+                        $CLIENTS->{$client}->{SERVICES}->{$HOSTGROUPSERVICES->{$service}->{'cn'}} = dclone($HOSTGROUPSERVICES->{$service});
                     }
                 }
 
