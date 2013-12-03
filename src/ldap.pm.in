@@ -136,7 +136,7 @@ sub LDAPsearch {
                 } elsif ($attrName eq "$cfg->{ldap}->{prefix}timeperiodvalue") {
                     @$attrVal[$counter] =~ m/(.*) +([-\w:]+(\,?)+[-\w:]+)/;
                     $return->{$_}->{$attrName}->{$counter}->{$1} = $2;
-                } elsif ($attrName eq "description") {
+                } elsif ($attrName eq "description" || $attrName eq "objectclass") {
                     $return->{$_}->{$attrName}->{@$attrVal[$counter]} = @$attrVal[$counter];
                 } else {
                     $return->{$_}->{$attrName} = @$attrVal[$counter];
