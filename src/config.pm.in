@@ -25,7 +25,7 @@ $cfg->{export}->{tmpdir}                 = '@TMP_DIR@';
 $cfg->{export}->{onlydiffs}              = 0;
 $cfg->{export}->{childs}                 = 2;
 # 1 .. Icinga 1.x, 2 .. Icinga 2.x
-$cfg->{export}->{format}                 = 2;
+#$cfg->{export}->{format}                 = 2;
 
 # set Tree Rewrite, use with care! For details, please refer to the docs
 # https://www.netways.org/projects/lconf/wiki/Wiki#TreeRewrite
