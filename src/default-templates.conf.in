@@ -1,0 +1,46 @@
+/**
+ * Icinga 2 configuration templates
+ */
+
+/**
+ * Provides default settings for hosts. By convention
+ * all hosts should inherit from this template.
+ */
+template Host "generic-host" {
+
+}
+
+/**
+ * Provides default settings for services. By convention
+ * all services should inherit from this template.
+ */
+template Service "generic-service" {
+  max_check_attempts = 3,
+  check_interval = 5m,
+  retry_interval = 1m,
+  enable_perfdata = 1
+}
+
+/**
+ * Provides default settings for users. By convention
+ * all users should inherit from this template.
+ */
+ 
+template User "generic-user" {
+  enable_notifications = 1,
+  notification_period = "24x7",
+
+  notification_state_filter = (StateFilterWarning |
+                               StateFilterCritical |
+                               StateFilterUnknown),
+  notification_type_filter = (NotificationFilterProblem |
+                              NotificationFilterAcknowledgement |
+                              NotificationFilterRecovery |
+                              NotificationFilterCustom |
+                              NotificationFilterFlappingStart |
+                              NotificationFilterFlappingEnd |
+                              NotificationFilterDowntimeStart |
+                              NotificationFilterDowntimeEnd |
+                              NotificationFilterDowntimeRemoved),
+
+}

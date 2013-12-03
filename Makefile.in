@@ -60,6 +60,14 @@ ICINGA_CONFIG=@icinga_config@
 ICINGA_CONFIG_QUOTED=`echo $(ICINGA_CONFIG) | sed s/\\\\//\\\\\\\\\\\\//g`
 ICINGA_USER=@icinga_user@
 
+# icinga 2 config
+ICINGA2_BINPATH=@icinga2_binpath@
+ICINGA2_BINPATH_QUOTED=`echo $(ICINGA2_BINPATH) | sed s/\\\\//\\\\\\\\\\\\//g`
+ICINGA2_CONFIG=@icinga2_config@
+ICINGA2_CONFIG_QUOTED=`echo $(ICINGA2_CONFIG) | sed s/\\\\//\\\\\\\\\\\\//g`
+ICINGA2_USER=@icinga2_user@
+
+
 # lconf settings
 LCONF_CLI_USER=@lconf_cli_user@
 LCONF_CLI_GROUP=@lconf_cli_group@
@@ -154,8 +162,9 @@ all:
 				-e "s/@SLAVESYNC__PID_FILE@/$(SLAVESYNC__PID_FILE_QUOTED)/g" \
 				-e "s/@SLAVESYNC__LOG_DIR@/$(SLAVESYNC__LOG_DIR_QUOTED)/g" \
 				> src/config.pm
-			# default-templates.cfg.in
+			# default-templates.{cfg,conf}.in
 			cat src/default-templates.cfg.in > src/default-templates.cfg
+			cat src/default-templates.conf.in > src/default-templates.conf
 		# LIB
 			# misc.pm
 			cat src/misc.pm.in > src/misc.pm
@@ -181,6 +190,18 @@ all:
 				-e "s/@ICINGA_USER@/$(ICINGA_USER)/g" \
 				> contrib/LConfDeploy.sh
 			chmod 755 contrib/LConfDeploy.sh
+			# LConfDeployIcinga2.sh
+			cat contrib/LConfDeployIcinga2.sh.in | sed \
+				-e "s/@SYSCONF_DIR@/$(SYSCONF_DIR_QUOTED)/g" \
+				-e "s/@BIN_DIR@/$(BIN_DIR_QUOTED)/g" \
+				-e "s/@LIB_DIR@/$(LIB_DIR_QUOTED)/g" \
+				-e "s/@TMP_DIR@/$(TMP_DIR_QUOTED)/g" \
+				-e "s/@VERSION@/$(VERSION)/g" \
+				-e "s/@ICINGA2_BINPATH@/$(ICINGA2_BINPATH_QUOTED)/g" \
+				-e "s/@ICINGA2_CONFIG@/$(ICINGA2_CONFIG_QUOTED)/g" \
+				-e "s/@ICINGA2_USER@/$(ICINGA2_USER)/g" \
+				> contrib/LConfDeployIcinga2.sh
+			chmod 755 contrib/LConfDeployIcinga2.sh
 		# LDAP SCHEMA + BASE.LDIF
 			# netways.schema
 			cat src/netways.schema.in | sed -e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" > src/netways.schema
@@ -239,7 +260,7 @@ install:
 	$(INSTALL) -m 775 $(INSTALL_OPTS) -d $(DESTDIR)$(LOCALSTATE_DIR)
 	$(INSTALL) -m 775 $(INSTALL_OPTS) -d $(DESTDIR)$(TMP_DIR)
 	$(INSTALL) -m 775 $(INSTALL_OPTS) -d $(DESTDIR)$(EXPORT_SCRIPT_DIR)
-	
+
 	# install files
 		$(INSTALL) -m 750 $(INSTALL_OPTS) src/LConfExport.pl ${DESTDIR}$(BIN_DIR)/LConfExport.pl
 		$(INSTALL) -m 750 $(INSTALL_OPTS) src/LConfImport.pl ${DESTDIR}$(BIN_DIR)/LConfImport.pl
@@ -248,10 +269,11 @@ install:
 		$(INSTALL) -m 750 $(INSTALL_OPTS) src/LConfSlaveSync.pl ${DESTDIR}$(BIN_DIR)/LConfSlaveSync.pl
 		$(INSTALL) -b -m 640 $(INSTALL_OPTS) src/config.pm ${DESTDIR}$(SYSCONF_DIR)/config.pm
 		$(INSTALL) -b -m 640 $(INSTALL_OPTS) src/default-templates.cfg ${DESTDIR}$(SYSCONF_DIR)/default-templates.cfg
+		$(INSTALL) -b -m 640 $(INSTALL_OPTS) src/default-templates.conf ${DESTDIR}$(SYSCONF_DIR)/default-templates.conf
 		$(INSTALL) -m 640 $(INSTALL_OPTS) src/misc.pm ${DESTDIR}$(LIB_DIR)/misc.pm
 		$(INSTALL) -m 640 $(INSTALL_OPTS) src/ldap.pm ${DESTDIR}$(LIB_DIR)/ldap.pm
 		$(INSTALL) -m 640 $(INSTALL_OPTS) src/generate.pm ${DESTDIR}$(LIB_DIR)/generate.pm
-				
+
 		# FINISHING OUTPUT
 		@echo ""
 		@echo ""
@@ -275,7 +297,10 @@ install:
 install-deploy-script:
 	$(INSTALL) -m 755 $(INSTALL_OPTS) contrib/LConfDeploy.sh ${DESTDIR}$(BIN_DIR)/LConfDeploy.sh
 
-			
+install-deploy-script-icinga2:
+	$(INSTALL) -m 755 $(INSTALL_OPTS) contrib/LConfDeployIcinga2.sh ${DESTDIR}$(BIN_DIR)/LConfDeployIcinga2.sh
+
+
 clean:
 	cd $(EXEC_DIR)
 	rm -f Makefile config.log config.status
@@ -292,9 +317,11 @@ clean:
 	rm -f src/netways.schema.ldif
 	rm -f src/base.ldif src/base.ldif.[0-9]
 	rm -f src/default-templates.cfg src/default-templates.cfg.[0-9]
+	rm -f src/default-templates.conf src/default-templates.conf.[0-9]
 	rm -f contrib/create_lconf-web-dn-mid.pl
 	rm -f contrib/lconf-slavesync
 	rm -f contrib/LConfDeploy.sh
+	rm -f contrib/LConfDeployIcinga2.sh
 
 create-tarball:
 	./make-tarball --prefix LConf-${VERSION}/

@@ -56,6 +56,7 @@ LConfSlaveExportRules.pl  -H <name of slave server>
                      -p <port>
                      -D <hashdump>
                      -t <path to config on slave host>
+		     [--format]
                      -v
                      -h
                      -V
@@ -81,6 +82,10 @@ Set Lconf hasdump file location
 =item -t|--target <path to config on slave host>
 
 Target path on slave server
+
+=item --format <1|2>
+
+Overwrite config export format. 1 for Icinga 1.x / Nagios 3.x, 2 for Icinga 2.x
 
 =item -v|--verbose <path to logfile>
 
@@ -122,13 +127,14 @@ our @state = ('OK', 'WARNING', 'ERROR', 'UNKNOWN');
 # get command-line parameters
 our $opt;
 GetOptions(
-	"H|host=s"			=> \$opt->{host},
-	"p|port=s"			=> \$opt->{port},
-    "D|hashdump=s" => \$opt->{hashdump},
-	"t|target=s"		=> \$opt->{target},
-	"v|verbose:s"		=> \$opt->{verbose},
-	"h|help"			=> \$opt->{help},
-	"V|version"		=> \$opt->{version}
+	"H|host=s"	=> \$opt->{host},
+	"p|port=s"	=> \$opt->{port},
+	"D|hashdump=s" 	=> \$opt->{hashdump},
+	"t|target=s"	=> \$opt->{target},
+	"format:s"      => \$opt->{format},
+	"v|verbose:s"	=> \$opt->{verbose},
+	"h|help"	=> \$opt->{help},
+	"V|version"	=> \$opt->{version}
 );
 
 
@@ -150,6 +156,12 @@ if ($opt->{help}) { pod2usage(1); }
 # define vars
 use vars qw($cfg);
 $cfg->{ldap}->{baseDN} = $cfg->{export}->{exportDN}.','.$cfg->{ldap}->{rootDN};
+
+# override format when set via commandline
+if(defined $opt->{format}) {
+    $cfg->{export}->{format} = $opt->{format};
+}
+
 our $CLIENTS;
 my @export;
 my @hosts;
@@ -203,7 +215,7 @@ foreach my $target (sort keys %{$cfg->{slaveexportrules}->{targets}}) {
 	print "\n===================\n";
 	print "slave: $target\n";
 	print "rulemap: $cfg->{slaveexportrules}->{targets}->{$target}->{rulemap}\n";
-	
+
 	# define and set vars
 	my $CLIENTS_slave;
 	$CLIENTS = $CLIENTS_backup;
@@ -212,15 +224,15 @@ foreach my $target (sort keys %{$cfg->{slaveexportrules}->{targets}}) {
 	$opt->{outputDir} = $cfg->{slaveexportrules}->{targets}->{$target}->{targetDir};
 	$opt->{slaveexportparents} = $cfg->{slaveexportrules}->{'settings'}->{slaveexportparents};
 	$opt->{slaveexportdependencies} = $cfg->{slaveexportrules}->{'settings'}->{slaveexportdependencies};
-	
-print "fump: host: $opt->{host}\n";
-print "fump: tmpDir: $opt->{tmpDir}\n";
-print "fump: outputDir: $opt->{outputDir}\n";
-		
-	
+
+	print "dump: host: $opt->{host}\n";
+	print "dump: tmpDir: $opt->{tmpDir}\n";
+	print "dump: outputDir: $opt->{outputDir}\n";
+
+
 	# split rulemap
 	my @rules = split(/,\s*/, $cfg->{slaveexportrules}->{targets}->{$target}->{rulemap});
-	
+
 	# process rules
 	foreach my $rule (@rules) {
 		print "\n";
@@ -229,17 +241,17 @@ print "fump: outputDir: $opt->{outputDir}\n";
 		print "\tpattern: $cfg->{slaveexportrules}->{rules}->{$rule}->{pattern}\n";
 		print "\tattribute: $cfg->{slaveexportrules}->{rules}->{$rule}->{attribute}\n";
 		print "\n";
-		
+
 		my $filtered_objects;
 		if ($cfg->{slaveexportrules}->{rules}->{$rule}->{object} =~ /Host/i) {
 			$filtered_objects = HashGrep($CLIENTS, 'objectclass', $cfg->{slaveexportrules}->{rules}->{$rule}->{object});
 			$filtered_objects = HashGrep($filtered_objects, $cfg->{slaveexportrules}->{rules}->{$rule}->{attribute}, $cfg->{slaveexportrules}->{rules}->{$rule}->{pattern});
-			
+
 			foreach my $object (keys %{$filtered_objects}) {
 				$CLIENTS_slave->{$object} = $filtered_objects->{$object};
 			}
 		}
-		
+
 		if ($cfg->{slaveexportrules}->{rules}->{$rule}->{object} =~ /Service/i) {
 			foreach my $client (keys %{$CLIENTS}) {
 				foreach my $service (keys %{$CLIENTS->{$client}->{SERVICES}}) {
@@ -276,9 +288,9 @@ print "fump: outputDir: $opt->{outputDir}\n";
 						}
 					}
 
-				}	
+				}
 			}
-			
+
 			# re-fill each hosts attributes
 			foreach my $client (keys %{$CLIENTS_slave}) {
 				foreach my $val1 (keys %{$CLIENTS->{$client}}) {
@@ -292,7 +304,7 @@ print "fump: outputDir: $opt->{outputDir}\n";
 			}
 		}
 	}
-	
+
 	# re-map and export
 	$CLIENTS = $CLIENTS_slave;
 
@@ -328,7 +340,7 @@ print "fump: outputDir: $opt->{outputDir}\n";
                 }
         }
 
-=pod	
+=pod
 	print "-----\n";
 	foreach my $val1 (keys %{$CLIENTS}) {
 		print $val1."\n";
@@ -351,21 +363,26 @@ print "fump: outputDir: $opt->{outputDir}\n";
 			}
 		}
 	}
-	
+
 	exit;
-=cut	
+=cut
 	# create tmp target
 	mkdir("$opt->{tmpDir}") if !-d $opt->{tmpDir};
-	
+
 	# clean tmp target
 	qx(rm -r $opt->{tmpDir}/*) if -f "$opt->{tmpDir}/lconf.identify";
 
 	# create identifier
 	open(FH, ">$opt->{tmpDir}/lconf.identify") || die "Can't write data: $opt->{tmpDir}/lconf.identify $!\n"; close(FH);
-	
-	# copy defaults localy
-    beVerbose("LOCAL COPY", "cp @SYSCONF_DIR@/default-templates.cfg $opt->{outputDir}/");
-	qx(cp @SYSCONF_DIR@/default-templates.cfg $opt->{outputDir}/);
+
+	# copy defaults locally
+	if(defined($cfg->{export}->{format}) && $cfg->{export}->{format} == 2) {
+	    beVerbose("LOCAL COPY", "cp @SYSCONF_DIR@/default-templates.conf $opt->{outputDir}/");
+	    qx(cp @SYSCONF_DIR@/default-templates.conf $opt->{outputDir}/);
+	} else {
+	    beVerbose("LOCAL COPY", "cp @SYSCONF_DIR@/default-templates.cfg $opt->{outputDir}/");
+	    qx(cp @SYSCONF_DIR@/default-templates.cfg $opt->{outputDir}/);
+	}
 
 	# create dirs and write config
 	createDirs($cfg->{ldap}->{baseDN}, $opt->{tmpDir});
@@ -379,16 +396,16 @@ print "fump: outputDir: $opt->{outputDir}\n";
 
 	# generate each client host
 	foreach my $client (keys %{$CLIENTS}) {
-		genHostConfig($CLIENTS, $client, $opt->{tmpDir});
+		genHostConfig($CONFIG, $CLIENTS, $client, $opt->{tmpDir});
 	}
-	
+
 	#
 	# NOW, START WORKING ON TARGET SERVER's REMOTE DIR
 	#
 
 	# remote dir exists?
 	checkRemoteDir($opt->{host}, $opt->{outputDir}, $opt->{port});
-	
+
 	# copy config to client
 	my $cmd;
 	if (defined $opt->{port}) {
@@ -398,12 +415,17 @@ print "fump: outputDir: $opt->{outputDir}\n";
 	}
 	beVerbose("COPY", $cmd);
 	qx($cmd);
-	
-	# reload Nagios / Icinga on slave (requires passwordless sudo for that command)
+
+	# reload Icinga (2) on slave (requires passwordless sudo for that command)
+	my $binary = "icinga";
+	if(defined($cfg->{export}->{format}) && $cfg->{export}->{format} == 2) {
+	    $binary = "icinga2";
+	}
+
 	if (defined $opt->{port}) {
-		$cmd = "ssh -p $opt->{port} $opt->{host} 'sudo /etc/init.d/icinga reload'";
+		$cmd = "ssh -p $opt->{port} $opt->{host} 'sudo /etc/init.d/$binary reload'";
 	} else {
-		$cmd = "ssh $opt->{host} 'sudo /etc/init.d/icinga reload'";
+		$cmd = "ssh $opt->{host} 'sudo /etc/init.d/$binary reload'";
 	}
 	beVerbose("RELOAD", $cmd);
 	my $result = qx($cmd);
@@ -415,21 +437,21 @@ print "fump: outputDir: $opt->{outputDir}\n";
 #foreach my $host (@hosts) {
 #	# re-map var
 #	$opt->{host} = $host;
-#	
+#
 #	# get global tree's
 #	my $exportGLOBAL = LDAPsearch($ldap, $cfg->{ldap}->{baseDN}, "sub", "description=LCONF->EXPORT->GLOBAL");
 #	@export = addPaths($exportGLOBAL, @export) if defined $exportGLOBAL;
-#	
+#
 #	# create tmp target
 #	$opt->{outputDir} = $cfg->{epxort}->{tmpdir}.'/'.$opt->{host}.'/';
 #	mkdir("$opt->{outputDir}") if !-d $opt->{outputDir};
-#	
+#
 #	# clean tmp target
 #	qx(rm -r $opt->{outputDir}/*) if -f "$opt->{outputDir}/lconf.identify";
 #
 #	# create identifier
 #	open(FH, ">$opt->{outputDir}/lconf.identify") || die "Can't write data: $opt->{outputDir}/lconf.identify $!\n"; close(FH);
-#	
+#
 #	 # copy defaults localy
 # 	beVerbose("LOCAL COPY", "cp /usr/local/LConf-1.3-dev.4/etc/default-templates.cfg $opt->{outputDir}/");
 # 	qx(cp /usr/local/LConf-1.3-dev.4/etc/default-templates.cfg $opt->{outputDir}/);
@@ -446,10 +468,10 @@ print "fump: outputDir: $opt->{outputDir}\n";
 #	}
 #	genHostConfig($CLIENTS);
 #
-#	
+#
 #	# disconnect from LDAP Server
 #	$ldap->unbind();
-#	
+#
 #exit;
 #
 #	#
@@ -468,7 +490,7 @@ print "fump: outputDir: $opt->{outputDir}\n";
 #	}
 #	beVerbose("COPY", $cmd);
 #	qx($cmd);
-#	
+#
 #	# reload Nagios / Icinga on slave
 #	if (defined $opt->{port}) {
 #		$cmd = "ssh -p $opt->{port} $opt->{host} '/etc/init.d/icinga reload'";
@@ -492,9 +514,9 @@ LeaveScript($exit->{code}, $exit->{message});
 sub addPaths {
 	my $result = shift;
 	my @to_return = @_;
-	
+
 	foreach(keys %{$result}) { push(@to_return, $_); }
-	
+
 	return @to_return;
 }
 

@@ -427,7 +427,8 @@ sub TreeBuilder {
         }
 
         # process host escalations
-        $result = HashGrep($CONFIG, 'dn', '^[\w]+=[._\w\/\d\s:-]+,'.$searchDN);     my $HOSTESCALATIONS = HashGrep($result, 'objectclass', $cfg->{ldap}->{prefix}.'hostescalation$');
+        $result = HashGrep($CONFIG, 'dn', '^[\w]+=[._\w\/\d\s:-]+,'.$searchDN);
+	my $HOSTESCALATIONS = HashGrep($result, 'objectclass', $cfg->{ldap}->{prefix}.'hostescalation$');
         foreach my $escalation (keys %{$HOSTESCALATIONS}) {
             foreach my $val1 (keys %{$HOSTESCALATIONS->{$escalation}}) {
                 if ($val1 =~ /$cfg->{ldap}->{prefix}hostescalation/) {

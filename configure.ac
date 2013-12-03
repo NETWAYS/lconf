@@ -30,6 +30,7 @@ icinga_prefix='/usr/local/icinga'
 # configure options
 AC_SUBST(exec_dir,[$exec_dir])
 
+dnl cli
 AC_ARG_WITH(lconf_cli_user,AC_HELP_STRING([--with-lconf-cli-user=<user>],[sets user name to run lconf on cli]),lconf_cli_user=$withval,lconf_cli_user=lconf) 
 AC_SUBST(lconf_cli_user)
 AC_DEFINE_UNQUOTED(DEFAULT_LCONF_CLI_USER,"$lconf_cli_user",[user name to run lconf on cli])
@@ -38,6 +39,7 @@ AC_ARG_WITH(lconf_cli_group,AC_HELP_STRING([--with-lconf-cli-group=<group>],[set
 AC_SUBST(lconf_cli_group)
 AC_DEFINE_UNQUOTED(DEFAULT_LCONF_CLI_GROUP,"$lconf_cli_group",[group name to run lconf on cli])
 
+dnl ldap
 AC_ARG_WITH(ldap_server,AC_HELP_STRING([--with-ldap-server=<ip-of-ldap-server>],[sets ldap servers ip]),ldap_server=$withval,ldap_server=127.0.0.1) 
 AC_SUBST(ldap_server)
 AC_DEFINE_UNQUOTED(DEFAULT_LDAP_SERVER,"$ldap_server",[sets ldap servers ip])
@@ -46,7 +48,7 @@ AC_ARG_WITH(ldap_dn,AC_HELP_STRING([--with-ldap-dn=<ldap servers dn>],[sets ldap
 AC_SUBST(ldap_dn)
 AC_DEFINE_UNQUOTED(DEFAULT_LDAP_DN,"$ldap_dn",[sets ldap servers dn])
 
-ldap_bind_dn='cn=admin'$comma$ldap_dn
+ldap_bind_dn='cn=Manager'$comma$ldap_dn
 AC_ARG_WITH(ldap_bind_dn,AC_HELP_STRING([--with-ldap-bind-dn=<ldap bind dn>],[sets ldap bind dn]),ldap_bind_dn=$withval,ldap_bind_dn=$ldap_bind_dn) 
 AC_SUBST(ldap_bind_dn)
 AC_DEFINE_UNQUOTED(DEFAULT_LDAP_BIND_DN,"$ldap_bind_dn",[sets ldap bind dn])
@@ -63,6 +65,8 @@ AC_ARG_WITH(ldap_config_style,AC_HELP_STRING([--with-ldap-config-style=<new/old>
 AC_SUBST(ldap_config_style)
 AC_DEFINE_UNQUOTED(DEFAULT_LDAP_CONFIG_STYLE,"$ldap_config_style",[sets ldap config style])
 
+dnl icinga 1.x
+
 AC_ARG_WITH(icinga_user,AC_HELP_STRING([--with-icinga-user=<user id of icinga>],[sets the user id of the icinga process]),icinga_user=$withval,icinga_user=icinga) 
 AC_SUBST(icinga_user)
 AC_DEFINE_UNQUOTED(DEFAULT_ICINGA_USER,"$icinga_user",[sets the user id of the icinga process])
@@ -74,6 +78,21 @@ AC_DEFINE_UNQUOTED(DEFAULT_ICINGA_BINPATH,"$icinga_binpath",[sets the path to th
 AC_ARG_WITH(icinga_config,AC_HELP_STRING([--with-icinga-config=<icinga configuration directory>],[sets the path to the icinga config directory]),icinga_config=$withval,icinga_config=/usr/local/icinga/etc) 
 AC_SUBST(icinga_config)
 AC_DEFINE_UNQUOTED(DEFAULT_ICINGA_CONFIG,"$icinga_config",[icinga configuration directory])
+
+
+dnl icinga 2.x
+AC_ARG_WITH(icinga2_user,AC_HELP_STRING([--with-icinga2-user=<user id of icinga>],[sets the user id of the icinga 2 process]),icinga2_user=$withval,icinga2_user=icinga) 
+AC_SUBST(icinga2_user)
+AC_DEFINE_UNQUOTED(DEFAULT_ICINGA2_USER,"$icinga2_user",[sets the user id of the icinga 2 process])
+
+AC_ARG_WITH(icinga2_binpath,AC_HELP_STRING([--with-icinga2-binpath=<path to the icinga 2 binary>],[sets the path to the icinga 2 binary]),icinga2_binpath=$withval,icinga2_binpath=/usr/sbin) 
+AC_SUBST(icinga2_binpath)
+AC_DEFINE_UNQUOTED(DEFAULT_ICINGA2_BINPATH,"$icinga2_binpath",[sets the path to the icinga 2 binary])
+
+AC_ARG_WITH(icinga2_config,AC_HELP_STRING([--with-icinga2-config=<icinga 2 configuration directory>],[sets the path to the icinga 2 config directory]),icinga2_config=$withval,icinga2_config=/etc/icinga2)
+AC_SUBST(icinga2_config)
+AC_DEFINE_UNQUOTED(DEFAULT_ICINGA2_CONFIG,"$icinga2_config",[icinga 2 configuration directory])
+
 
 dnl Location of export script path
 EXPORTSCRIPTDIR=no

@@ -56,6 +56,7 @@ LConfSlaveExport.pl  -H <name of slave server>
                      [-p <port>]
                      [-D <hashdump>]
                      -t <path to config on slave host>
+                     [--format]
                      [-v]
                      [-h]
                      [-V]
@@ -81,6 +82,10 @@ Set Lconf hashdump file location
 =item -t|--target <path to config on slave host>
 
 Target path on slave server
+
+=item --format <1|2>
+
+Overwrite config export format. 1 for Icinga 1.x / Nagios 3.x, 2 for Icinga 2.x
 
 =item -v|--verbose <path to logfile>
 
@@ -142,6 +147,7 @@ GetOptions(
     "o|output=s"   => \$opt->{outputDir},
     "n|noremote"   => \$opt->{noremote},
     "e|exportdn=s" => \$opt->{exportDN},
+    "format:s"     => \$opt->{format},
     "v|verbose:s"  => \$opt->{verbose},
     "h|help"       => \$opt->{help},
     "V|version"    => \$opt->{version}
@@ -171,6 +177,12 @@ if (defined $opt->{exportDN}) {
 else {
     $cfg->{ldap}->{baseDN} = $cfg->{export}->{exportDN}.','.$cfg->{ldap}->{rootDN};
 }
+
+# override format when set via commandline
+if(defined $opt->{format}) {
+    $cfg->{export}->{format} = $opt->{format};
+}
+
 our $CLIENTS;
 my @export;
 my @hosts;
@@ -296,9 +308,14 @@ foreach my $host (@hosts) {
     # create identifier
     open(FH, ">$opt->{outputDir}/lconf.identify") || die "Can't write data: $opt->{outputDir}/lconf.identify $!\n"; close(FH);
 
-     # copy defaults localy
-    beVerbose("LOCAL COPY", "cp @SYSCONF_DIR@/default-templates.cfg $opt->{outputDir}/");
-    qx(cp @SYSCONF_DIR@/default-templates.cfg $opt->{outputDir}/);
+    # copy defaults locally
+    if(defined($cfg->{export}->{format}) && $cfg->{export}->{format} == 2) {
+        beVerbose("LOCAL COPY", "cp @SYSCONF_DIR@/default-templates.conf $opt->{outputDir}/");
+        qx(cp @SYSCONF_DIR@/default-templates.conf $opt->{outputDir}/);
+    } else {
+        beVerbose("LOCAL COPY", "cp @SYSCONF_DIR@/default-templates.cfg $opt->{outputDir}/");
+        qx(cp @SYSCONF_DIR@/default-templates.cfg $opt->{outputDir}/);
+    }
 
     # create dirs and write config
     createDirs($cfg->{ldap}->{baseDN}, $opt->{outputDir});
@@ -314,7 +331,7 @@ foreach my $host (@hosts) {
     }
 
     foreach my $client (keys %{$CLIENTS}) {
-        genHostConfig($CLIENTS, $client);
+        genHostConfig($CONFIG, $CLIENTS, $client);
     }
 
     # disconnect from LDAP Server
@@ -338,12 +355,17 @@ foreach my $host (@hosts) {
         beVerbose("COPY", $cmd);
         qx($cmd);
 
-        # reload Nagios / Icinga on slave
-        if (defined $opt->{port}) {
-            $cmd = "ssh -p $opt->{port} $opt->{host} '/etc/init.d/icinga reload'";
-        } else {
-            $cmd = "ssh $opt->{host} '/etc/init.d/icinga reload'";
-        }
+	# reload Icinga (2) on slave (requires passwordless sudo for that command)
+	my $binary = "icinga";
+	if(defined($cfg->{export}->{format}) && $cfg->{export}->{format} == 2) {
+	    $binary = "icinga2";
+	}
+
+	if (defined $opt->{port}) {
+		$cmd = "ssh -p $opt->{port} $opt->{host} 'sudo /etc/init.d/$binary reload'";
+	} else {
+		$cmd = "ssh $opt->{host} 'sudo /etc/init.d/$binary reload'";
+	}
         #beVerbose("RELOAD", $cmd);
         #my $result = qx($cmd);
         #print $result;
