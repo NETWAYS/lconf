@@ -4,15 +4,22 @@ LConf Changelog
 NOTE: Please read doc/UPGRADING for detailed information on changes and
 upgrade information!
 
-1.4.0 - XX/XX/2013
+1.4.0 - 04/12/2013
 
 ENHANCEMENTS
+* add Icinga 2 export format #2364
+* add config option for ldap port #1753
+* allow multiple customvars in the service description for replacement #2224
 * re-add services below hostgroup linked to hosts #2136
 * add --with-treerewrite-method=MainOverLink|None to configure #2286
 * add debug verbosity level to LConfExport #2288
+* add debug out if service is disabled on export #2366
 
 FIXES
+* fix customvar in service name gets replaced, but causes duplicates #2148
+* fix attributes resolved in links get pulled into main tree (MainOverLink) #2268
 * fix service data returning from a link walk is messed up #2270
+* fix objects are not exported if multiple objectclasses are defined #2276
 
 SUPPORT
 * add TreeBuilder processing level to debug output #2290

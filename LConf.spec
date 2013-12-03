@@ -7,7 +7,7 @@
 # package are under the same license as the package itself.
 #
 
-%define revision 0.dev
+%define revision 0
 
 Name:           LConf
 Summary:        LDAP based configuration tool for Icinga and Nagios
@@ -156,6 +156,9 @@ mkdir -p %{buildroot}%{_sysconfdir}/icinga/lconf
 %config(noreplace) %{_sysconfdir}/init.d/lconf-slavesync
 
 %changelog
+* Tue Dec 03 2013 Michael Friedrich <michael.friedrich@netways.de>
+- update to 1.4.0
+
 * Wed Oct 09 2013 Michael Friedrich <michael.friedrich@netways.de>
 - update development branch to 1.4.0-0.dev
 

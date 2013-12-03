@@ -5,13 +5,31 @@ Upgrading LConf
 Upgrading from 1.3.x to 1.4.x
 -----------------------------
 
+- LConf Export features Icinga 2.x configuration format. Must be
+  configured/set on the command line.
+
+  Additional files were added:
+    * default-templates.conf
+    * LConfDeployIcinga2.sh
+
+  !!! These changes include function parameter updates and require a full
+  update (except custom scripts). !!!
+
 - $cfg->{ldap}->{port} in config.pm allows to define an additional
   ldap port.
+
+- $cfg->{export}->{format} specifies the configuration format on export.
+  Can be overridden with the '--format' parameter for the export scripts.
+
+- --with-treerewrite-method=<None/MainOverLink> as configure option
+
+- new %itemMapIcinga2 in config.pm for Icinga 2 - must be updated at all cost!!!
 
 |==============|===========================|==================================================|
 | Old          | New                       | Notes                                            |
 |==============|===========================|==================================================|
 |              | $cfg->{ldap}->{port}      | Optional ldap port. If omitted, defaults to 389. |
+|              | $cfg->{export}->{format}  | Optional export format. 1..Icinga1x, 2..Icinga2x |
 |==============|===========================|==================================================|
 
 Upgrading from 1.2.x to 1.3.x

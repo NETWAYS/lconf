@@ -8,6 +8,7 @@ autom4te.cache
 contrib/create_lconf-web-dn-mid.pl
 contrib/lconf-slavesync
 contrib/LConfDeploy.sh
+contrib/LConfDeployIcinga2.sh
 
 src/LConfExport.pl
 src/LConfImport.pl
