@@ -21,7 +21,11 @@ Upgrading from 1.3.x to 1.4.x
 - $cfg->{export}->{format} specifies the configuration format on export.
   Can be overridden with the '--format' parameter for the export scripts.
 
-- --with-treerewrite-method=<None/MainOverLink> as configure option
+- configure options:
+  --with-treerewrite-method=<None/MainOverLink>
+  --with-icinga2-user=<user id of icinga>
+  --with-icinga2-binpath=<path to the icinga 2 binary>
+  --with-icinga2-config=<icinga 2 configuration directory>
 
 - new %itemMapIcinga2 in config.pm for Icinga 2 - must be updated at all cost!!!
 
