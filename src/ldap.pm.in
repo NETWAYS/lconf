@@ -54,7 +54,11 @@ sub LDAPconnect {
 
     if (defined $login) {
         # do ldap connect with login
-        $ldap = Net::LDAP->new($cfg->{ldap}->{server}) or die "Can't connect to LDAP Server '$cfg->{ldap}->{server}'";
+        if (defined($cfg->{ldap}->{port}) && $cfg->{ldap}->{port} ne '') {
+            $ldap = Net::LDAP->new($cfg->{ldap}->{server}.":".$cfg->{ldap}->{port}) or die "Can't connect to LDAP Server '$cfg->{ldap}->{server}:$cfg->{ldap}->{port}': $!";
+        } else {
+            $ldap = Net::LDAP->new($cfg->{ldap}->{server}) or die "Can't connect to LDAP Server '$cfg->{ldap}->{server}': $!";
+        }
 
         if ( $cfg->{ldap}->{tls} ) {
 	        $startTLSmesg = $ldap->start_tls( %{$cfg->{ldap}->{tls}} );
@@ -62,14 +66,23 @@ sub LDAPconnect {
 	    }
 
         my $mesg=$ldap->bind("$cfg->{ldap}->{binddn}", password => "$cfg->{ldap}->{bindpw}" );
-        beVerbose("LDAP CONNECT", "connect to host: $cfg->{ldap}->{server}, User: $cfg->{ldap}->{binddn}, Pass: ******");
+        if (defined($cfg->{ldap}->{port}) && $cfg->{ldap}->{port} ne '') {
+            beVerbose("LDAP CONNECT", "connect to host: $cfg->{ldap}->{server} Port: $cfg->{ldap}->{port}, User: $cfg->{ldap}->{binddn}, Pass: ******");
+        } else {
+            beVerbose("LDAP CONNECT", "connect to host: $cfg->{ldap}->{server}, User: $cfg->{ldap}->{binddn}, Pass: ******");
+        }
         LeaveScript(2, "Can't connect to ldap server! Wrong user and/or password? Disabled TLS, but server requires it?") if $mesg->{resultCode};
     } else {
 	    # no anonymous bind with TLS
 	    LeaveScript(2, "We do not support TLS with anonymous bind") if $cfg->{ldap}->{tls};
         # anonymous bind
-        beVerbose("LDAP CONNECT", "connect to Host: $cfg->{ldap}->{server} with anonymous bind");
-        $ldap = Net::LDAP->new ($cfg->{ldap}->{server}) or die "Can't connect to LDAP Server $cfg->{ldap}->{server}: $!";
+        if (defined($cfg->{ldap}->{port}) && $cfg->{ldap}->{port} ne '') {
+            beVerbose("LDAP CONNECT", "connect to Host: $cfg->{ldap}->{server} Port: $cfg->{ldap}->{port} with anonymous bind");
+            $ldap = Net::LDAP->new($cfg->{ldap}->{server}.":".$cfg->{ldap}->{port}) or die "Can't connect to LDAP Server '$cfg->{ldap}->{server}:$cfg->{ldap}->{port}': $!";
+        } else {
+            beVerbose("LDAP CONNECT", "connect to Host: $cfg->{ldap}->{server} with anonymous bind");
+            $ldap = Net::LDAP->new($cfg->{ldap}->{server}) or die "Can't connect to LDAP Server '$cfg->{ldap}->{server}': $!";
+        }
     }
 
     return $ldap;
