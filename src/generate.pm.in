@@ -890,6 +890,8 @@ sub genHostConfig1x {
 
                     print FH "}\n";
                     print FH "\n";
+                } else {
+                    DebugOutput("$$ GENERATE HOSTCONFIG 1x", "Skipping disabled service '$service' ", 1);
                 }
             }
 
@@ -978,6 +980,8 @@ sub genHostConfig1x {
                     }
                 }
             }
+        } else {
+            DebugOutput("$$ GENERATE HOSTCONFIG 1x", "Skipping disabled host '$client' ", 1);
         }
     }
 }
@@ -1389,7 +1393,10 @@ sub genHostConfig2x {
 
                     print FH "\t},\n";
                     print FH "\n";
+                } else {
+                    DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Skipping disabled service '$service' ", 1);
                 }
+
             }
 
             # host again
@@ -1413,46 +1420,8 @@ sub genHostConfig2x {
                 print FH "}\n";
                 print FH "\n";
             }
-=pod
-
-
-            #
-            # HOST ESCALATIONS
-            #
-            foreach my $escalation (sort keys %{$CLIENTS->{$client}->{'HOSTESCALATION'}}) {
-                # only if host is not disabled
-                if (!$CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostdisable"}) {
-                    print FH "define hostescalation {\n";
-                    print FH "\thost_name\t$CLIENTS->{$client}->{cn}\n";
-                    foreach my $val (keys %{$CLIENTS->{$client}->{HOSTESCALATION}->{$escalation}}) {
-                        print FH "\t$itemMapIcinga2{$val}\t$CLIENTS->{$client}->{HOSTESCALATION}->{$escalation}->{$val}\n";
-                    }
-                    print FH "}\n";
-                    print FH "\n";
-                }
-            }
-
-            #
-            # SERVICE ESCALATIONS
-            #
-            foreach my $service (sort keys %{$CLIENTS->{$client}->{'SERVICES'}}) {
-                # only gen service if lconfservicedisable is not set
-                if (!defined $CLIENTS->{$client}->{'SERVICES'}->{$service}->{"$cfg->{ldap}->{prefix}servicedisable"}) {
-                    if (defined $CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEESCALATION}) {
-                        foreach my $escalation (sort keys %{$CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEESCALATION}}) {
-                            print FH "define serviceescalation {\n";
-                            print FH "\thost_name\t$CLIENTS->{$client}->{cn}\n";
-                            print FH "\tservice_description\t$service\n";
-                            foreach my $val (keys %{$CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEESCALATION}->{$escalation}}) {
-                                print FH "\t$itemMapIcinga2{$val}\t$CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEESCALATION}->{$escalation}->{$val}\n";
-                            }
-                            print FH "}\n";
-                            print FH "\n";
-                        }
-                    }
-                }
-            }
-=cut
+        } else {
+            DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Skipping disabled host '$client' ", 1);
         }
     }
 }
