@@ -1152,9 +1152,9 @@ sub genHostConfig2x {
                                 $depHost = $CLIENTS->{$client}->{cn};
                             }
 
-                            print FH "\t\t\t{ host = \"$depHost\", service = \"$depService\"},\n";
+                            print FH "\t\t\t{ host = \"$depHost\", service = \"$depService\" },\n";
                         }
-                        print FH "\t\t},\n";
+                        print FH "\t\t],\n";
                     }
 
                     #
