@@ -55,6 +55,7 @@ $cfg->{slavesync}->{directIO}            = '1'; # use master checkresult spool d
 $cfg->{slavesync}->{pidFile}             = '@SLAVESYNC__PID_FILE@';
 $cfg->{slavesync}->{debugLog}            = '@SLAVESYNC__LOG_DIR@/LConfSlaveSync.debug';
 $cfg->{slavesync}->{debug}               = '0';
+$cfg->{slavesync}->{timeout}             = '20';
 
 
 #

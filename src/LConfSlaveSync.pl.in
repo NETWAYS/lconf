@@ -171,6 +171,7 @@ GetOptions(
     "pidFile=s"      => \$cfg->{slavesync}->{pidFile},
     "d|debug=s"      => \$cfg->{slavesync}->{debug},
     "debugLog=s"     => \$cfg->{slavesync}->{debugLog},
+    "t|timeout=s"    => \$cfg->{slavesync}->{timeout},
     "nocheck"        => \$cfg->{slavesync}->{nocheck},
     "h|help"         => \$opt->{help},
     "V|version"      => \$opt->{version}
@@ -194,6 +195,9 @@ LeaveScript(2, "Variable '\$cfg->{slavesync}->{pidFile}' not set in config.pm") 
 LeaveScript(2, "Variable '\$cfg->{slavesync}->{getInterval}' not set in config.pm")  if !$cfg->{slavesync}->{getInterval};
 LeaveScript(2, "Variable '\$cfg->{slavesync}->{pushInterval}' not set in config.pm") if !$cfg->{slavesync}->{pushInterval};
 LeaveScript(2, "Variable '\$cfg->{slavesync}->{debugLog}' not set in config.pm")     if !$cfg->{slavesync}->{debugLog};
+
+# set default it not set (upgrade)
+$cfg->{slavesync}->{timeout} = 20 if !$cfg->{slavesync}->{timeout};
 
 # debug mode?
 if (defined $cfg->{slavesync}->{debug} && $cfg->{slavesync}->{debug} == 1) {
@@ -225,7 +229,7 @@ if ($ARGV[0] eq 'start') {
     }
 
     # run main function
-    main($cfg->{slavesync}->{getInterval}, $cfg->{slavesync}->{localDir}, $cfg->{slavesync}->{remoteDir}, @HOSTS);
+    main($cfg->{slavesync}->{getInterval}, $cfg->{slavesync}->{localDir}, $cfg->{slavesync}->{remoteDir}, $cfg->{slavesync}->{timeout}, @HOSTS);
 
     # join thread
     $thread_handle{0}->join();
@@ -289,11 +293,12 @@ sub main {
     my $sleepHostThread = shift;
     my $localDir        = shift;
     my $remoteDir       = shift;
+    my $timeout         = shift;
     my @HOSTS = @_;
 
     while(1) {
         foreach(@HOSTS) {
-            getFiles($_, $localDir, $remoteDir);
+            getFiles($_, $localDir, $remoteDir, $timeout);
         }
 
         beVerbose('MAIN', "sleep $sleepHostThread");
@@ -305,12 +310,21 @@ sub getFiles {
     my $host      = shift;
     my $localDir  = shift;
     my $remoteDir = shift;
+    my $timeout   = shift;
 
     beVerbose("GET FILES", "from host '$host'");
     my $cmd = "rsync --remove-sent-files -azd -e ssh $host:$remoteDir/ $localDir";
-    my $val = system($cmd);
-
-    if ($val != 0) { print "ERROR: data sync with $host failed!\n"}
+    eval {
+        local $SIG{ALRM} = sub { die "Alarm" };
+        alarm ($timeout);
+        my $val = system($cmd);
+        if ($val != 0) { print "ERROR: data sync with $host failed!\n"}
+        alarm 0;
+    }
+    if ($@) {
+        die unless $@ eq "Alarm";
+        beVerbose("GET FILES","Transfer from host '$host' timed out after $timeout seconds !");
+    }
 }
 
 sub killProc {
