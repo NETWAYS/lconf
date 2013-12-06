@@ -55,7 +55,7 @@ BuildRequires:  perl(Parallel::ForkManager) >= 0.7.6
 %define slavesyncremotedir %{_localstatedir}/spool/icinga/perfdata-remote
 %define slavesynccrspooldir %{_localstatedir}/spool/icinga/checkresults
 %define slavesyncpid %{_localstatedir}/run/LConfSlaveSync.pid
-%define slavesynclogdir %{_localstatedir}/log/icinga/LConfSlaveSync.debug
+%define slavesynclogdir %{_localstatedir}/log/icinga
 
 %description
 LConf is a LDAP based configuration tool for Icinga® and Nagios®. All
