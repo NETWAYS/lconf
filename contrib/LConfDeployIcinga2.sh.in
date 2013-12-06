@@ -89,7 +89,7 @@ $SUDOCOMMAND rsync -a --del "$LCONFTMP"/ "$LCONFDIR"
 
 # reload the final config on the master
 echo reload config on Master $(hostname -f)
-$SUDOCOMMAND /etc/init.d/icinga2 restart
+sudo /etc/init.d/icinga2 restart
 exit $?
 else 	# config test ##
 echo "Config verification failed. Aborting..."
