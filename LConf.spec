@@ -94,6 +94,8 @@ work independent from the LDAP during runtime.
 
 %{__make}
 
+%{__rm} -f contrib/*.in
+
 %install
 %{__rm} -rf %{buildroot}
 %{__make} install \
@@ -130,7 +132,7 @@ mkdir -p %{buildroot}%{_sysconfdir}/icinga/lconf
 
 %files
 %defattr(644,root,root,755)
-%doc src/*.schema src/*.ldif contrib README doc/LICENSE doc/README.RHEL doc/CHANGELOG contrib/LConfDeploy.sh
+%doc src/*.schema src/*.ldif README doc/LICENSE doc/README.RHEL doc/CHANGELOG contrib
 %dir %{_libdir}/%{name}
 %{_libdir}/%{name}/
 %defattr(755,root,root,755)
