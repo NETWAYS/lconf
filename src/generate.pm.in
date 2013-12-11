@@ -1081,24 +1081,6 @@ sub genHostConfig2x {
                     print FH "\t},\n";
 
                     print FH "\tcheck = \"$service_name\",\n";
-                } elsif ($val1 eq "$cfg->{ldap}->{prefix}hosteventhandler") {
-
-                    my $event_command_name = $CLIENTS->{$client}->{$val1};
-                    my $event_command_object_name = "$host-$event_command_name";
-
-                    my $event_command_line; # we don't have args for notification commands
-                    foreach my $command (keys %{$COMMANDS}) {
-                        if ($COMMANDS->{$command}->{cn} eq $event_command_name) {
-                            $event_command_line = escape_str($COMMANDS->{$command}->{$cfg->{ldap}->{prefix}.'commandline'});
-                            goto FOUND_EVENT;
-                        }
-                    }
-
-                    FOUND_EVENT:
-
-                    $event_commands->{$event_command_object_name} = $event_command_line;
-
-                    print FH "\t\tevent_command = \"$event_command_object_name\",\n";
                 }
             }
 
