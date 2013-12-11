@@ -899,14 +899,14 @@ sub genHostConfig1x {
             #
             # HOST DEPENDENCIES
             #
-            foreach my $dependency (sort keys %{$CLIENTS->{$client}->{'DEPENDENCY'}}) {
+            foreach my $dependency (sort keys %{$CLIENTS->{$client}->{'HOSTDEPENDENCY'}}) {
                 # only if host is not disabled
                 if (!$CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostdisable"}) {
                     print FH "define hostdependency {\n";
                     print FH "\thost_name\t$dependency\n";
                     print FH "\tdependent_host_name\t$CLIENTS->{$client}->{cn}\n";
-                    foreach(sort keys %{$CLIENTS->{$client}->{DEPENDENCY}->{$dependency}}) {
-                        print FH "\t$itemMap{$_}\t$CLIENTS->{$client}->{DEPENDENCY}->{$dependency}->{$_}\n" if $itemMap{$_};
+                    foreach(sort keys %{$CLIENTS->{$client}->{HOSTDEPENDENCY}->{$dependency}}) {
+                        print FH "\t$itemMap{$_}\t$CLIENTS->{$client}->{HOSTDEPENDENCY}->{$dependency}->{$_}\n" if $itemMap{$_};
                     }
                     print FH "}\n";
                     print FH "\n";
@@ -1085,20 +1085,15 @@ sub genHostConfig2x {
             }
 
             # host dependencies
-            if (defined($CLIENTS->{$client}->{'DEPENDENCY'})) {
-                foreach my $dependency (sort keys %{$CLIENTS->{$client}->{'DEPENDENCY'}}) {
-                    foreach my $dep_host (sort keys %{$CLIENTS->{$client}->{DEPENDENCY}->{$dependency}}) {
-                        if (defined($host_deps) && $host_deps ne "") {
-                            $host_deps = $CLIENTS->{$client}->{DEPENDENCY}->{$dependency}->{$dep_host} if $itemMapIcinga2{$dep_host};
-                        } else {
-                            $host_deps .= ",".$CLIENTS->{$client}->{DEPENDENCY}->{$dependency}->{$dep_host} if $itemMapIcinga2{$dep_host};
-                        }
-                    }
+            my @host_deps = ();
+            if (defined($CLIENTS->{$client}->{'HOSTDEPENDENCY'})) {
+                foreach my $dep_host (sort keys %{$CLIENTS->{$client}->{HOSTDEPENDENCY}}) {
+                    next if (!defined $dep_host || $dep_host eq "");
+                    push @host_deps, $dep_host;
                 }
             }
-            if ($host_deps ne "") {
-                $host_deps =~ s/,/\", \"/;
-                print FH "\thost_dependencies = [ \"$host_deps\" ],\n";
+            if (@host_deps > 0) {
+                print FH "\thost_dependencies = [ \"".join( "\", \"", @host_deps)."\" ],\n";
             }
 
             # macros
