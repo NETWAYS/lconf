@@ -879,7 +879,8 @@ sub genHostConfig1x {
                             # customvar or a default item?
                             if ($val1 =~ /customvar/i) {
                                 foreach my $val2 (sort keys %{$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}}) {
-                                    next if (!$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}->{$val2}); # XXX find a better way to handle empty customvars before
+                                    next if (!defined($val2) || $val2 eq "" ||
+                                        $val2 eq "_" || !$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}->{$val2});
                                     print FH "\t$val2\t$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}->{$val2}\n";
                                 }
                             } else {
@@ -1349,7 +1350,8 @@ sub genHostConfig2x {
                             print FH "\t\tmax_check_attempts = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1},\n";
                         } elsif ($val1 =~ /customvar/i) {
                             foreach my $val2 (sort keys %{$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}}) {
-                                next if (!$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}->{$val2}); # XXX find a better way to handle empty customvars before
+                                next if (!defined($val2) || $val2 eq "" ||
+                                    $val2 eq "_" || !$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}->{$val2});
                                 $key = $val2;
                                 $key =~ s/_//;
                                 $macros_svc->{$key} = escape_str($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}->{$val2});
