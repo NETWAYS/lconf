@@ -1040,7 +1040,7 @@ sub genHostConfig2x {
                     print FH "\tgroups = [ \"$groups\" ],\n";
                 } elsif ($val1 eq "$cfg->{ldap}->{prefix}alias") {
                     print FH "\tdisplay_name = \"$CLIENTS->{$client}->{$val1}\",\n";
-                } elsif ($val1 eq "$cfg->{ldap}->{prefix}hostcheckcommand") {
+                } elsif ($val1 eq "$cfg->{ldap}->{prefix}hostcheckcommand" || $val1 eq "$cfg->{ldap}->{prefix}checkcommand") {
 
                     # treat as new service
                     my $host_check_command_str = $CLIENTS->{$client}->{$val1};
@@ -1315,7 +1315,7 @@ sub genHostConfig2x {
                         #
 
                         # check command with macro arguments
-                        if ($val1 eq "$cfg->{ldap}->{prefix}servicecheckcommand") {
+                        if ($val1 eq "$cfg->{ldap}->{prefix}servicecheckcommand" || $val1 eq "$cfg->{ldap}->{prefix}checkcommand") {
                             my ($checkcommand_name, @checkcommand_macros) = split /!/, "$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}";
 
                             #print $checkcommand_name;
@@ -1345,7 +1345,7 @@ sub genHostConfig2x {
                             print FH "\t\tcheck_interval = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}m,\n";
                         } elsif ($val1 =~ /retryinterval/i) {
                             print FH "\t\tretry_interval = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}m,\n";
-                        } elsif ($val1 =~ /mexcheckattempts/i) {
+                        } elsif ($val1 =~ /maxcheckattempts/i) {
                             print FH "\t\tmax_check_attempts = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1},\n";
                         } elsif ($val1 =~ /customvar/i) {
                             foreach my $val2 (sort keys %{$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}}) {
