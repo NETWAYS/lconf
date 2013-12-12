@@ -1058,7 +1058,7 @@ sub genHostConfig2x {
                         $arg_c++;
                     }
 
-                    my $service_name = "$host-$host_check_command_name";
+                    my $service_name = "host-alive"; # same as generic-host template
 
                     DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Found host $host checkcommand, creating new host check service as $service_name");
 
