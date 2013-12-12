@@ -113,7 +113,7 @@ mkdir -p %{buildroot}%{_localstatedir}/run/%{name}
 # init-script
 mkdir "%{buildroot}%{_sysconfdir}/init.d"
 install -m0755 contrib/lconf-slavesync "%{buildroot}%{_sysconfdir}/init.d/lconf-slavesync"
-rm contrib/lconf-slavesync{,.in}
+rm contrib/lconf-slavesync
 sed -i -e 's|^DAEMON=/usr/local/LConf/LConfSlaveSync.pl|DAEMON=%{_bindir}/LConfSlaveSync.pl|' \
 	"%{buildroot}%{_sysconfdir}/init.d/lconf-slavesync"
 
