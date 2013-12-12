@@ -94,6 +94,8 @@ sub genTimeperiods1x {
                             my $key = $timeperiod_value;
                             $key =~ s/^\s+//;
                             $key =~ s/^\t//;
+                            $key =~ s/\s+$//;
+                            $key =~ s/\t$//;
                             print FH "\t$key\t$TIMEPERIODS->{$timeperiod}->{$_}->{$val}->{$timeperiod_value}\n";
                         }
                     }
@@ -127,6 +129,8 @@ sub genTimeperiods2x {
                         my $key = $timeperiod_value;
                         $key =~ s/^\s+//;
                         $key =~ s/^\t//;
+                        $key =~ s/\s+$//;
+                        $key =~ s/\t$//;
                         print FH "\t\t\"$key\" = \"$TIMEPERIODS->{$timeperiod}->{$_}->{$val}->{$timeperiod_value}\",\n";
                     }
                 }
