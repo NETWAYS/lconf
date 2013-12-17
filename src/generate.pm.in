@@ -1037,6 +1037,15 @@ sub genHostConfig2x {
                     $val1 eq "$cfg->{ldap}->{prefix}statusmapimage"
                     ) {
                     $macros->{$itemMapIcinga2{$val1}} = escape_str($CLIENTS->{$client}->{$val1});
+                } elsif ($val1 =~ /customvar/i) {
+                    foreach my $val2 (sort keys %{$CLIENTS->{$client}->{$val1}}) {
+                        next if (!defined($val2) || $val2 eq "" ||
+                                    $val2 eq "_" || !$CLIENTS->{$client}->{$val1}->{$val2});
+                        $key = $val2;
+                        $key =~ s/_//;
+                        $macros->{"_HOST".$key} = escape_str($CLIENTS->{$client}->{$val1}->{$val2});
+                        $custom->{$key} = escape_str($CLIENTS->{$client}->{$val1}->{$val2});
+                    }
                 } elsif ($val1 eq "$cfg->{ldap}->{prefix}parent") {
                     $host_deps = $CLIENTS->{$client}->{$val1};
                 } elsif ($val1 eq "$cfg->{ldap}->{prefix}hostgroups") {
@@ -1104,6 +1113,12 @@ sub genHostConfig2x {
             print FH "\tmacros = {\n";
             foreach my $macro (sort keys %{$macros}) {
                 print FH "\t\t\"$macro\" = \"$macros->{$macro}\",\n"
+            }
+            print FH "\t},\n";
+
+            print FH "\tcustom = {\n";
+            foreach my $custm (sort keys %{$custom}) {
+                print FH "\t\t\"$custm\" = \"$custom->{$custm}\",\n";
             }
             print FH "\t},\n";
 
@@ -1336,7 +1351,7 @@ sub genHostConfig2x {
                                 $key = $val2;
                                 $key =~ s/_//;
                                 $macros_svc->{$key} = escape_str($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}->{$val2});
-                                $custom_svc->{$key} = escape_str($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}->{$val2});
+                                $custom_svc->{"_SERVICE".$key} = escape_str($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}->{$val2});
                             }
                         } elsif ($val1 eq "$cfg->{ldap}->{prefix}serviceeventhandler") {
 
