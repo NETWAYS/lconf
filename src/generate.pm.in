@@ -736,7 +736,7 @@ sub genServicegroupEscalations {
     my $SERVICEESCALATIONS = HashGrep($se_result, 'objectclass', $cfg->{ldap}->{prefix}.'serviceescalation$');
 
     if (defined $cfg->{export}->{format} && $cfg->{export}->{format} == 2) {
-        genServicegroupEscalations1x($CONFIG, $CLIENTS, $SERVICEESCALATIONS, $servicegroup, $outputDir);
+        genServicegroupEscalations2x($CONFIG, $CLIENTS, $SERVICEESCALATIONS, $servicegroup, $outputDir);
     } else {
         genServicegroupEscalations1x($CONFIG, $SERVICEESCALATIONS, $servicegroup, $outputDir);
     }
@@ -768,7 +768,7 @@ sub genServicegroupEscalations1x {
     }
 }
 
-sub genServicegroupEscalation2x {
+sub genServicegroupEscalations2x {
     my $CONFIG  = shift;
     my $CLIENTS = shift;
     my $SERVICEESCALATIONS = shift;
