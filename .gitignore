@@ -3,6 +3,10 @@ Makefile
 *.swp
 *.swo
 autom4te.cache
+.directory
+*.komodoproject
+*.diff
+*.patch
 
 # built stuff
 contrib/create_lconf-web-dn-mid.pl

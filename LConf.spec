@@ -98,7 +98,7 @@ work independent from the LDAP during runtime.
 
 %install
 %{__rm} -rf %{buildroot}
-%{__make} install \
+%{__make} install-basic install-config \
     DESTDIR="%{buildroot}" \
     INSTALL_OPTS="" \
     INIT_OPTS=""

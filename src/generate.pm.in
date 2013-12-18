@@ -1043,9 +1043,14 @@ sub genHostConfig2x {
                                     $val2 eq "_" || !$CLIENTS->{$client}->{$val1}->{$val2});
                         $key = $val2;
                         $key =~ s/_//;
-                        $macros->{"_HOST".$key} = escape_str($CLIENTS->{$client}->{$val1}->{$val2});
-                        $custom->{$key} = escape_str($CLIENTS->{$client}->{$val1}->{$val2});
+
+                        my $cv_val = escape_str($CLIENTS->{$client}->{$val1}->{$val2});
+
+                        # save custom vars with special prefix as available icinga 2 macros
+                        $macros->{"_HOST".$key} = $cv_val;
+                        $custom->{$key} = $cv_val;
                     }
+
                 } elsif ($val1 eq "$cfg->{ldap}->{prefix}parent") {
                     $host_deps = $CLIENTS->{$client}->{$val1};
                 } elsif ($val1 eq "$cfg->{ldap}->{prefix}hostgroups") {
@@ -1063,6 +1068,15 @@ sub genHostConfig2x {
                     my $macros_host_svc;
                     my $arg_c = 1;
                     foreach my $macro_val (@host_check_command_args) {
+                        # check command arg name for being an icinga 1.x macro and resolve its value
+                        if ($macro_val =~ /^\$(\w+)\$$/) {
+                            if ($1 =~ /^_HOST(\w+)/) {
+                                my $cv_val_macro_key = "_".$1;
+                                # override the original cv value
+                                $macro_val = $CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostcustomvar"}->{$cv_val_macro_key};
+                            }
+                        }
+
                         $macros_host_svc->{'ARG'.$arg_c} = escape_str($macro_val);
                         $arg_c++;
                     }
@@ -1206,7 +1220,6 @@ sub genHostConfig2x {
 
                                     print FH "\t\tnotifications[\"$notification_name\"] = {\n";
                                     # get the command line, add a new notification command
-                                    # FIXME
                                     my $notification_command_line; # we don't have args for notification commands
                                     foreach my $command (keys %{$COMMANDS}) {
                                         if ($COMMANDS->{$command}->{cn} eq $notification_command_name) {
@@ -1252,7 +1265,6 @@ sub genHostConfig2x {
                     #
                     # service escalations as notification with begin/end
                     #
-                    # FIXME
 
                     if (defined $CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEESCALATION}) {
                         foreach my $escalation (sort keys %{$CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEESCALATION}}) {
@@ -1315,11 +1327,24 @@ sub genHostConfig2x {
                         if ($val1 eq "$cfg->{ldap}->{prefix}servicecheckcommand" || $val1 eq "$cfg->{ldap}->{prefix}checkcommand") {
                             my ($checkcommand_name, @checkcommand_macros) = split /!/, "$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}";
 
-                            #print $checkcommand_name;
                             my $arg_c = 1;
                             foreach my $macro_val (@checkcommand_macros) {
-                                #print "ARG $arg_c = $macro_val\n";
+                                # check command arg name for being an icinga 1.x macro and resolve its value
+                                if ($macro_val =~ /^\$(\w+)\$$/) {
+                                    if ($1 =~ /^_HOST(\w+)/) {
+                                        my $cv_val_macro_key = "_".$1;
+                                        # override the original cv value with the resolved host cv
+                                        $macro_val = $CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostcustomvar"}->{$cv_val_macro_key};
+                                    }
+                                    elsif ($1 =~ /^_SERVICE(\w+)/) {
+                                        my $cv_val_macro_key = "_".$1;
+                                        # override the original cv value with the resolved service cv
+                                        $macro_val = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{"$cfg->{ldap}->{prefix}servicecustomvar"}->{$cv_val_macro_key};
+                                    }
+                                }
+
                                 $macros_svc->{'ARG'.$arg_c} = escape_str($macro_val);
+
                                 $arg_c++;
                             }
 
@@ -1350,8 +1375,12 @@ sub genHostConfig2x {
                                     $val2 eq "_" || !$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}->{$val2});
                                 $key = $val2;
                                 $key =~ s/_//;
-                                $macros_svc->{$key} = escape_str($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}->{$val2});
-                                $custom_svc->{"_SERVICE".$key} = escape_str($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}->{$val2});
+
+                                my $cv_val = escape_str($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}->{$val2});
+
+                                # save custom vars with special prefix as available icinga 2 macros
+                                $macros_svc->{"_SERVICE".$key} = $cv_val;
+                                $custom_svc->{$key} = $cv_val;
                             }
                         } elsif ($val1 eq "$cfg->{ldap}->{prefix}serviceeventhandler") {
 

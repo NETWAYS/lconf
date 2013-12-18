@@ -92,128 +92,128 @@ endif
 
 all:
 	# generate files
-		# BIN
-			# LConfExport.pl
-			cat src/LConfExport.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" \
-				-e "s/@EXPORT_SCRIPT_DIR@/$(EXPORT_SCRIPT_DIR_QUOTED)/g" \
-				-e "s/@SYSCONF_DIR@/$(SYSCONF_DIR_QUOTED)/g" \
-				-e "s/@BIN_DIR@/$(BIN_DIR_QUOTED)/g" \
-				-e "s/@LIB_DIR@/$(LIB_DIR_QUOTED)/g" \
-				-e "s/@VERSION@/$(VERSION)/g" \
-				> src/LConfExport.pl
-			chmod 755 src/LConfExport.pl
-			# LConfImport.pl
-			cat src/LConfImport.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" \
-				-e "s/@EXPORT_SCRIPT_DIR@/$(EXPORT_SCRIPT_DIR_QUOTED)/g" \
-				-e "s/@SYSCONF_DIR@/$(SYSCONF_DIR_QUOTED)/g" \
-				-e "s/@BIN_DIR@/$(BIN_DIR_QUOTED)/g" \
-				-e "s/@LIB_DIR@/$(LIB_DIR_QUOTED)/g" \
-				-e "s/@VERSION@/$(VERSION)/g" \
-				> src/LConfImport.pl
-			chmod 755 src/LConfImport.pl
-			# LConfSlaveExport.pl
-			cat src/LConfSlaveExport.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" \
-				-e "s/@EXPORT_SCRIPT_DIR@/$(EXPORT_SCRIPT_DIR_QUOTED)/g" \
-				-e "s/@SYSCONF_DIR@/$(SYSCONF_DIR_QUOTED)/g" \
-				-e "s/@BIN_DIR@/$(BIN_DIR_QUOTED)/g" \
-				-e "s/@LIB_DIR@/$(LIB_DIR_QUOTED)/g" \
-				-e "s/@VERSION@/$(VERSION)/g" \
-				> src/LConfSlaveExport.pl
-			chmod 755 src/LConfSlaveExport.pl
-			# LConfSlaveExportRules.pl
-			cat src/LConfSlaveExportRules.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" \
-				-e "s/@EXPORT_SCRIPT_DIR@/$(EXPORT_SCRIPT_DIR_QUOTED)/g" \
-				-e "s/@SYSCONF_DIR@/$(SYSCONF_DIR_QUOTED)/g" \
-				-e "s/@BIN_DIR@/$(BIN_DIR_QUOTED)/g" \
-				-e "s/@LIB_DIR@/$(LIB_DIR_QUOTED)/g" \
-				-e "s/@VERSION@/$(VERSION)/g" \
-				> src/LConfSlaveExportRules.pl
-			chmod 755 src/LConfSlaveExportRules.pl
-			# LConfSlaveSync.pl
-			cat src/LConfSlaveSync.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" \
-				-e "s/@EXPORT_SCRIPT_DIR@/$(EXPORT_SCRIPT_DIR_QUOTED)/g" \
-				-e "s/@SYSCONF_DIR@/$(SYSCONF_DIR_QUOTED)/g" \
-				-e "s/@BIN_DIR@/$(BIN_DIR_QUOTED)/g" \
-				-e "s/@LIB_DIR@/$(LIB_DIR_QUOTED)/g" \
-				-e "s/@VERSION@/$(VERSION)/g" \
-				> src/LConfSlaveSync.pl
-			chmod 755 src/LConfSlaveSync.pl
-		# ETC
-			# config.pm
-			cat src/config.pm.in | sed \
-				-e "s/@LDAP_SERVER@/$(LDAP_SERVER)/g" \
-				-e "s/@LDAP_DN@/$(LDAP_DN)/g" \
-				-e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" \
-				-e "s/@LDAP_BIND_DN@/$(LDAP_BIND_DN)/g" \
-				-e "s/@LDAP_BIND_PASSWORD@/$(LDAP_BIND_PASSWORD)/g" \
-				-e "s/@LCONF_CLI_USER@/$(LCONF_CLI_USER)/g" \
-				-e "s/@PREFIX@/$(PREFIX_QUOTED)/g" \
-				-e "s/@EXPORT_SCRIPT_DIR@/$(EXPORT_SCRIPT_DIR_QUOTED)/g" \
-				-e "s/@SYSCONF_DIR@/$(SYSCONF_DIR_QUOTED)/g" \
-				-e "s/@BIN_DIR@/$(BIN_DIR_QUOTED)/g" \
-				-e "s/@LIB_DIR@/$(LIB_DIR_QUOTED)/g" \
-				-e "s/@TMP_DIR@/$(TMP_DIR_QUOTED)/g" \
-				-e "s/@TREE_REWRITE_METHOD@/$(TREE_REWRITE_METHOD_QUOTED)/g" \
-				-e "s/@LOCALSTATE_DIR@/$(LOCALSTATE_DIR_QUOTED)/g" \
-				-e "s/@SLAVESYNC__LOCAL_DIR@/$(SLAVESYNC__LOCAL_DIR_QUOTED)/g" \
-				-e "s/@SLAVESYNC__REMOTE_DIR@/$(SLAVESYNC__REMOTE_DIR_QUOTED)/g" \
-				-e "s/@SLAVESYNC__CHECKRESULT_SPOOL_DIR@/$(SLAVESYNC__CHECKRESULT_SPOOL_DIR_QUOTED)/g" \
-				-e "s/@SLAVESYNC__EXTCMD_PIPE_PATH@/$(SLAVESYNC__EXTCMD_PIPE_PATH_QUOTED)/g" \
-				-e "s/@SLAVESYNC__PID_FILE@/$(SLAVESYNC__PID_FILE_QUOTED)/g" \
-				-e "s/@SLAVESYNC__LOG_DIR@/$(SLAVESYNC__LOG_DIR_QUOTED)/g" \
-				> src/config.pm
-			# default-templates.{cfg,conf}.in
-			cat src/default-templates.cfg.in > src/default-templates.cfg
-			cat src/default-templates.conf.in > src/default-templates.conf
-		# LIB
-			# misc.pm
-			cat src/misc.pm.in > src/misc.pm
-			# ldap.pm
-			cat src/ldap.pm.in > src/ldap.pm
-			# generate.pm
-			cat src/generate.pm.in > src/generate.pm
-		# CONTRIB
-			# create_lconf-web-dn-mid.pl
-			cat contrib/create_lconf-web-dn-mid.pl.in | sed -e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" > contrib/create_lconf-web-dn-mid.pl
-			chmod 755 contrib/create_lconf-web-dn-mid.pl
-			# lconf-slavesync
-			cat contrib/lconf-slavesync.in > contrib/lconf-slavesync
-			chmod 755 contrib/lconf-slavesync
-			# LConfDeploy.sh
-			cat contrib/LConfDeploy.sh.in | sed \
-				-e "s/@SYSCONF_DIR@/$(SYSCONF_DIR_QUOTED)/g" \
-				-e "s/@BIN_DIR@/$(BIN_DIR_QUOTED)/g" \
-				-e "s/@LIB_DIR@/$(LIB_DIR_QUOTED)/g" \
-				-e "s/@VERSION@/$(VERSION)/g" \
-				-e "s/@ICINGA_BINPATH@/$(ICINGA_BINPATH_QUOTED)/g" \
-				-e "s/@ICINGA_CONFIG@/$(ICINGA_CONFIG_QUOTED)/g" \
-				-e "s/@ICINGA_USER@/$(ICINGA_USER)/g" \
-				> contrib/LConfDeploy.sh
-			chmod 755 contrib/LConfDeploy.sh
-			# LConfDeployIcinga2.sh
-			cat contrib/LConfDeployIcinga2.sh.in | sed \
-				-e "s/@SYSCONF_DIR@/$(SYSCONF_DIR_QUOTED)/g" \
-				-e "s/@BIN_DIR@/$(BIN_DIR_QUOTED)/g" \
-				-e "s/@LIB_DIR@/$(LIB_DIR_QUOTED)/g" \
-				-e "s/@TMP_DIR@/$(TMP_DIR_QUOTED)/g" \
-				-e "s/@VERSION@/$(VERSION)/g" \
-				-e "s/@ICINGA2_BINPATH@/$(ICINGA2_BINPATH_QUOTED)/g" \
-				-e "s/@ICINGA2_CONFIG@/$(ICINGA2_CONFIG_QUOTED)/g" \
-				-e "s/@ICINGA2_USER@/$(ICINGA2_USER)/g" \
-				> contrib/LConfDeployIcinga2.sh
-			chmod 755 contrib/LConfDeployIcinga2.sh
-		# LDAP SCHEMA + BASE.LDIF
-			# netways.schema
-			cat src/netways.schema.in | sed -e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" > src/netways.schema
-			# netways.schema.ldif
-			cat src/netways.schema.ldif.in | sed -e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" > src/netways.schema.ldif
-			# base.ldif
-			cat src/base.ldif.in | sed \
-				-e "s/@LDAP_DN@/$(LDAP_DN)/g" \
-				-e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" \
-			> src/base.ldif
-		# SUMMARY
-		make info
+	# BIN
+	# LConfExport.pl
+	cat src/LConfExport.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" \
+		-e "s/@EXPORT_SCRIPT_DIR@/$(EXPORT_SCRIPT_DIR_QUOTED)/g" \
+		-e "s/@SYSCONF_DIR@/$(SYSCONF_DIR_QUOTED)/g" \
+		-e "s/@BIN_DIR@/$(BIN_DIR_QUOTED)/g" \
+		-e "s/@LIB_DIR@/$(LIB_DIR_QUOTED)/g" \
+		-e "s/@VERSION@/$(VERSION)/g" \
+		> src/LConfExport.pl
+	chmod 755 src/LConfExport.pl
+	# LConfImport.pl
+	cat src/LConfImport.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" \
+		-e "s/@EXPORT_SCRIPT_DIR@/$(EXPORT_SCRIPT_DIR_QUOTED)/g" \
+		-e "s/@SYSCONF_DIR@/$(SYSCONF_DIR_QUOTED)/g" \
+		-e "s/@BIN_DIR@/$(BIN_DIR_QUOTED)/g" \
+		-e "s/@LIB_DIR@/$(LIB_DIR_QUOTED)/g" \
+		-e "s/@VERSION@/$(VERSION)/g" \
+		> src/LConfImport.pl
+	chmod 755 src/LConfImport.pl
+	# LConfSlaveExport.pl
+	cat src/LConfSlaveExport.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" \
+		-e "s/@EXPORT_SCRIPT_DIR@/$(EXPORT_SCRIPT_DIR_QUOTED)/g" \
+		-e "s/@SYSCONF_DIR@/$(SYSCONF_DIR_QUOTED)/g" \
+		-e "s/@BIN_DIR@/$(BIN_DIR_QUOTED)/g" \
+		-e "s/@LIB_DIR@/$(LIB_DIR_QUOTED)/g" \
+		-e "s/@VERSION@/$(VERSION)/g" \
+		> src/LConfSlaveExport.pl
+	chmod 755 src/LConfSlaveExport.pl
+	# LConfSlaveExportRules.pl
+	cat src/LConfSlaveExportRules.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" \
+		-e "s/@EXPORT_SCRIPT_DIR@/$(EXPORT_SCRIPT_DIR_QUOTED)/g" \
+		-e "s/@SYSCONF_DIR@/$(SYSCONF_DIR_QUOTED)/g" \
+		-e "s/@BIN_DIR@/$(BIN_DIR_QUOTED)/g" \
+		-e "s/@LIB_DIR@/$(LIB_DIR_QUOTED)/g" \
+		-e "s/@VERSION@/$(VERSION)/g" \
+		> src/LConfSlaveExportRules.pl
+	chmod 755 src/LConfSlaveExportRules.pl
+	# LConfSlaveSync.pl
+	cat src/LConfSlaveSync.pl.in | sed -e "s/@PREFIX@/$(PREFIX_QUOTED)/g" \
+		-e "s/@EXPORT_SCRIPT_DIR@/$(EXPORT_SCRIPT_DIR_QUOTED)/g" \
+		-e "s/@SYSCONF_DIR@/$(SYSCONF_DIR_QUOTED)/g" \
+		-e "s/@BIN_DIR@/$(BIN_DIR_QUOTED)/g" \
+		-e "s/@LIB_DIR@/$(LIB_DIR_QUOTED)/g" \
+		-e "s/@VERSION@/$(VERSION)/g" \
+		> src/LConfSlaveSync.pl
+	chmod 755 src/LConfSlaveSync.pl
+	# ETC
+	# config.pm
+	cat src/config.pm.in | sed \
+		-e "s/@LDAP_SERVER@/$(LDAP_SERVER)/g" \
+		-e "s/@LDAP_DN@/$(LDAP_DN)/g" \
+		-e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" \
+		-e "s/@LDAP_BIND_DN@/$(LDAP_BIND_DN)/g" \
+		-e "s/@LDAP_BIND_PASSWORD@/$(LDAP_BIND_PASSWORD)/g" \
+		-e "s/@LCONF_CLI_USER@/$(LCONF_CLI_USER)/g" \
+		-e "s/@PREFIX@/$(PREFIX_QUOTED)/g" \
+		-e "s/@EXPORT_SCRIPT_DIR@/$(EXPORT_SCRIPT_DIR_QUOTED)/g" \
+		-e "s/@SYSCONF_DIR@/$(SYSCONF_DIR_QUOTED)/g" \
+		-e "s/@BIN_DIR@/$(BIN_DIR_QUOTED)/g" \
+		-e "s/@LIB_DIR@/$(LIB_DIR_QUOTED)/g" \
+		-e "s/@TMP_DIR@/$(TMP_DIR_QUOTED)/g" \
+		-e "s/@TREE_REWRITE_METHOD@/$(TREE_REWRITE_METHOD_QUOTED)/g" \
+		-e "s/@LOCALSTATE_DIR@/$(LOCALSTATE_DIR_QUOTED)/g" \
+		-e "s/@SLAVESYNC__LOCAL_DIR@/$(SLAVESYNC__LOCAL_DIR_QUOTED)/g" \
+		-e "s/@SLAVESYNC__REMOTE_DIR@/$(SLAVESYNC__REMOTE_DIR_QUOTED)/g" \
+		-e "s/@SLAVESYNC__CHECKRESULT_SPOOL_DIR@/$(SLAVESYNC__CHECKRESULT_SPOOL_DIR_QUOTED)/g" \
+		-e "s/@SLAVESYNC__EXTCMD_PIPE_PATH@/$(SLAVESYNC__EXTCMD_PIPE_PATH_QUOTED)/g" \
+		-e "s/@SLAVESYNC__PID_FILE@/$(SLAVESYNC__PID_FILE_QUOTED)/g" \
+		-e "s/@SLAVESYNC__LOG_DIR@/$(SLAVESYNC__LOG_DIR_QUOTED)/g" \
+		> src/config.pm
+	# default-templates.{cfg,conf}.in
+	cat src/default-templates.cfg.in > src/default-templates.cfg
+	cat src/default-templates.conf.in > src/default-templates.conf
+	# LIB
+	# misc.pm
+	cat src/misc.pm.in > src/misc.pm
+	# ldap.pm
+	cat src/ldap.pm.in > src/ldap.pm
+	# generate.pm
+	cat src/generate.pm.in > src/generate.pm
+	# CONTRIB
+	# create_lconf-web-dn-mid.pl
+	cat contrib/create_lconf-web-dn-mid.pl.in | sed -e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" > contrib/create_lconf-web-dn-mid.pl
+	chmod 755 contrib/create_lconf-web-dn-mid.pl
+	# lconf-slavesync
+	cat contrib/lconf-slavesync.in > contrib/lconf-slavesync
+	chmod 755 contrib/lconf-slavesync
+	# LConfDeploy.sh
+	cat contrib/LConfDeploy.sh.in | sed \
+		-e "s/@SYSCONF_DIR@/$(SYSCONF_DIR_QUOTED)/g" \
+		-e "s/@BIN_DIR@/$(BIN_DIR_QUOTED)/g" \
+		-e "s/@LIB_DIR@/$(LIB_DIR_QUOTED)/g" \
+		-e "s/@VERSION@/$(VERSION)/g" \
+		-e "s/@ICINGA_BINPATH@/$(ICINGA_BINPATH_QUOTED)/g" \
+		-e "s/@ICINGA_CONFIG@/$(ICINGA_CONFIG_QUOTED)/g" \
+		-e "s/@ICINGA_USER@/$(ICINGA_USER)/g" \
+		> contrib/LConfDeploy.sh
+	chmod 755 contrib/LConfDeploy.sh
+	# LConfDeployIcinga2.sh
+	cat contrib/LConfDeployIcinga2.sh.in | sed \
+		-e "s/@SYSCONF_DIR@/$(SYSCONF_DIR_QUOTED)/g" \
+		-e "s/@BIN_DIR@/$(BIN_DIR_QUOTED)/g" \
+		-e "s/@LIB_DIR@/$(LIB_DIR_QUOTED)/g" \
+		-e "s/@TMP_DIR@/$(TMP_DIR_QUOTED)/g" \
+		-e "s/@VERSION@/$(VERSION)/g" \
+		-e "s/@ICINGA2_BINPATH@/$(ICINGA2_BINPATH_QUOTED)/g" \
+		-e "s/@ICINGA2_CONFIG@/$(ICINGA2_CONFIG_QUOTED)/g" \
+		-e "s/@ICINGA2_USER@/$(ICINGA2_USER)/g" \
+		> contrib/LConfDeployIcinga2.sh
+	chmod 755 contrib/LConfDeployIcinga2.sh
+	# LDAP SCHEMA + BASE.LDIF
+		# netways.schema
+		cat src/netways.schema.in | sed -e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" > src/netways.schema
+		# netways.schema.ldif
+		cat src/netways.schema.ldif.in | sed -e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" > src/netways.schema.ldif
+		# base.ldif
+		cat src/base.ldif.in | sed \
+			-e "s/@LDAP_DN@/$(LDAP_DN)/g" \
+			-e "s/@LDAP_PREFIX@/$(LDAP_PREFIX)/g" \
+		> src/base.ldif
+	# SUMMARY
+	make info
 
 info:
 	@echo ""
@@ -253,7 +253,30 @@ info:
 	@echo "   ldap_config_style:      "$(LDAP_CONFIG_STYLE)
 	@echo ""
 
-install:
+install: install-basic install-config
+
+	@echo ""
+	@echo ""
+	@echo " * * * LConf $(VERSION) - finish the installation * * *"
+	@echo ""
+	@echo "You have configured LConf with the "$(LDAP_CONFIG_STYLE)" ldap configuration."
+	@echo ""
+	@echo "Finish the installation with the following steps:"
+	@echo ""
+	@echo "  1) add the LConf schema to your ldap server"
+	@echo "  2) restart your ldap server"
+	@echo "  3) add the base ldif file to your ldap tree"
+	@echo ""
+	@echo "So... what's next?"
+	@echo ""
+	@echo "  1) "$(LDAP_ADD_SCHEMA)
+	@echo "  2) /etc/init.d/slapd restart"
+	@echo "  3) ldapadd -h "$(LDAP_SERVER)" -x -D \""$(LDAP_BIND_DN)"\" -W -f src/base.ldif"
+	@echo ""
+	@echo "Optional: Run 'make install-deploy-script(-icinga2)' for deployment script installation."
+
+install-basic:
+	@echo "Installing LConf Backend..."
 	$(INSTALL) -m 775 $(INSTALL_OPTS) -d $(DESTDIR)$(SYSCONF_DIR)
 	$(INSTALL) -m 775 $(INSTALL_OPTS) -d $(DESTDIR)$(BIN_DIR)
 	$(INSTALL) -m 775 $(INSTALL_OPTS) -d $(DESTDIR)$(LIB_DIR)
@@ -261,43 +284,27 @@ install:
 	$(INSTALL) -m 775 $(INSTALL_OPTS) -d $(DESTDIR)$(TMP_DIR)
 	$(INSTALL) -m 775 $(INSTALL_OPTS) -d $(DESTDIR)$(EXPORT_SCRIPT_DIR)
 
-	# install files
-		$(INSTALL) -m 750 $(INSTALL_OPTS) src/LConfExport.pl ${DESTDIR}$(BIN_DIR)/LConfExport.pl
-		$(INSTALL) -m 750 $(INSTALL_OPTS) src/LConfImport.pl ${DESTDIR}$(BIN_DIR)/LConfImport.pl
-		$(INSTALL) -m 750 $(INSTALL_OPTS) src/LConfSlaveExport.pl ${DESTDIR}$(BIN_DIR)/LConfSlaveExport.pl
-		$(INSTALL) -m 750 $(INSTALL_OPTS) src/LConfSlaveExportRules.pl ${DESTDIR}$(BIN_DIR)/LConfSlaveExportRules.pl
-		$(INSTALL) -m 750 $(INSTALL_OPTS) src/LConfSlaveSync.pl ${DESTDIR}$(BIN_DIR)/LConfSlaveSync.pl
-		$(INSTALL) -b -m 640 $(INSTALL_OPTS) src/config.pm ${DESTDIR}$(SYSCONF_DIR)/config.pm
-		$(INSTALL) -b -m 640 $(INSTALL_OPTS) src/default-templates.cfg ${DESTDIR}$(SYSCONF_DIR)/default-templates.cfg
-		$(INSTALL) -b -m 640 $(INSTALL_OPTS) src/default-templates.conf ${DESTDIR}$(SYSCONF_DIR)/default-templates.conf
-		$(INSTALL) -m 640 $(INSTALL_OPTS) src/misc.pm ${DESTDIR}$(LIB_DIR)/misc.pm
-		$(INSTALL) -m 640 $(INSTALL_OPTS) src/ldap.pm ${DESTDIR}$(LIB_DIR)/ldap.pm
-		$(INSTALL) -m 640 $(INSTALL_OPTS) src/generate.pm ${DESTDIR}$(LIB_DIR)/generate.pm
+	$(INSTALL) -m 750 $(INSTALL_OPTS) src/LConfExport.pl ${DESTDIR}$(BIN_DIR)/LConfExport.pl
+	$(INSTALL) -m 750 $(INSTALL_OPTS) src/LConfImport.pl ${DESTDIR}$(BIN_DIR)/LConfImport.pl
+	$(INSTALL) -m 750 $(INSTALL_OPTS) src/LConfSlaveExport.pl ${DESTDIR}$(BIN_DIR)/LConfSlaveExport.pl
+	$(INSTALL) -m 750 $(INSTALL_OPTS) src/LConfSlaveExportRules.pl ${DESTDIR}$(BIN_DIR)/LConfSlaveExportRules.pl
+	$(INSTALL) -m 750 $(INSTALL_OPTS) src/LConfSlaveSync.pl ${DESTDIR}$(BIN_DIR)/LConfSlaveSync.pl
+	$(INSTALL) -b -m 640 $(INSTALL_OPTS) src/default-templates.cfg ${DESTDIR}$(SYSCONF_DIR)/default-templates.cfg
+	$(INSTALL) -b -m 640 $(INSTALL_OPTS) src/default-templates.conf ${DESTDIR}$(SYSCONF_DIR)/default-templates.conf
+	$(INSTALL) -m 640 $(INSTALL_OPTS) src/misc.pm ${DESTDIR}$(LIB_DIR)/misc.pm
+	$(INSTALL) -m 640 $(INSTALL_OPTS) src/ldap.pm ${DESTDIR}$(LIB_DIR)/ldap.pm
+	$(INSTALL) -m 640 $(INSTALL_OPTS) src/generate.pm ${DESTDIR}$(LIB_DIR)/generate.pm
 
-		# FINISHING OUTPUT
-		@echo ""
-		@echo ""
-		@echo " * * * LConf $(VERSION) - finish the installation * * *"
-		@echo ""
-		@echo "You have configured LConf with the "$(LDAP_CONFIG_STYLE)" ldap configuration."
-		@echo ""
-		@echo "To finish the installation you have to:"
-		@echo ""
-		@echo "  1) add the LConf schema to your ldap server"
-		@echo "  2) restart your ldap server"
-		@echo "  3) add the base ldif file to your ldap tree"
-		@echo ""
-		@echo "So... what's next?"
-		@echo ""
-		@echo "  1) "$(LDAP_ADD_SCHEMA)
-		@echo "  2) /etc/init.d/slapd restart"
-		@echo "  3) ldapadd -h "$(LDAP_SERVER)" -x -D \""$(LDAP_BIND_DN)"\" -W -f src/base.ldif"
-		@echo ""
+install-config:
+	@echo "Installing LConf Configuration..."
+	$(INSTALL) -b -m 640 $(INSTALL_OPTS) src/config.pm ${DESTDIR}$(SYSCONF_DIR)/config.pm
 
 install-deploy-script:
+	@echo "Installing LConf Deploy Script..."
 	$(INSTALL) -m 755 $(INSTALL_OPTS) contrib/LConfDeploy.sh ${DESTDIR}$(BIN_DIR)/LConfDeploy.sh
 
 install-deploy-script-icinga2:
+	@echo "Installing LConf Deploy Script for Icinga 2..."
 	$(INSTALL) -m 755 $(INSTALL_OPTS) contrib/LConfDeployIcinga2.sh ${DESTDIR}$(BIN_DIR)/LConfDeployIcinga2.sh
 
 
