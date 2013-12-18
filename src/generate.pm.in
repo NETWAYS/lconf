@@ -1043,12 +1043,7 @@ sub genHostConfig2x {
                                     $val2 eq "_" || !$CLIENTS->{$client}->{$val1}->{$val2});
                         $key = $val2;
                         $key =~ s/_//;
-
-                        my $cv_val = escape_str($CLIENTS->{$client}->{$val1}->{$val2});
-
-                        # save custom vars with special prefix as available icinga 2 macros
-                        $macros->{"_HOST".$key} = $cv_val;
-                        $custom->{$key} = $cv_val;
+                        $custom->{$key} = escape_str($CLIENTS->{$client}->{$val1}->{$val2});
                     }
 
                 } elsif ($val1 eq "$cfg->{ldap}->{prefix}parent") {
@@ -1375,12 +1370,7 @@ sub genHostConfig2x {
                                     $val2 eq "_" || !$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}->{$val2});
                                 $key = $val2;
                                 $key =~ s/_//;
-
-                                my $cv_val = escape_str($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}->{$val2});
-
-                                # save custom vars with special prefix as available icinga 2 macros
-                                $macros_svc->{"_SERVICE".$key} = $cv_val;
-                                $custom_svc->{$key} = $cv_val;
+                                $custom_svc->{$key} = escape_str($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}->{$val2});
                             }
                         } elsif ($val1 eq "$cfg->{ldap}->{prefix}serviceeventhandler") {
 
