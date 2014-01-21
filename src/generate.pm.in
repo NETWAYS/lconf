@@ -1025,7 +1025,7 @@ sub genHostConfig2x {
             # generate host definition
             print FH "object Host \"$CLIENTS->{$client}->{cn}\" inherits \"generic-host\" {\n";
 
-            my $host_deps = "";
+            my $host_deps_str = "";
             # process each item...
             foreach my $val1 (sort keys %{$CLIENTS->{$client}}) {
                 if ($val1 eq "$cfg->{ldap}->{prefix}address" ||
@@ -1047,7 +1047,7 @@ sub genHostConfig2x {
                     }
 
                 } elsif ($val1 eq "$cfg->{ldap}->{prefix}parent") {
-                    $host_deps = $CLIENTS->{$client}->{$val1};
+                    $host_deps_str = $CLIENTS->{$client}->{$val1};
                 } elsif ($val1 eq "$cfg->{ldap}->{prefix}hostgroups") {
                     my $groups = $CLIENTS->{$client}->{$val1};
                     $groups =~ s/,/\", \"/;
@@ -1114,6 +1114,11 @@ sub genHostConfig2x {
                     push @host_deps, $dep_host;
                 }
             }
+
+            if ($host_deps_str ne "") {
+                push @host_deps, str2arr_by_delim_without_excludes($host_deps_str, ',', 1);
+            }
+
             if (@host_deps > 0) {
                 print FH "\thost_dependencies = [ \"".join( "\", \"", @host_deps)."\" ],\n";
             }
