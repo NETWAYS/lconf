@@ -1050,7 +1050,7 @@ sub genHostConfig2x {
                     $host_deps_str = $CLIENTS->{$client}->{$val1};
                 } elsif ($val1 eq "$cfg->{ldap}->{prefix}hostgroups") {
                     my $groups = $CLIENTS->{$client}->{$val1};
-                    $groups =~ s/,/\", \"/;
+                    $groups =~ s/,/\", \"/g;
                     print FH "\tgroups = [ \"$groups\" ],\n";
                 } elsif ($val1 eq "$cfg->{ldap}->{prefix}alias") {
                     print FH "\tdisplay_name = \"$CLIENTS->{$client}->{$val1}\",\n";
@@ -1361,7 +1361,7 @@ sub genHostConfig2x {
                         }
                         elsif ($val1 =~ /servicegroups/i) {
                             my $groups = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1};
-                            $groups =~ s/,/\", \"/;
+                            $groups =~ s/,/\", \"/g;
                             print FH "\t\tgroups = [ \"$groups\" ],\n";
                         } elsif ($val1 =~ /checkinterval/i) {
                             print FH "\t\tcheck_interval = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}m,\n";
