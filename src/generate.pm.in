@@ -1149,7 +1149,9 @@ sub genHostConfig2x {
                 if (!defined $CLIENTS->{$client}->{'SERVICES'}->{$service}->{"$cfg->{ldap}->{prefix}servicedisable"}) {
                     print FH "\tservices[\"$CLIENTS->{$client}->{'SERVICES'}->{$service}->{cn}\"] = {\n";
                     print FH "\t\ttemplates = [ \"generic-service\" ],\n";
+                    # initialize each service macro / custom dict
                     my $macros_svc = ();
+                    my $custom_svc = ();
 
                     #
                     # service dependencies
@@ -1323,8 +1325,6 @@ sub genHostConfig2x {
                         #
                         # default service attributes
                         #
-                        my $macros_svc = ();
-                        my $custom_svc = ();
 
                         # check command with macro arguments
                         if ($val1 eq "$cfg->{ldap}->{prefix}servicecheckcommand" || $val1 eq "$cfg->{ldap}->{prefix}checkcommand") {
