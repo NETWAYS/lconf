@@ -1017,6 +1017,7 @@ sub genHostConfig2x {
             # HOST DEFINITION
             #
             my $macros = ();
+            my $custom = ();
 
             # get target file's name and open it for writing
             my $writeFile = BuildFilepath($CLIENTS->{$client}->{dn}, $outputDir);
@@ -1322,6 +1323,8 @@ sub genHostConfig2x {
                         #
                         # default service attributes
                         #
+                        my $macros_svc = ();
+                        my $custom_svc = ();
 
                         # check command with macro arguments
                         if ($val1 eq "$cfg->{ldap}->{prefix}servicecheckcommand" || $val1 eq "$cfg->{ldap}->{prefix}checkcommand") {
