@@ -215,6 +215,9 @@ sub TreeBuilder {
         # save TreeBuilder results depending on TreeRewrite setting
         # TreeRewrite is None; the classical behaviour
         # save only services
+        # ##########################################################################################
+        # START TREEREWRITE NONE
+        # ##########################################################################################
         if (defined $cfg->{export}->{treerewrite} && $cfg->{export}->{treerewrite} =~ /None/i) {
             foreach my $alias (keys %{$ALIASES}) {
                 DebugOutput('TREE BUILDER', "Found link $ALIASES->{$alias}->{ou} --> follow to target $ALIASES->{$alias}->{aliasedobjectname}", 1);
@@ -244,6 +247,9 @@ sub TreeBuilder {
                 }
             }
         }
+        # ##########################################################################################
+        # END TREEREWRITE NONE
+        # ##########################################################################################
 
         # process main targets attributes
         foreach my $val1 (keys %{$CONFIG->{$searchDN}}) {
@@ -266,7 +272,7 @@ sub TreeBuilder {
                         $forward{'SERVICEDEPENDENCY'}{$CONFIG->{$searchDN}->{"$cfg->{ldap}->{prefix}servicedependency"}}->{$val1} = $CONFIG->{$searchDN}->{$val1};
                     }
                 } else {
-                    DebugOutput('TREE BUILDER', "Found attribute '$val1' with value '$CONFIG->{$searchDN}->{$val1}' => store!", 1);
+                    DebugOutput('TREE BUILDER', "Found attribute '$val1' with value '".Dumper($CONFIG->{$searchDN}->{$val1})."' => store!", 1);
                     # additive inheritance?
                     if ($CONFIG->{$searchDN}->{$val1} && $CONFIG->{$searchDN}->{$val1} =~ /^\s*\+/) {
                         my $tmp_var = $CONFIG->{$searchDN}->{$val1}; $tmp_var =~ s/\+//;
@@ -283,6 +289,9 @@ sub TreeBuilder {
 
         #DebugOutput('TREE BUILDER', "Forward Hash contains" .Dumper(%forward), 2);
 
+        # ##########################################################################################
+        # START TREEREWRITE MAINOVERLINK
+        # ##########################################################################################
         # save TreeBuilder results depending on TreeRewrite setting
         # TreeRewrite is MainOverLink; push all attributes from main target to linked objects
         if (defined $cfg->{export}->{treerewrite} && $cfg->{export}->{treerewrite} =~ /MainOverLink/i) {
@@ -290,30 +299,61 @@ sub TreeBuilder {
                 DebugOutput('TREE BUILDER', "Found link $ALIASES->{$alias}->{ou} --> follow to target $ALIASES->{$alias}->{aliasedobjectname}\n", 1);
 
                 # XXX special debug output
-                #DebugOutput('TREE BUILDER', "Calling TreeBuilder recursivly with " . Dumper(%forward),2);
+                DebugOutput('TREE BUILDER', "Calling TreeBuilder recursivly with " . Dumper(%forward),2);
                 #my %tmp_forward = TreeBuilder($ALIASES->{$alias}->{aliasedobjectname}, $CONFIG,  {%{$forward}}, $tree_builder_level);
                 my %tmp_forward = TreeBuilder($ALIASES->{$alias}->{aliasedobjectname}, $CONFIG,  dclone(\%forward), $tree_builder_level);
 
+		# link target exists?
+		if(!defined $CONFIG->{$ALIASES->{$alias}->{aliasedobjectname}}->{objectclass}) {
+		    die "alias broken: $ALIASES->{$alias}->{dn}!";
+		}
+
+		DebugOutput('TREE BUILDER', "Checking alias '$ALIASES->{$alias}->{dn}': '".Dumper($CONFIG->{$ALIASES->{$alias}->{aliasedobjectname}}->{objectclass})."' eq '$cfg->{ldap}->{prefix}Service': ",1);
+		DebugOutput('TREE BUILDER', "Checking alias '$ALIASES->{$alias}->{dn}': '".Dumper($CONFIG->{$ALIASES->{$alias}->{aliasedobjectname}}->{objectclass})."' eq '$cfg->{ldap}->{prefix}Service': " . Dumper(%forward),2);
+
+		# extract the link type to check whether this alias links to a service or not
+		my @link_keys = keys %{$CONFIG->{$ALIASES->{$alias}->{aliasedobjectname}}->{objectclass}};
+		my $link_type;
+		if (@link_keys > 0) {
+		    $link_type = $link_keys[0];
+		} else {
+		    $link_type = $CONFIG->{$ALIASES->{$alias}->{aliasedobjectname}}->{objectclass};
+		}
+
+		DebugOutput('TREE BUILDER', "Alias used '$ALIASES->{$alias}->{aliasedobjectname}' for link type: '$link_type'",1);
+
+		my $alias_links_to_service = 0;
+
                 # process services on links main area
                 foreach my $service (keys %{$tmp_forward{SERVICES}}) {
+		    # process all services grabbed via TreeBuilder lookup in alias tree
                     foreach my $val1 (keys %{$tmp_forward{SERVICES}{$service}}) {
 
-                        # ist das link ziel da?
-                        if(!defined $CONFIG->{$ALIASES->{$alias}->{aliasedobjectname}}->{objectclass}) {
-                            die "alias broken: $ALIASES->{$alias}->{dn}!";
-                        }
+			# check if alias link targets a service directly
+                        if($link_type eq $cfg->{ldap}->{prefix}.'Service') {
+                            DebugOutput('TREE BUILDER', "Direct link '$tmp_forward{SERVICES}{$service}->{cn}' eq '$ALIASES->{$alias}->{ou}'? ",1);
 
-                        #link ist direkt auf service
-                        if($CONFIG->{$ALIASES->{$alias}->{aliasedobjectname}}->{objectclass} eq $cfg->{ldap}->{prefix}.'Service') {
                             if($tmp_forward{SERVICES}{$service}->{cn} eq $ALIASES->{$alias}->{ou}) {
                                 $forward{'SERVICES'}{$service}{$val1} = $tmp_forward{SERVICES}{$service}{$val1};
+				DebugOutput('TREE BUILDER', "Found direct link '$tmp_forward{SERVICES}{$service}->{cn}' with '$ALIASES->{$alias}->{ou}': Skipping other SERVICES",1);
+                                DebugOutput('TREE BUILDER', "Found direct link '$tmp_forward{SERVICES}{$service}->{cn}' with '$ALIASES->{$alias}->{ou}': " . Dumper(%forward),2);
+				# XXX
+				# XXX we found a link - skip the other services from being pulled!!!
+				# XXX
+				$alias_links_to_service = 1;
                             }
-                        } else {
+                        }
+			# if not, grab all existing services/attributes
+			else {
+                            DebugOutput('TREE BUILDER', "No direct link '$tmp_forward{SERVICES}{$service}->{cn}' with '$ALIASES->{$alias}->{ou}': " . Dumper(%forward),2);
                             $forward{'SERVICES'}{$service}{$val1} = $tmp_forward{SERVICES}{$service}{$val1};
                         }
                     }
+
+		    goto SERVICES_PROCESSED if ($alias_links_to_service == 1);
                 }
 
+                DebugOutput('TREE BUILDER', "Processing forward hash with " . Dumper(%tmp_forward),2);
                 # process services from link forward
                 DebugOutput('TreeBuilder', "Process services from link", 1);
                 foreach my $attribute (keys %tmp_forward) {
@@ -329,8 +369,14 @@ sub TreeBuilder {
                         $forward{$attribute} = $tmp_forward{$attribute};
                     }
                 }
+
+		# jump here if all services from alias are processed (or if an alias targets a service directly)
+		SERVICES_PROCESSED:
             }
         }
+        # ##########################################################################################
+        # END TREEREWRITE MAINOVERLINK
+        # ##########################################################################################
 
         #DebugOutput('TREE BUILDER', "Forward Hash contains" .Dumper(%forward), 2);
 
@@ -355,10 +401,13 @@ sub TreeBuilder {
             #DebugOutput('TREE BUILDER', "Forward Hash contains " .Dumper(%forward), 2);
             # create service and push every parent attribute to the service
             foreach my $val1 (keys %{forward}) {
+		DebugOutput('TREE BUILDER', "Processing forward hash key '$val1' with value '".Dumper($forward{$val1})."'",1);
                 if (ref($forward{$val1}) eq "HASH") {
+		    DebugOutput('TREE BUILDER', "Processing forward hash key '$val1' with hash value '".Dumper($forward{$val1})."'",1);
+
                     # if val1 is an ADDITIONAL service hash (containing multiple services)
                     # we must ignore it. a service can't affect another one here.
-                    if ($val1 eq 'SERVICES') {
+                    if ($val1 eq 'SERVICES' || $val1 eq 'description' || $val1 eq 'objectclass') {
                         DebugOutput('TREE BUILDER', "Ignoring '$val1' attribute for service to forward: $CONFIG->{$service}->{cn}", 1);
                         next;
                     }
@@ -367,6 +416,7 @@ sub TreeBuilder {
                         $forward{'SERVICES'}{$CONFIG->{$service}->{cn}}{$val1} = {%{$forward{$val1}}};
                         DebugOutput('TREE BUILDER', "Added service hash from '$val1' attribute to forward: $CONFIG->{$service}->{cn}", 1);
                     }
+
                     DebugOutput('TREE BUILDER', "Forward Hash contains " .Dumper(%forward),2);
                 } else {
                     $forward{'SERVICES'}{$CONFIG->{$service}->{cn}}{$val1} = $forward{$val1};
