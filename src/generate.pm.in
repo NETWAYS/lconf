@@ -234,15 +234,33 @@ sub genHostgroups {
 
     }
 
+    my @hg_existing = keys %{$result};
+
     # get all hostgroups defined by hostobject
     foreach my $client (keys %{$CLIENTS}) {
         if (defined $CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostgroups"}) {
             # multiple or a single hostgroup?
+            my @val;
+
             if ($CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostgroups"} =~ /,/) {
-                my @val = split(/\s*,\s*/, $CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostgroups"});
-                foreach(@val) { $result->{$_}->{cn} = $_ if $_ ne ''; }
-            } else {
-                $result->{$CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostgroups"}}->{cn} = $CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostgroups"};
+                @val = split(/\s*,\s*/, $CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostgroups"});
+            }
+            else {
+                @val = ($CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostgroups"});
+            }
+            foreach(@val) {
+                next if $_ eq '';
+
+                my $found = 0;
+                # search for matching hostgroups
+                foreach my $hg (@hg_existing) {
+                    if ($hg =~ /^cn=$_,/) {
+                        $found = 1;
+                        last;
+                    }
+                }
+                # create hostgroup when nothing found
+                $result->{$_}->{cn} = $_ if ($found == 0);
             }
         }
     }
