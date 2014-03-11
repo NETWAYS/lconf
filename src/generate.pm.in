@@ -1026,16 +1026,17 @@ sub genHostConfig2x {
             # generate host definition
             print FH "object Host \"$CLIENTS->{$client}->{cn}\" inherits \"generic-host\" {\n";
 
-            my $host_deps_str = "";
+            my $host_parents_str = "";
             # process each item...
             foreach my $val1 (sort keys %{$CLIENTS->{$client}}) {
                 if ($val1 eq "$cfg->{ldap}->{prefix}address" ||
-                    $val1 eq "$cfg->{ldap}->{prefix}actionurl" ||
-                    $val1 eq "$cfg->{ldap}->{prefix}notesurl" ||
-                    $val1 eq "$cfg->{ldap}->{prefix}notes" ||
-                    $val1 eq "$cfg->{ldap}->{prefix}iconimage" ||
-                    $val1 eq "$cfg->{ldap}->{prefix}iconimagealt" ||
-                    $val1 eq "$cfg->{ldap}->{prefix}statusmapimage"
+                    $val1 eq "$cfg->{ldap}->{prefix}hostactionurl" ||
+                    $val1 eq "$cfg->{ldap}->{prefix}hostnotesurl" ||
+                    $val1 eq "$cfg->{ldap}->{prefix}hostnotes"
+                    # not yet supported
+                    #$val1 eq "$cfg->{ldap}->{prefix}iconimage" ||
+                    #$val1 eq "$cfg->{ldap}->{prefix}iconimagealt" ||
+                    #$val1 eq "$cfg->{ldap}->{prefix}statusmapimage"
                     ) {
                     $macros->{$itemMapIcinga2{$val1}} = escape_str($CLIENTS->{$client}->{$val1});
                 } elsif ($val1 =~ /customvar/i) {
@@ -1048,7 +1049,7 @@ sub genHostConfig2x {
                     }
 
                 } elsif ($val1 eq "$cfg->{ldap}->{prefix}parent") {
-                    $host_deps_str = $CLIENTS->{$client}->{$val1};
+                    $host_parents_str = $CLIENTS->{$client}->{$val1};
                 } elsif ($val1 eq "$cfg->{ldap}->{prefix}hostgroups") {
                     my $groups = $CLIENTS->{$client}->{$val1};
                     $groups =~ s/,/\", \"/g;
@@ -1108,20 +1109,42 @@ sub genHostConfig2x {
             }
 
             # host dependencies
-            my @host_deps = ();
             if (defined($CLIENTS->{$client}->{'HOSTDEPENDENCY'})) {
-                foreach my $dep_host (sort keys %{$CLIENTS->{$client}->{HOSTDEPENDENCY}}) {
-                    next if (!defined $dep_host || $dep_host eq "");
-                    push @host_deps, $dep_host;
+                foreach my $dependency (sort keys %{$CLIENTS->{$client}->{HOSTDEPENDENCY}}) {
+                    next if (!defined $dependency || $dependency eq "");
+                    print FH "\tdependencies[\"$dependency\"] = {\n";
+                    print FH "\t\tparent_host = \"$dependency\",\n";
+                    foreach(sort keys %{$CLIENTS->{$client}->{HOSTDEPENDENCY}->{$dependency}}) {
+                        if ($_ eq "$cfg->{ldap}->{prefix}hostdependencyexecutionfailurecriteria") {
+                            my $fail_crit = convert_dependendy_failure_criteria_2x($CLIENTS->{$client}->{HOSTDEPENDENCY}->{$dependency}->{$_}, 'check');
+                            DebugOutput("$$ GENERATE HOSTCONFIG 2x", "HOSTDEPENDENCY exec: $CLIENTS->{$client}->{HOSTDEPENDENCY}->{$dependency}->{$_}: ".Dumper($fail_crit));
+                            print FH "\t\tdisable_checks = true,\n" if $fail_crit->{'runeverything'} == 0;
+                            print FH "\t\tdisable_checks = false,\n" if $fail_crit->{'runeverything'} == 1;
+                            print FH "\t\tstate_filter = (". (join ' | ', @{$fail_crit->{'state'}}) ."),\n"; # execution failure criteria is mandatory for state_filter
+                        }
+                        if ($_ eq "$cfg->{ldap}->{prefix}hostdependencynotificationfailurecriteria") {
+                            my $fail_crit = convert_dependendy_failure_criteria_2x($CLIENTS->{$client}->{HOSTDEPENDENCY}->{$dependency}->{$_}, 'notification');
+                            DebugOutput("$$ GENERATE HOSTCONFIG 2x", "HOSTDEPENDENCY notif: $CLIENTS->{$client}->{HOSTDEPENDENCY}->{$dependency}->{$_}: ".Dumper($fail_crit));
+                            print FH "\t\tdisable_notifications = true,\n" if $fail_crit->{'runeverything'} == 0;
+                            print FH "\t\tdisable_notifications = false,\n" if $fail_crit->{'runeverything'} == 1;
+                        }
+                    }
+                    print FH "\t},\n";
                 }
             }
 
-            if ($host_deps_str ne "") {
-                push @host_deps, str2arr_by_delim_without_excludes($host_deps_str, ',', 1);
+            # 1.x parents are 2.x dependencies with no attributes
+            my @parent_dependencies = ();
+            if ($host_parents_str ne "") {
+                push @parent_dependencies, str2arr_by_delim_without_excludes($host_parents_str, ',', 1);
             }
 
-            if (@host_deps > 0) {
-                print FH "\thost_dependencies = [ \"".join( "\", \"", @host_deps)."\" ],\n";
+            if (@parent_dependencies > 0) {
+                foreach my $parent_host (@parent_dependencies) {
+                    print FH "\tdependencies[\"$parent_host\"] = {\n";
+                    print FH "\t\tparent_host = \"$parent_host\"\n";
+                    print FH "\t},\n";
+                }
             }
 
             # macros
@@ -1157,18 +1180,34 @@ sub genHostConfig2x {
                     # service dependencies
                     #
                     if (defined $CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEDEPENDENCY}) {
-                        print FH "\t\tservice_dependencies = [\n";
                         foreach my $dependency (sort keys %{$CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEDEPENDENCY}}) {
                             my ($depHost, $depService) = (split(/ *-> */, $dependency))[0,1];
+                            print FH "\t\tdependencies[\"$depHost-$depService\"] = {\n";
 
                             # special stuff for inheritance
                             if ($depHost eq "\$HOSTNAME\$") {
                                 $depHost = $CLIENTS->{$client}->{cn};
                             }
 
-                            print FH "\t\t\t{ host = \"$depHost\", service = \"$depService\" },\n";
+                            print FH "\t\t\tparent_host = \"$depHost\",\n";
+                            print FH "\t\t\tparent_service = \"$depService\",\n";
+                            foreach (sort keys %{$CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEDEPENDENCY}->{$dependency}}) {
+                                if ($_ eq "$cfg->{ldap}->{prefix}servicedependencyexecutionfailurecriteria") {
+                                    my $fail_crit = convert_dependendy_failure_criteria_2x($CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEDEPENDENCY}->{$dependency}->{$_}, 'check');
+                                    DebugOutput("$$ GENERATE HOSTCONFIG 2x", "SERVICEDEPENDENCY: exec: $CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEDEPENDENCY}->{$dependency}->{$_}: ".Dumper($fail_crit));
+                                    print FH "\t\t\tdisable_checks = true,\n" if $fail_crit->{'runeverything'} == 0;
+                                    print FH "\t\t\tdisable_checks = false,\n" if $fail_crit->{'runeverything'} == 1;
+                                    print FH "\t\t\tstate_filter = (". (join ' | ', @{$fail_crit->{'state'}}) ."),\n"; # execution failure criteria is mandatory for state_filter
+                                }
+                                if ($_ eq "$cfg->{ldap}->{prefix}servicedependencynotificationfailurecriteria") {
+                                    my $fail_crit = convert_dependendy_failure_criteria_2x($CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEDEPENDENCY}->{$dependency}->{$_}, 'notification');
+                                    DebugOutput("$$ GENERATE HOSTCONFIG 2x", "SERVICEDEPENDENCY: notif: $CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEDEPENDENCY}->{$dependency}->{$_}: ".Dumper($fail_crit));
+                                    print FH "\t\t\tdisable_notifications = true,\n" if $fail_crit->{'runeverything'} == 0;
+                                    print FH "\t\t\tdisable_notifications = false,\n" if $fail_crit->{'runeverything'} == 1;
+                                }
+                            }
+                            print FH "\t\t},\n";
                         }
-                        print FH "\t\t],\n";
                     }
 
                     #
@@ -1354,11 +1393,12 @@ sub genHostConfig2x {
                             print FH "\t\tcheck_command = \"$checkcommand_name\",\n";
 
                         }
-                        elsif ($val1 eq "$cfg->{ldap}->{prefix}actionurl" ||
-                               $val1 eq "$cfg->{ldap}->{prefix}notesurl" ||
-                               $val1 eq "$cfg->{ldap}->{prefix}notes" ||
-                               $val1 eq "$cfg->{ldap}->{prefix}iconimage" ||
-                               $val1 eq "$cfg->{ldap}->{prefix}iconimagealt"
+                        elsif ($val1 eq "$cfg->{ldap}->{prefix}serviceactionurl" ||
+                               $val1 eq "$cfg->{ldap}->{prefix}servicenotesurl" ||
+                               $val1 eq "$cfg->{ldap}->{prefix}servicenotes"
+                               # not yet supported
+                               #$val1 eq "$cfg->{ldap}->{prefix}iconimage" ||
+                               #$val1 eq "$cfg->{ldap}->{prefix}iconimagealt"
                                ) {
                             $macros_svc->{$itemMapIcinga2{$val1}} = escape_str($CLIENTS->{$client}->{$val1});
                         }
