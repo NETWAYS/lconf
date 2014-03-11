@@ -347,6 +347,49 @@ sub convert_notification_options_to_filter_2x {
     return $filter;
 }
 
+sub convert_dependendy_failure_criteria_2x {
+    my $fail_criteria = shift;
+    my $type = shift;
+
+    my $filter = ();
+    @{$filter->{'state'}} = ();
+
+    # define all types - p not supported
+    my $filter_names = {
+        'o' => 'StateFilterOK',
+        'w' => 'StateFilterWarning',
+        'c' => 'StateFilterCritical',
+        'u' => 'StateFilterUnknown',
+        'd' => 'StateFilterCritical', # down, treated as critical
+    };
+
+    # by default checks are run
+    # but notifications suppressed
+    if ($type eq 'check') {
+        $filter->{'runeverything'} = 1;
+    } else {
+        $filter->{'runeverything'} = 0;
+    }
+
+    # host o,d,u.p,n
+    # service o,w,u,c,p,n
+    my @options = str2arr_by_delim_without_excludes($fail_criteria, ',', 1);
+
+    if (grep(/n/, @options)) {
+        push @{$filter->{'state'}}, 'StateFilterOK';
+        $filter->{'runeverything'} = 1;
+        return $filter;
+    }
+
+    foreach my $option (@options) {
+        next if !defined($filter_names->{$option});
+        push @{$filter->{'state'}}, $filter_names->{$option};
+    }
+
+    return $filter;
+}
+
+
 1;
 
 # vi: sw=4 ts=4 expandtab :
