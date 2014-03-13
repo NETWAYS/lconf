@@ -4,6 +4,26 @@ LConf Changelog
 NOTE: Please read doc/UPGRADING for detailed information on changes and
 upgrade information!
 
+1.4.1 - 13/03/2014
+
+Special thanks to Jörg Monpetain (VHV) for bug hunting and tests!
+
+FIXES
+* Icinga 2: Changed host/service dependency export for Icinga 2 0.0.8 export #2374 #2503
+* Icinga 2: Fix checkcommand vs servicecheckcommand #2392
+* Icinga 2: Fix missing host event_command attribute #2394
+* Icinga 2: Fix custom macro export #2400 #2416 #2418 #2455
+* Icinga 2: Fix regexp for {host,service}groups (Thomas Gebhardt) #2443
+* Icinga 2: Fix missing host checks #2402
+* Icinga 2: Sanitize trailing whitespaces on timeperiod keys #2406
+* Icinga 2: Fix CV prefix for _HOST/_SERVICE macros #2414
+* Icinga 2: Fix parents not exported as host dependencies #2441
+* Icinga 2: Fix reload command in LConfDeployIcinga2.sh #2384
+* Fix host dependency export (Alexander Leisentritt) #2370
+* Fix link to a service adds all other services on the same level #2453
+* Fix spec file #2382 #2386
+
+
 1.4.0 - 04/12/2013
 
 ENHANCEMENTS

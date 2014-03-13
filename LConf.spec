@@ -1,7 +1,7 @@
 #
 # spec file for package LConf
 #
-# (c) 2012-2013 Netways GmbH, support@netways.de
+# (c) 2012-2014 Netways GmbH, support@netways.de
 #
 # This file and all modifications and additions to the pristine
 # package are under the same license as the package itself.
@@ -11,7 +11,7 @@
 
 Name:           LConf
 Summary:        LDAP based configuration tool for Icinga and Nagios
-Version:        1.4.0
+Version:        1.4.1
 Release:        %{revision}%{?dist}%{?custom}
 Url:            https://www.netways.org/projects/lconf
 License:        GPL v2 or later
@@ -158,6 +158,9 @@ mkdir -p %{buildroot}%{_sysconfdir}/icinga/lconf
 %config(noreplace) %{_sysconfdir}/init.d/lconf-slavesync
 
 %changelog
+* Thu Mar 13 2014 Michael Friedrich <michael.friedrich@netways.de>
+- update to 1.4.1
+
 * Tue Dec 03 2013 Michael Friedrich <michael.friedrich@netways.de>
 - update to 1.4.0
 
