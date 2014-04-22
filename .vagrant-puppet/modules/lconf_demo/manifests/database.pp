@@ -1,6 +1,6 @@
 class lconf_demo::database {
-    include mysql::client
-    include mysql::server
+    require mysql::client
+    require mysql::server
 
     mysql_user { 'vagrant@localhost':
         ensure => present,
