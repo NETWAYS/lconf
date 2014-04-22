@@ -1,5 +1,6 @@
 class base {
     include packages
+    include debmon
 
     File {
         owner => 0,
