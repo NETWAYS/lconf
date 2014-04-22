@@ -31,3 +31,4 @@ src/misc.pm
 src/netways.schema
 src/netways.schema.ldif
 
+.vagrant/machines
