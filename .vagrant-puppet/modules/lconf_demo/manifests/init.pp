@@ -1,5 +1,9 @@
-class base {
+class lconf_demo {
+    # subclasses
     include packages
+    include database
+
+    # modules
     include debmon
 
     File {

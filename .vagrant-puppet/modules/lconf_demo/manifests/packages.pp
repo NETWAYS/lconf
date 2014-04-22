@@ -1,4 +1,4 @@
-class base::packages {
+class lconf_demo::packages {
 
     $packages = [
         'git',

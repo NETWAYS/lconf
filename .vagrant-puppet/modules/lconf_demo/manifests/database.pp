@@ -1,4 +1,4 @@
-class base::database {
+class lconf_demo::database {
     include mysql::client
     include mysql::server
 

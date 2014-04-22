@@ -1,1 +1,1 @@
-include base
+include lconf_demo
