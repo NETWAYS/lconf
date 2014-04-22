@@ -2,9 +2,12 @@ class lconf_demo {
     # subclasses
     include packages
     include database
+    include augeas
+    include apache
 
     # modules
     include debmon
+    include icinga
 
     File {
         owner => 0,
@@ -14,7 +17,7 @@ class lconf_demo {
 
     user { 'vagrant':
         ensure => present,
-        #groups => ['nagios', 'icingacmd'],
+        groups => ['adm', 'sudo'],
     }
 
     file { '/etc/motd':
