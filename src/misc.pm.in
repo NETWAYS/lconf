@@ -287,19 +287,21 @@ sub print_sorted_hash {
 sub convert_notification_options_to_filter_2x {
     my $notification_options = shift;
     my $filter = ();
+    my $is_host = shift;
+
     @{$filter->{'state'}} = ();
     @{$filter->{'type'}} = ();
 
     # define all types
     my $filter_names = {
-        'o' => 'StateFilterOK',
-        'w' => 'StateFilterWarning',
-        'c' => 'StateFilterCritical',
-        'u' => 'StateFilterUnknown',
-        'd' => 'StateFilterCritical', # down, treated as critical
-        's' => 'NotificationFilterDowntimeStart | NotificationFilterDowntimeEnd | NotificationFilterDowntimeRemoved',
-        'r' => 'NotificationFilterRecovery',
-        'f' => 'NotificationFilterFlappingStart | NotificationFilterFlappingEnd'
+        'o' => 'OK', #Up for hosts
+        'w' => 'Warning',
+        'c' => 'Critical',
+        'u' => 'Unknown',
+        'd' => 'Down',
+        's' => 'DowntimeStart | DowntimeEnd | DowntimeRemoved',
+        'r' => 'Recovery',
+        'f' => 'FlappingStart | FlappingEnd'
     };
     my $filter_by = {
         'o' => 'state',
@@ -327,21 +329,35 @@ sub convert_notification_options_to_filter_2x {
         push @{$filter->{'state'}}, 'StateFilterOK';
     }
 
-    # always add NotificationFilterProblem|Custom
-    push @{$filter->{'type'}}, 'NotificationFilterProblem';
-    push @{$filter->{'type'}}, 'NotificationFilterCustom';
+    # always add Problem|Custom|OK
+    push @{$filter->{'type'}}, 'Problem';
+    push @{$filter->{'type'}}, 'Custom';
+    push @{$filter->{'state'}}, 'OK';
 
     # verify if there's 'a' (all) and add all filters
     if (grep /a/, @options) {
         foreach my $by (keys %{$filter_by}) {
-            push @{$filter->{$filter_by->{$by}}}, $filter_names->{$by};
+            my $value = $filter_names->{$by};
+
+            if ($value eq "OK" && $is_host == 1) {
+                $value = "Up";
+            }
+
+            push @{$filter->{$filter_by->{$by}}}, $value;
         }
         return $filter;
     }
 
     # the selective way
     foreach my $option (@options) {
-        push @{$filter->{$filter_by->{$option}}}, $filter_names->{$option};
+
+        my $value = $filter_names->{$option};
+
+        if ($value eq "OK" && $is_host == 1) {
+            $value = "Up";
+        }
+
+        push @{$filter->{$filter_by->{$option}}}, $value;
     }
 
     return $filter;
@@ -350,17 +366,18 @@ sub convert_notification_options_to_filter_2x {
 sub convert_dependendy_failure_criteria_2x {
     my $fail_criteria = shift;
     my $type = shift;
+    my $is_host = shift;
 
     my $filter = ();
     @{$filter->{'state'}} = ();
 
     # define all types - p not supported
     my $filter_names = {
-        'o' => 'StateFilterOK',
-        'w' => 'StateFilterWarning',
-        'c' => 'StateFilterCritical',
-        'u' => 'StateFilterUnknown',
-        'd' => 'StateFilterCritical', # down, treated as critical
+        'o' => 'OK', #Up for hosts
+        'w' => 'Warning',
+        'c' => 'Critical',
+        'u' => 'Unknown',
+        'd' => 'Down',
     };
 
     # by default checks are run
@@ -383,7 +400,17 @@ sub convert_dependendy_failure_criteria_2x {
 
     foreach my $option (@options) {
         next if !defined($filter_names->{$option});
-        push @{$filter->{'state'}}, $filter_names->{$option};
+
+        my $value = $filter_names->{$option};
+
+        if ($value eq "OK" && $is_host == 1) {
+            $value = "Up";
+        }
+
+        #skip unreachable
+        next if ($value eq "Unknown" && $is_host == 1);
+
+        push @{$filter->{'state'}}, $value;
     }
 
     return $filter;

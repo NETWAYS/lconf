@@ -120,7 +120,8 @@ sub genTimeperiods2x {
         my $writeFile = BuildFilepath($TIMEPERIODS->{$timeperiod}->{dn}, $outputDir);
         open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
 
-        print FH "object TimePeriod \"$TIMEPERIODS->{$timeperiod}->{cn}\" inherits \"legacy-timeperiod\" {\n";
+        print FH "object TimePeriod \"$TIMEPERIODS->{$timeperiod}->{cn}\"\n";
+        print FH "\timports \"legacy-timeperiod\"\n";
         print FH "\tranges = {\n";
         foreach (sort keys %{$TIMEPERIODS->{$timeperiod}}) {
             if ($_ eq "$cfg->{ldap}->{prefix}timeperiodvalue") {
@@ -131,7 +132,7 @@ sub genTimeperiods2x {
                         $key =~ s/^\t//;
                         $key =~ s/\s+$//;
                         $key =~ s/\t$//;
-                        print FH "\t\t\"$key\" = \"$TIMEPERIODS->{$timeperiod}->{$_}->{$val}->{$timeperiod_value}\",\n";
+                        print FH "\t\t\"$key\" = \"$TIMEPERIODS->{$timeperiod}->{$_}->{$val}->{$timeperiod_value}\"\n";
                     }
                 }
             }
@@ -210,7 +211,8 @@ sub genCommands2x {
         my $writeFile = BuildFilepath($COMMANDS->{$command}->{dn}, $outputDir);
         open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
 
-        print FH "object ".$type."Command \"$COMMANDS->{$command}->{cn}\" inherits \"$template\" {\n";
+        print FH "object ".$type."Command \"$COMMANDS->{$command}->{cn}\" {\n";
+        print FH "\timports \"$template\"\n";
         foreach (keys %{$COMMANDS->{$command}}) {
             if ($_ =~ /commandline/) {
                 my $command_line = escape_str($COMMANDS->{$command}->{$_}); # escape quotes
@@ -290,19 +292,25 @@ sub genContacts2x {
         my $writeFile = BuildFilepath($CONTACTS->{$contact}->{dn}, $outputDir);
         open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
 
-        print FH "object User \"$CONTACTS->{$contact}->{cn}\" inherits \"generic-user\" {\n";
+        print FH "object User \"$CONTACTS->{$contact}->{cn}\" {\n";
+        print FH "\timport \"generic-user\"\n";
         if (defined $CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'alias'}) {
-            print FH "\tdisplay_name = \"$CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'alias'}\",\n";
+            print FH "\tdisplay_name = \"$CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'alias'}\"\n";
         } else {
-            print FH "\tdisplay_name = \"$CONTACTS->{$contact}->{cn}\",\n";
+            print FH "\tdisplay_name = \"$CONTACTS->{$contact}->{cn}\"\n";
         }
-        print FH "\tmacros = {\n";
+
         foreach(sort keys %{$CONTACTS->{$contact}}) {
-            if ($_ =~ /pager/ || $_ =~ /address/ || $_ =~ /email/) {
-                print FH "\t\t\"$itemMapIcinga2{$_}\" = \"$CONTACTS->{$contact}->{$_}\",\n";
+            if ($_ !~ /pager/ && $_ =~ /address/ && $_ !~ /email/) {
+                print FH "\tvars.$itemMapIcinga2{$_} = \"$CONTACTS->{$contact}->{$_}\"\n";
             }
         }
-        print FH "\t}\n";
+
+        foreach(sort keys %{$CONTACTS->{$contact}}) {
+            if ($_ =~ /pager/ || $_ =~ /email/) {
+                print FH "\t\"$itemMapIcinga2{$_}\" = \"$CONTACTS->{$contact}->{$_}\"\n";
+            }
+        }
 
         print FH "}\n";
 
@@ -378,9 +386,9 @@ sub genContactgroups2x {
 
         print FH "object UserGroup \"$CONTACTGROUPS->{$contactgroup}->{cn}\" {\n";
         if (defined $CONTACTGROUPS->{$contactgroup}->{$cfg->{ldap}->{prefix}.'alias'}) {
-            print FH "\tdisplay_name = \"$CONTACTGROUPS->{$contactgroup}->{$cfg->{ldap}->{prefix}.'alias'}\",\n";
+            print FH "\tdisplay_name = \"$CONTACTGROUPS->{$contactgroup}->{$cfg->{ldap}->{prefix}.'alias'}\"\n";
         } else {
-            print FH "\tdisplay_name = \"$CONTACTGROUPS->{$contactgroup}->{cn}\",\n";
+            print FH "\tdisplay_name = \"$CONTACTGROUPS->{$contactgroup}->{cn}\"\n";
         }
         print FH "}\n";
 
@@ -1016,36 +1024,39 @@ sub genHostConfig2x {
             #
             # HOST DEFINITION
             #
-            my $macros = ();
-            my $custom = ();
+            my $vars = ();
 
             # get target file's name and open it for writing
             my $writeFile = BuildFilepath($CLIENTS->{$client}->{dn}, $outputDir);
             open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
 
             # generate host definition
-            print FH "object Host \"$CLIENTS->{$client}->{cn}\" inherits \"generic-host\" {\n";
+            print FH "object Host \"$CLIENTS->{$client}->{cn}\" {\n";
+            print FH "\timport \"generic-host\"\n";
 
             my $host_parents_str = "";
             # process each item...
             foreach my $val1 (sort keys %{$CLIENTS->{$client}}) {
                 if ($val1 eq "$cfg->{ldap}->{prefix}address" ||
+                    $val1 eq "$cfg->{ldap}->{prefix}address6" ||
                     $val1 eq "$cfg->{ldap}->{prefix}hostactionurl" ||
                     $val1 eq "$cfg->{ldap}->{prefix}hostnotesurl" ||
-                    $val1 eq "$cfg->{ldap}->{prefix}hostnotes"
-                    # not yet supported
-                    #$val1 eq "$cfg->{ldap}->{prefix}iconimage" ||
-                    #$val1 eq "$cfg->{ldap}->{prefix}iconimagealt" ||
-                    #$val1 eq "$cfg->{ldap}->{prefix}statusmapimage"
+                    $val1 eq "$cfg->{ldap}->{prefix}hostnotes" ||
+                    $val1 eq "$cfg->{ldap}->{prefix}iconimage" ||
+                    $val1 eq "$cfg->{ldap}->{prefix}iconimagealt"
                     ) {
-                    $macros->{$itemMapIcinga2{$val1}} = escape_str($CLIENTS->{$client}->{$val1});
+                    print FH "\t$itemMapIcinga2{$val1} = \"$CLIENTS->{$client}->{$val1}\"\n";
+
+                } elsif ($val1 eq "$cfg->{ldap}->{prefix}statusmapimage") {
+                    $vars->{$itemMapIcinga2{$val1}} = escape_str($CLIENTS->{$client}->{$val1});
+
                 } elsif ($val1 =~ /customvar/i) {
                     foreach my $val2 (sort keys %{$CLIENTS->{$client}->{$val1}}) {
                         next if (!defined($val2) || $val2 eq "" ||
                                     $val2 eq "_" || !$CLIENTS->{$client}->{$val1}->{$val2});
                         $key = $val2;
                         $key =~ s/_//;
-                        $custom->{$key} = escape_str($CLIENTS->{$client}->{$val1}->{$val2});
+                        $vars->{$key} = escape_str($CLIENTS->{$client}->{$val1}->{$val2});
                     }
 
                 } elsif ($val1 eq "$cfg->{ldap}->{prefix}parent") {
@@ -1053,16 +1064,14 @@ sub genHostConfig2x {
                 } elsif ($val1 eq "$cfg->{ldap}->{prefix}hostgroups") {
                     my $groups = $CLIENTS->{$client}->{$val1};
                     $groups =~ s/,/\", \"/g;
-                    print FH "\tgroups = [ \"$groups\" ],\n";
+                    print FH "\tgroups = [ \"$groups\" ]\n";
                 } elsif ($val1 eq "$cfg->{ldap}->{prefix}alias") {
-                    print FH "\tdisplay_name = \"$CLIENTS->{$client}->{$val1}\",\n";
+                    print FH "\tdisplay_name = \"$CLIENTS->{$client}->{$val1}\"\n";
                 } elsif ($val1 eq "$cfg->{ldap}->{prefix}hostcheckcommand" || $val1 eq "$cfg->{ldap}->{prefix}checkcommand") {
 
-                    # treat as new service
                     my $host_check_command_str = $CLIENTS->{$client}->{$val1};
                     my ($host_check_command_name, @host_check_command_args) = split /!/, $host_check_command_str;
 
-                    my $macros_host_svc;
                     my $arg_c = 1;
                     foreach my $macro_val (@host_check_command_args) {
                         # check command arg name for being an icinga 1.x macro and resolve its value
@@ -1074,62 +1083,59 @@ sub genHostConfig2x {
                             }
                         }
 
-                        $macros_host_svc->{'ARG'.$arg_c} = escape_str($macro_val);
+                        $vars->{'ARG'.$arg_c} = escape_str($macro_val);
                         $arg_c++;
                     }
 
-                    my $service_name = "host-alive"; # same as generic-host template
-
-                    DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Found host $host checkcommand, creating new host check service as $service_name");
-
-                    print FH "\tservices[\"$service_name\"] = {\n";
-                    print FH "\t\ttemplates = [ \"generic-service\" ],\n";
-                    print FH "\t\tcheck_command = \"$host_check_command_name\",\n";
-
                     if (defined($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostcheckinterval'})) {
-                        print FH "\t\tcheck_interval = $CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostcheckinterval'}m,\n";
+                        print FH "\tcheck_interval = $CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostcheckinterval'}m\n";
                     }
                     if (defined($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostcheckretryinterval'})) {
-                        print FH "\t\tcheck_interval = $CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostcheckretryinterval'}m,\n";
+                        print FH "\tcheck_interval = $CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostcheckretryinterval'}m\n";
                     }
                     if (defined($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostmaxcheckattempts'})) {
-                        print FH "\t\tmax_check_attempts = $CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostmaxcheckattempts'},\n";
+                        print FH "\tmax_check_attempts = $CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostmaxcheckattempts'}\n";
                     }
 
-                    print FH "\t\tmacros = {\n";
-                    foreach my $macro (sort keys %{$macros_host_svc}) {
-                        print FH "\t\t\t\"$macro\" = \"$macros_host_svc->{$macro}\",\n";
-                    }
-                    print FH "\t\t},\n";
-
-                    print FH "\t},\n";
-
-                    print FH "\tcheck = \"$service_name\",\n";
+                    print FH "\tcheck_command = \"$host_check_command_name\"\n";
                 }
             }
+
+            # custom attr
+            foreach my $var (sort keys %{$vars}) {
+                print FH "\tvars.$var = \"$vars->{$var}\"\n"
+            }
+
+            # generate end of host definition
+            print FH "}\n";
+            print FH "\n";
 
             # host dependencies
             if (defined($CLIENTS->{$client}->{'HOSTDEPENDENCY'})) {
                 foreach my $dependency (sort keys %{$CLIENTS->{$client}->{HOSTDEPENDENCY}}) {
                     next if (!defined $dependency || $dependency eq "");
-                    print FH "\tdependencies[\"$dependency\"] = {\n";
-                    print FH "\t\tparent_host = \"$dependency\",\n";
+
+                    print FH "object Dependency \"$dependency\" {\n";
+
+                    print FH "\tparent_host_name = \"$dependency\"\n";
+                    print FH "\tchild_host_name = \"$CLIENTS->{$client}->{cn}\"\n";
+
                     foreach(sort keys %{$CLIENTS->{$client}->{HOSTDEPENDENCY}->{$dependency}}) {
                         if ($_ eq "$cfg->{ldap}->{prefix}hostdependencyexecutionfailurecriteria") {
-                            my $fail_crit = convert_dependendy_failure_criteria_2x($CLIENTS->{$client}->{HOSTDEPENDENCY}->{$dependency}->{$_}, 'check');
+                            my $fail_crit = convert_dependendy_failure_criteria_2x($CLIENTS->{$client}->{HOSTDEPENDENCY}->{$dependency}->{$_}, 'check', 1);
                             DebugOutput("$$ GENERATE HOSTCONFIG 2x", "HOSTDEPENDENCY exec: $CLIENTS->{$client}->{HOSTDEPENDENCY}->{$dependency}->{$_}: ".Dumper($fail_crit));
-                            print FH "\t\tdisable_checks = true,\n" if $fail_crit->{'runeverything'} == 0;
-                            print FH "\t\tdisable_checks = false,\n" if $fail_crit->{'runeverything'} == 1;
-                            print FH "\t\tstate_filter = (". (join ' | ', @{$fail_crit->{'state'}}) ."),\n"; # execution failure criteria is mandatory for state_filter
+                            print FH "\tdisable_checks = true\n" if $fail_crit->{'runeverything'} == 0;
+                            print FH "\tdisable_checks = false\n" if $fail_crit->{'runeverything'} == 1;
+                            print FH "\tstate_filter = [ ". (join ', ', @{$fail_crit->{'state'}}) ." ]\n"; # execution failure criteria is mandatory for state_filter
                         }
                         if ($_ eq "$cfg->{ldap}->{prefix}hostdependencynotificationfailurecriteria") {
-                            my $fail_crit = convert_dependendy_failure_criteria_2x($CLIENTS->{$client}->{HOSTDEPENDENCY}->{$dependency}->{$_}, 'notification');
+                            my $fail_crit = convert_dependendy_failure_criteria_2x($CLIENTS->{$client}->{HOSTDEPENDENCY}->{$dependency}->{$_}, 'notification', 1);
                             DebugOutput("$$ GENERATE HOSTCONFIG 2x", "HOSTDEPENDENCY notif: $CLIENTS->{$client}->{HOSTDEPENDENCY}->{$dependency}->{$_}: ".Dumper($fail_crit));
-                            print FH "\t\tdisable_notifications = true,\n" if $fail_crit->{'runeverything'} == 0;
-                            print FH "\t\tdisable_notifications = false,\n" if $fail_crit->{'runeverything'} == 1;
+                            print FH "\tdisable_notifications = true\n" if $fail_crit->{'runeverything'} == 0;
+                            print FH "\tdisable_notifications = false\n" if $fail_crit->{'runeverything'} == 1;
                         }
                     }
-                    print FH "\t},\n";
+                    print FH "}\n";
                 }
             }
 
@@ -1141,25 +1147,14 @@ sub genHostConfig2x {
 
             if (@parent_dependencies > 0) {
                 foreach my $parent_host (@parent_dependencies) {
-                    print FH "\tdependencies[\"$parent_host\"] = {\n";
-                    print FH "\t\tparent_host = \"$parent_host\"\n";
-                    print FH "\t},\n";
+                    print FH "object Dependency \"$parent_host\" {\n";
+                    print FH "\tparent_host_name = \"$parent_host\"\n";
+                    print FH "\tchild_host_name = \"$CLIENTS->{$client}->{cn}\"\n";
+                    print FH "}\n";
                 }
             }
 
-            # macros
-            print FH "\tmacros = {\n";
-            foreach my $macro (sort keys %{$macros}) {
-                print FH "\t\t\"$macro\" = \"$macros->{$macro}\",\n"
-            }
-            print FH "\t},\n";
-
-            print FH "\tcustom = {\n";
-            foreach my $custm (sort keys %{$custom}) {
-                print FH "\t\t\"$custm\" = \"$custom->{$custm}\",\n";
-            }
-            print FH "\t},\n";
-
+            print FH "\n";
 
             #
             # SERVICES
@@ -1170,11 +1165,111 @@ sub genHostConfig2x {
 
                 # only gen service if lconfservicedisable is not set
                 if (!defined $CLIENTS->{$client}->{'SERVICES'}->{$service}->{"$cfg->{ldap}->{prefix}servicedisable"}) {
-                    print FH "\tservices[\"$CLIENTS->{$client}->{'SERVICES'}->{$service}->{cn}\"] = {\n";
-                    print FH "\t\ttemplates = [ \"generic-service\" ],\n";
+                    print FH "object Service \"$CLIENTS->{$client}->{'SERVICES'}->{$service}->{cn}\" {\n";
+                    print FH "\timport \"generic-service\"\n";
+
+                    print FH "\thost_name = \"$CLIENTS->{$client}->{cn}\"\n";
+
                     # initialize each service macro / custom dict
-                    my $macros_svc = ();
-                    my $custom_svc = ();
+                    my $vars_svc = ();
+
+                    #
+                    # ordinary service attributes
+                    #
+
+                    # process each item
+                    foreach my $val1 (sort keys %{$CLIENTS->{$client}->{'SERVICES'}->{$service}}) {
+
+                        # ...but look after type; only service items!
+
+                        #
+                        # default service attributes
+                        #
+
+                        # check command with macro arguments
+                        if ($val1 eq "$cfg->{ldap}->{prefix}servicecheckcommand" || $val1 eq "$cfg->{ldap}->{prefix}checkcommand") {
+                            my ($checkcommand_name, @checkcommand_macros) = split /!/, "$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}";
+
+                            my $arg_c = 1;
+                            foreach my $macro_val (@checkcommand_macros) {
+                                # check command arg name for being an icinga 1.x macro and resolve its value
+                                if ($macro_val =~ /^\$(\w+)\$$/) {
+                                    if ($1 =~ /^_HOST(\w+)/) {
+                                        my $cv_val_macro_key = "_".$1;
+                                        # override the original cv value with the resolved host cv
+                                        $macro_val = $CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostcustomvar"}->{$cv_val_macro_key};
+                                    }
+                                    elsif ($1 =~ /^_SERVICE(\w+)/) {
+                                        my $cv_val_macro_key = "_".$1;
+                                        # override the original cv value with the resolved service cv
+                                        $macro_val = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{"$cfg->{ldap}->{prefix}servicecustomvar"}->{$cv_val_macro_key};
+                                    }
+                                }
+
+                                $vars_svc->{'ARG'.$arg_c} = escape_str($macro_val);
+
+                                $arg_c++;
+                            }
+
+                            print FH "\tcheck_command = \"$checkcommand_name\"\n";
+
+                        }
+                        elsif ($val1 eq "$cfg->{ldap}->{prefix}serviceactionurl" ||
+                               $val1 eq "$cfg->{ldap}->{prefix}servicenotesurl" ||
+                               $val1 eq "$cfg->{ldap}->{prefix}servicenotes" ||
+                               $val1 eq "$cfg->{ldap}->{prefix}iconimage" ||
+                               $val1 eq "$cfg->{ldap}->{prefix}iconimagealt"
+                               ) {
+                            print FH "\t\t$itemMapIcinga2{$val1} = \"$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}\"\n";
+                        }
+                        elsif ($val1 =~ /servicegroups/i) {
+                            my $groups = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1};
+                            $groups =~ s/,/\", \"/g;
+                            print FH "\t\tgroups = [ \"$groups\" ],\n";
+                        } elsif ($val1 =~ /checkinterval/i) {
+                            print FH "\t\tcheck_interval = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}m,\n";
+                        } elsif ($val1 =~ /retryinterval/i) {
+                            print FH "\t\tretry_interval = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}m,\n";
+                        } elsif ($val1 =~ /maxcheckattempts/i) {
+                            print FH "\t\tmax_check_attempts = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1},\n";
+                        } elsif ($val1 =~ /customvar/i) {
+                            foreach my $val2 (sort keys %{$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}}) {
+                                next if (!defined($val2) || $val2 eq "" ||
+                                    $val2 eq "_" || !$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}->{$val2});
+                                $key = $val2;
+                                $key =~ s/_//;
+                                $vars_svc->{$key} = escape_str($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}->{$val2});
+                            }
+                        } elsif ($val1 eq "$cfg->{ldap}->{prefix}serviceeventhandler") {
+
+                            my $event_command_name = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1};
+                            my $event_command_object_name = "$service-$event_command_name";
+
+                            my $event_command_line; # we don't have args for notification commands
+                            foreach my $command (keys %{$COMMANDS}) {
+                                if ($COMMANDS->{$command}->{cn} eq $event_command_name) {
+                                    $event_command_line = escape_str($COMMANDS->{$command}->{$cfg->{ldap}->{prefix}.'commandline'});
+                                    goto FOUND_EVENT;
+                                }
+                            }
+
+                            FOUND_EVENT:
+
+                            $event_commands->{$event_command_object_name} = $event_command_line;
+
+                            print FH "\t\tevent_command = \"$event_command_object_name\",\n";
+
+                        } else { # FIXME different check_interval, quote notation
+                            #print FH "\t\t$itemMapIcinga2{$val1} = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1},\n";
+                        }
+                    }
+
+                    foreach my $var (sort keys %{$vars_svc}) {
+                        print FH "\tvars.$var = \"$vars_svc->{$var}\"\n";
+                    }
+
+                    print FH "}\n";
+                    print FH "\n";
 
                     #
                     # service dependencies
@@ -1182,31 +1277,35 @@ sub genHostConfig2x {
                     if (defined $CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEDEPENDENCY}) {
                         foreach my $dependency (sort keys %{$CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEDEPENDENCY}}) {
                             my ($depHost, $depService) = (split(/ *-> */, $dependency))[0,1];
-                            print FH "\t\tdependencies[\"$depHost-$depService\"] = {\n";
+
+                            print FH "object Dependency \"$depHost-$depService\" {\n";
 
                             # special stuff for inheritance
                             if ($depHost eq "\$HOSTNAME\$") {
                                 $depHost = $CLIENTS->{$client}->{cn};
                             }
 
-                            print FH "\t\t\tparent_host = \"$depHost\",\n";
-                            print FH "\t\t\tparent_service = \"$depService\",\n";
+                            print FH "\tparent_host_name = \"$depHost\"\n";
+                            print FH "\tparent_service_name = \"$depService\"\n";
+                            print FH "\tchild_host_name = \"$CLIENTS->{$client}->{cn}\"\n";
+                            print FH "\tchild_service_name = \"$service\"\n";
+
                             foreach (sort keys %{$CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEDEPENDENCY}->{$dependency}}) {
                                 if ($_ eq "$cfg->{ldap}->{prefix}servicedependencyexecutionfailurecriteria") {
-                                    my $fail_crit = convert_dependendy_failure_criteria_2x($CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEDEPENDENCY}->{$dependency}->{$_}, 'check');
+                                    my $fail_crit = convert_dependendy_failure_criteria_2x($CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEDEPENDENCY}->{$dependency}->{$_}, 'check', 0);
                                     DebugOutput("$$ GENERATE HOSTCONFIG 2x", "SERVICEDEPENDENCY: exec: $CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEDEPENDENCY}->{$dependency}->{$_}: ".Dumper($fail_crit));
-                                    print FH "\t\t\tdisable_checks = true,\n" if $fail_crit->{'runeverything'} == 0;
-                                    print FH "\t\t\tdisable_checks = false,\n" if $fail_crit->{'runeverything'} == 1;
-                                    print FH "\t\t\tstate_filter = (". (join ' | ', @{$fail_crit->{'state'}}) ."),\n"; # execution failure criteria is mandatory for state_filter
+                                    print FH "\tdisable_checks = true\n" if $fail_crit->{'runeverything'} == 0;
+                                    print FH "\tdisable_checks = false\n" if $fail_crit->{'runeverything'} == 1;
+                                    print FH "\tstate_filter = [ ". (join ', ', @{$fail_crit->{'state'}}) ." ]\n"; # execution failure criteria is mandatory for state_filter
                                 }
                                 if ($_ eq "$cfg->{ldap}->{prefix}servicedependencynotificationfailurecriteria") {
-                                    my $fail_crit = convert_dependendy_failure_criteria_2x($CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEDEPENDENCY}->{$dependency}->{$_}, 'notification');
+                                    my $fail_crit = convert_dependendy_failure_criteria_2x($CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEDEPENDENCY}->{$dependency}->{$_}, 'notification', 0);
                                     DebugOutput("$$ GENERATE HOSTCONFIG 2x", "SERVICEDEPENDENCY: notif: $CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEDEPENDENCY}->{$dependency}->{$_}: ".Dumper($fail_crit));
-                                    print FH "\t\t\tdisable_notifications = true,\n" if $fail_crit->{'runeverything'} == 0;
-                                    print FH "\t\t\tdisable_notifications = false,\n" if $fail_crit->{'runeverything'} == 1;
+                                    print FH "\tdisable_notifications = true\n" if $fail_crit->{'runeverything'} == 0;
+                                    print FH "\tdisable_notifications = false\n" if $fail_crit->{'runeverything'} == 1;
                                 }
                             }
-                            print FH "\t\t},\n";
+                            print FH "}\n";
                         }
                     }
 
@@ -1256,11 +1355,16 @@ sub genHostConfig2x {
                                 my @service_notification_commands = split /,/, $CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'contactservicenotificationcommands'};
 
                                 foreach my $notification_command_name (@service_notification_commands) {
-                                    my $notification_name = "service-".$notification_command_name."-".$notification_cnt;
+                                    my $notification_name = "host-".$CLIENTS->{$client}->{cn}."-service-".$CLIENTS->{$client}->{'SERVICES'}->{$service}->{cn}."-".$notification_command_name."-".$notification_cnt;
 
                                     my $notification_command_object_name = "notification-".$notification_name; # generate a unique command name for this notification
 
-                                    print FH "\t\tnotifications[\"$notification_name\"] = {\n";
+                                    print FH "object Notification \"$notification_name\" {\n";
+                                    print FH "\timport \"mail-service-notification\"\n";
+
+                                    print FH "\thost_name = \"$CLIENTS->{$client}->{cn}\"\n";
+                                    print FH "\tservice_name = \"$CLIENTS->{$client}->{'SERVICES'}->{$service}->{cn}\"\n";
+
                                     # get the command line, add a new notification command
                                     my $notification_command_line; # we don't have args for notification commands
                                     foreach my $command (keys %{$COMMANDS}) {
@@ -1275,11 +1379,11 @@ sub genHostConfig2x {
                                     $notification_commands->{$notification_command_object_name} = $notification_command_line;
 
                                     # notification command
-                                    print FH "\t\t\tnotification_command = \"$notification_command_object_name\",\n";
+                                    print FH "\tcommand = \"$notification_command_object_name\"\n";
 
                                     # notification options
                                     if (defined($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$cfg->{ldap}->{prefix}.'servicenotificationoptions'})) {
-                                        my $notification_filters = convert_notification_options_to_filter_2x($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$cfg->{ldap}->{prefix}.'servicenotificationoptions'});
+                                        my $notification_filters = convert_notification_options_to_filter_2x($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$cfg->{ldap}->{prefix}.'servicenotificationoptions'}, 0);
 
                                         foreach my $by (keys %{$notification_filters}) {
                                             next if !@{$notification_filters->{$by}};
@@ -1287,15 +1391,21 @@ sub genHostConfig2x {
                                             if (grep /0/, @{$notification_filters->{$by}}) {
                                                 $notification_filter = 0;
                                             } else {
-                                                $notification_filter = "(". (join ' | ', @{$notification_filters->{$by}}) .")";
+                                                $notification_filter = "[ ". (join ', ', @{$notification_filters->{$by}}) ."]";
                                             }
-                                            print FH "\t\t\tnotification_".$by."_filter = $notification_filter,\n";
+                                            print FH "\t".$by."s = $notification_filter\n";
                                         }
                                     }
 
-                                    print FH "\t\t\tusers = [ \"$user\" ]\n";
+                                    # notification period
+                                    if (defined($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$cfg->{ldap}->{prefix}.'servicenotificationperiod'})) {
+                                        print FH "\tperiod = \"$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$cfg->{ldap}->{prefix}.'servicenotificationperiod'})\"";
+                                    }
 
-                                    print FH "\t\t},\n";
+                                    print FH "\tusers = [ \"$user\" ]\n";
+
+                                    print FH "}\n";
+                                    print FH "\n";
 
                                     # next notification
                                     $notification_cnt++;
@@ -1320,167 +1430,63 @@ sub genHostConfig2x {
                             my $begin;
                             my $end;
 
-                            print FH "\t\t\tnotifications[\"$escalation\"] = {\n";
+                            print FH "object Notification \"$escalation\" {\n";
+                            print FH "\timport \"mail-service-notification\"\n";
 
                             # if missing, set a default of 5m
                             if (!defined($service_escalation_notificationinterval)) {
                                 $service_escalation_notificationinterval = 5;
                             }
 
-                            print FH "\t\t\t\ttimes = {\n";
+                            print FH "\ttimes = {\n";
 
                             if (defined($service_escalation_firstnotification)) {
                                 $begin = $service_escalation_firstnotification * $service_escalation_notificationinterval;
-                                print FH "\t\t\t\t\tbegin = ".$begin."m,\n";
+                                print FH "\t\tbegin = ".$begin."m,\n";
                             }
 
                             if (defined($service_escalation_lastnotification)) {
                                 $end = $service_escalation_lastnotification * $service_escalation_notificationinterval;
-                                print FH "\t\t\t\t\tend = ".$end."m,\n";
+                                print FH "\t\tend = ".$end."m,\n";
                             }
 
-                            print FH "\t\t\t\t},\n";
+                            print FH "\t}\n";
 
                             if (defined($service_escalation_contacts)) {
                                 my @users = split /,/, $service_escalation_contacts;
-                                print FH "\t\t\t\tusers = [ \"".join("\", \"", @users)."\" ],\n";
+                                print FH "\tusers = [ \"".join("\", \"", @users)."\" ],\n";
                             }
                             if (defined($service_escalation_contactgroups)) {
                                 my @usergroups = split /,/, $service_escalation_contactgroups;
-                                print FH "\t\t\t\tusers = [ \"".join("\", \"", @usergroups)."\" ],\n";
+                                print FH "\tuser_groups = [ \"".join("\", \"", @usergroups)."\" ],\n";
                             }
+
+                            print FH "}\n";
+                            print FH "\n";
+
                         }
                     }
 
-                    #
-                    # ordinary service attributes
-                    #
-
-                    # process each item
-                    foreach my $val1 (sort keys %{$CLIENTS->{$client}->{'SERVICES'}->{$service}}) {
-
-                        # ...but look after type; only service items!
-
-                        #
-                        # default service attributes
-                        #
-
-                        # check command with macro arguments
-                        if ($val1 eq "$cfg->{ldap}->{prefix}servicecheckcommand" || $val1 eq "$cfg->{ldap}->{prefix}checkcommand") {
-                            my ($checkcommand_name, @checkcommand_macros) = split /!/, "$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}";
-
-                            my $arg_c = 1;
-                            foreach my $macro_val (@checkcommand_macros) {
-                                # check command arg name for being an icinga 1.x macro and resolve its value
-                                if ($macro_val =~ /^\$(\w+)\$$/) {
-                                    if ($1 =~ /^_HOST(\w+)/) {
-                                        my $cv_val_macro_key = "_".$1;
-                                        # override the original cv value with the resolved host cv
-                                        $macro_val = $CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostcustomvar"}->{$cv_val_macro_key};
-                                    }
-                                    elsif ($1 =~ /^_SERVICE(\w+)/) {
-                                        my $cv_val_macro_key = "_".$1;
-                                        # override the original cv value with the resolved service cv
-                                        $macro_val = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{"$cfg->{ldap}->{prefix}servicecustomvar"}->{$cv_val_macro_key};
-                                    }
-                                }
-
-                                $macros_svc->{'ARG'.$arg_c} = escape_str($macro_val);
-
-                                $arg_c++;
-                            }
-
-                            print FH "\t\tcheck_command = \"$checkcommand_name\",\n";
-
-                        }
-                        elsif ($val1 eq "$cfg->{ldap}->{prefix}serviceactionurl" ||
-                               $val1 eq "$cfg->{ldap}->{prefix}servicenotesurl" ||
-                               $val1 eq "$cfg->{ldap}->{prefix}servicenotes"
-                               # not yet supported
-                               #$val1 eq "$cfg->{ldap}->{prefix}iconimage" ||
-                               #$val1 eq "$cfg->{ldap}->{prefix}iconimagealt"
-                               ) {
-                            $macros_svc->{$itemMapIcinga2{$val1}} = escape_str($CLIENTS->{$client}->{$val1});
-                        }
-                        elsif ($val1 =~ /servicegroups/i) {
-                            my $groups = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1};
-                            $groups =~ s/,/\", \"/g;
-                            print FH "\t\tgroups = [ \"$groups\" ],\n";
-                        } elsif ($val1 =~ /checkinterval/i) {
-                            print FH "\t\tcheck_interval = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}m,\n";
-                        } elsif ($val1 =~ /retryinterval/i) {
-                            print FH "\t\tretry_interval = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}m,\n";
-                        } elsif ($val1 =~ /maxcheckattempts/i) {
-                            print FH "\t\tmax_check_attempts = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1},\n";
-                        } elsif ($val1 =~ /customvar/i) {
-                            foreach my $val2 (sort keys %{$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}}) {
-                                next if (!defined($val2) || $val2 eq "" ||
-                                    $val2 eq "_" || !$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}->{$val2});
-                                $key = $val2;
-                                $key =~ s/_//;
-                                $custom_svc->{$key} = escape_str($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}->{$val2});
-                            }
-                        } elsif ($val1 eq "$cfg->{ldap}->{prefix}serviceeventhandler") {
-
-                            my $event_command_name = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1};
-                            my $event_command_object_name = "$service-$event_command_name";
-
-                            my $event_command_line; # we don't have args for notification commands
-                            foreach my $command (keys %{$COMMANDS}) {
-                                if ($COMMANDS->{$command}->{cn} eq $event_command_name) {
-                                    $event_command_line = escape_str($COMMANDS->{$command}->{$cfg->{ldap}->{prefix}.'commandline'});
-                                    goto FOUND_EVENT;
-                                }
-                            }
-
-                            FOUND_EVENT:
-
-                            $event_commands->{$event_command_object_name} = $event_command_line;
-
-                            print FH "\t\tevent_command = \"$event_command_object_name\",\n";
-
-                        } else { # FIXME different check_interval, quote notation
-                            #print FH "\t\t$itemMapIcinga2{$val1} = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1},\n";
-                        }
-                    }
-
-                    print FH "\t\tmacros = {\n";
-                    foreach my $macro (sort keys %{$macros_svc}) {
-                        print FH "\t\t\t\"$macro\" = \"$macros_svc->{$macro}\",\n";
-                    }
-                    print FH "\t\t},\n";
-
-                    print FH "\t\tcustom = {\n";
-                    foreach my $custm (sort keys %{$custom_svc}) {
-                        print FH "\t\t\t\"$custm\" = \"$custom_svc->{$custm}\",\n";
-                    }
-                    print FH "\t\t},\n";
-
-                    print FH "\t},\n";
-                    print FH "\n";
                 } else {
                     DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Skipping disabled service '$service' ", 1);
                 }
 
             }
 
-            # host again
-
-            # FIXME
-            # generate end of host definition
-            print FH "}\n";
             print FH "\n";
 
             # print additional commands generated by notifications and event handlers
             foreach my $notification_command_object_name (keys %{$notification_commands}) {
-                print FH "object NotificationCommand \"$notification_command_object_name\" inherits \"plugin-notification-command\" {\n";
+                print FH "object NotificationCommand \"$notification_command_object_name\" {\n";
+                print FH "\timport \"plugin-notification-command\"\n";
                 print FH "\tcommand = \"$notification_commands->{$notification_command_object_name}\"\n";
                 print FH "}\n";
                 print FH "\n";
             }
 
             foreach my $event_command_object_name (keys %{$event_commands}) {
-                print FH "object EventCommand \"$event_command_object_name\" inherits \"plugin-event-command\" {\n";
+                print FH "object EventCommand \"$event_command_object_name\" {\n";
+                print FH "\timport \"plugin-event-command\"\n";
                 print FH "\tcommand = \"$event_commands->{$event_command_object_name}\"\n";
                 print FH "}\n";
                 print FH "\n";
