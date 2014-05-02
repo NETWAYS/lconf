@@ -1157,6 +1157,163 @@ sub genHostConfig2x {
             print FH "\n";
 
             #
+            # host notifications
+            #
+
+            # parse contacts, contactgroups
+            my @users = ();
+            if (defined($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostcontactgroups'})) {
+                foreach my $contactgroup (keys %{$CONTACTGROUPS}) {
+                    #DebugOutput("$$ GENERATE HOSTCONFIG 2x", Dumper($CONTACTGROUPS->{$contactgroup}));
+                    if ($CONTACTGROUPS->{$contactgroup}->{cn} eq $CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostcontactgroups'}) {
+                        my @members = split /,/, $CONTACTGROUPS->{$contactgroup}->{$cfg->{ldap}->{prefix}.'members'};
+                        push @users, @members;
+                    }
+                }
+            } else {
+                #DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Skipping $CLIENTS->{$client}->{cn} notification, no contactgroups found.");
+            }
+
+            if (defined($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostcontacts'})) {
+                my @contacts = split /,/, $CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostcontacts'};
+                push @users, @contacts;
+            } else {
+                #DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Skipping $CLIENTS->{$client}->{cn} notification, no contacts found.");
+            }
+
+            if (@users) {
+                # make sure that group members and contacts remain unique
+                @users = uniq(@users);
+                #DebugOutput("$$ GENERATE HOSTCONFIG 2x", Dumper(@users));
+            }
+
+            # now that we've got all users, get their notification commands
+            foreach my $user (@users) {
+                my $notification_cnt = 0;
+                #DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Looking for user $user in ".Dumper($CONTACTS));
+
+                foreach my $contact (keys %{$CONTACTS}) {
+                    #DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Looking for user $user in ".Dumper($CONTACTS->{$contact}));
+
+                    if ($CONTACTS->{$contact}->{cn} eq $user) {
+                        DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Building notification for host '$CLIENTS->{$client}->{cn}' and user '$user'");
+
+                        # build the notification based on the commands
+                        my @host_notification_commands = split /,/, $CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'contacthostnotificationcommands'};
+
+                        foreach my $notification_command_name (@host_notification_commands) {
+                            my $notification_name = "host-".$CLIENTS->{$client}->{cn}."-".$notification_command_name."-".$notification_cnt;
+
+                            my $notification_command_object_name = "notification-".$notification_name; # generate a unique command name for this notification
+
+                            print FH "object Notification \"$notification_name\" {\n";
+                            print FH "\timport \"mail-host-notification\"\n";
+
+                            print FH "\thost_name = \"$CLIENTS->{$client}->{cn}\"\n";
+
+                            # get the command line, add a new notification command
+                            my $notification_command_line; # we don't have args for notification commands
+                            foreach my $command (keys %{$COMMANDS}) {
+                                if ($COMMANDS->{$command}->{cn} eq $notification_command_name) {
+                                    $notification_command_line = escape_str($COMMANDS->{$command}->{$cfg->{ldap}->{prefix}.'commandline'});
+                                    goto FOUND_NOTIFICATION;
+                                }
+                            }
+
+                            FOUND_NOTIFICATION:
+
+                            $notification_commands->{$notification_command_object_name} = $notification_command_line;
+
+                            # notification command
+                            print FH "\tcommand = \"$notification_command_object_name\"\n";
+
+                            # notification options
+                            if (defined($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostnotificationoptions'})) {
+                                my $notification_filters = convert_notification_options_to_filter_2x($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostnotificationoptions'}, 1);
+
+                                foreach my $by (keys %{$notification_filters}) {
+                                    next if !@{$notification_filters->{$by}};
+                                    my $notification_filter;
+                                    if (grep /0/, @{$notification_filters->{$by}}) {
+                                        $notification_filter = 0;
+                                    } else {
+                                        $notification_filter = "[ ". (join ', ', @{$notification_filters->{$by}}) ."]";
+                                    }
+                                    print FH "\t".$by."s = $notification_filter\n";
+                                }
+                            }
+
+                            # notification period
+                            if (defined($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'servicenotificationperiod'})) {
+                                print FH "\tperiod = \"$CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'servicenotificationperiod'})\"";
+                            }
+
+                            print FH "\tusers = [ \"$user\" ]\n";
+
+                            print FH "}\n";
+                            print FH "\n";
+
+                            # next notification
+                            $notification_cnt++;
+                        }
+                    }
+                }
+            }
+
+            #
+            # service escalations as notification with begin/end
+            #
+
+            if (defined $CLIENTS->{$client}->{HOSTESCALATION}) {
+                foreach my $escalation (sort keys %{$CLIENTS->{$client}->{HOSTESCALATION}}) {
+
+                    my $host_escalation_firstnotification = $CLIENTS->{$client}->{HOSTESCALATION}->{$escalation}->{$cfg->{ldap}->{prefix}.'hostescalationfirstnotification'};
+                    my $host_escalation_lastnotification = $CLIENTS->{$client}->{HOSTESCALATION}->{$escalation}->{$cfg->{ldap}->{prefix}.'hostescalationlastnotification'};
+                    my $host_escalation_notificationinterval = $CLIENTS->{$client}->{HOSTESCALATION}->{$escalation}->{$cfg->{ldap}->{prefix}.'hostescalationnotificationinterval'};
+                    my $host_escalation_contacts = $CLIENTS->{$client}->{HOSTESCALATION}->{$escalation}->{$cfg->{ldap}->{prefix}.'hostescalationcontacts'};
+                    my $host_escalation_contactgroups = $CLIENTS->{$client}->{HOSTESCALATION}->{$escalation}->{$cfg->{ldap}->{prefix}.'hostescalationcontactgroups'};
+
+                    my $begin;
+                    my $end;
+
+                    print FH "object Notification \"$escalation\" {\n";
+                    print FH "\timport \"mail-host-notification\"\n";
+
+                    # if missing, set a default of 5m
+                    if (!defined($host_escalation_notificationinterval)) {
+                        $host_escalation_notificationinterval = 5;
+                    }
+
+                    print FH "\ttimes = {\n";
+
+                    if (defined($host_escalation_firstnotification)) {
+                        $begin = $host_escalation_firstnotification * $host_escalation_notificationinterval;
+                        print FH "\t\tbegin = ".$begin."m,\n";
+                    }
+
+                    if (defined($service_escalation_lastnotification)) {
+                        $end = $host_escalation_lastnotification * $host_escalation_notificationinterval;
+                        print FH "\t\tend = ".$end."m,\n";
+                    }
+
+                    print FH "\t}\n";
+
+                    if (defined($host_escalation_contacts)) {
+                        my @users = split /,/, $host_escalation_contacts;
+                        print FH "\tusers = [ \"".join("\", \"", @users)."\" ],\n";
+                    }
+                    if (defined($host_escalation_contactgroups)) {
+                        my @usergroups = split /,/, $host_escalation_contactgroups;
+                        print FH "\tuser_groups = [ \"".join("\", \"", @usergroups)."\" ],\n";
+                    }
+
+                    print FH "}\n";
+                    print FH "\n";
+
+                }
+            }
+
+            #
             # SERVICES
             #
             foreach my $service (keys %{$CLIENTS->{$client}->{'SERVICES'}}) {
