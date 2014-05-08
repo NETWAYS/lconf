@@ -120,8 +120,8 @@ sub genTimeperiods2x {
         my $writeFile = BuildFilepath($TIMEPERIODS->{$timeperiod}->{dn}, $outputDir);
         open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
 
-        print FH "object TimePeriod \"$TIMEPERIODS->{$timeperiod}->{cn}\"\n";
-        print FH "\timports \"legacy-timeperiod\"\n";
+        print FH "object TimePeriod \"$TIMEPERIODS->{$timeperiod}->{cn}\"{\n";
+        print FH "\timport \"legacy-timeperiod\"\n";
         print FH "\tranges = {\n";
         foreach (sort keys %{$TIMEPERIODS->{$timeperiod}}) {
             if ($_ eq "$cfg->{ldap}->{prefix}timeperiodvalue") {
@@ -212,10 +212,16 @@ sub genCommands2x {
         open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
 
         print FH "object ".$type."Command \"$COMMANDS->{$command}->{cn}\" {\n";
-        print FH "\timports \"$template\"\n";
+        print FH "\timport \"$template\"\n";
         foreach (keys %{$COMMANDS->{$command}}) {
             if ($_ =~ /commandline/) {
                 my $command_line = escape_str($COMMANDS->{$command}->{$_}); # escape quotes
+
+                # TODO translate macros
+                # TODO detect $ARGn$
+                print FH "//\$HOSTADDRESS\$ etc macro translation missing. See https://www.netways.org/issues/2557\"\n";
+
+
                 print FH "\tcommand = \"$command_line\"\n";
             }
         }
@@ -1126,7 +1132,7 @@ sub genHostConfig2x {
                             DebugOutput("$$ GENERATE HOSTCONFIG 2x", "HOSTDEPENDENCY exec: $CLIENTS->{$client}->{HOSTDEPENDENCY}->{$dependency}->{$_}: ".Dumper($fail_crit));
                             print FH "\tdisable_checks = true\n" if $fail_crit->{'runeverything'} == 0;
                             print FH "\tdisable_checks = false\n" if $fail_crit->{'runeverything'} == 1;
-                            print FH "\tstate_filter = [ ". (join ', ', @{$fail_crit->{'state'}}) ." ]\n"; # execution failure criteria is mandatory for state_filter
+                            print FH "\tstates = [ ". (join ', ', @{$fail_crit->{'state'}}) ." ]\n"; # execution failure criteria is mandatory for state_filter
                         }
                         if ($_ eq "$cfg->{ldap}->{prefix}hostdependencynotificationfailurecriteria") {
                             my $fail_crit = convert_dependendy_failure_criteria_2x($CLIENTS->{$client}->{HOSTDEPENDENCY}->{$dependency}->{$_}, 'notification', 1);
@@ -1237,7 +1243,7 @@ sub genHostConfig2x {
                                     if (grep /0/, @{$notification_filters->{$by}}) {
                                         $notification_filter = 0;
                                     } else {
-                                        $notification_filter = "[ ". (join ', ', @{$notification_filters->{$by}}) ."]";
+                                        $notification_filter = "[ ". (join ', ', @{$notification_filters->{$by}}) ." ]";
                                     }
                                     print FH "\t".$by."s = $notification_filter\n";
                                 }
@@ -1453,7 +1459,7 @@ sub genHostConfig2x {
                                     DebugOutput("$$ GENERATE HOSTCONFIG 2x", "SERVICEDEPENDENCY: exec: $CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEDEPENDENCY}->{$dependency}->{$_}: ".Dumper($fail_crit));
                                     print FH "\tdisable_checks = true\n" if $fail_crit->{'runeverything'} == 0;
                                     print FH "\tdisable_checks = false\n" if $fail_crit->{'runeverything'} == 1;
-                                    print FH "\tstate_filter = [ ". (join ', ', @{$fail_crit->{'state'}}) ." ]\n"; # execution failure criteria is mandatory for state_filter
+                                    print FH "\tstates = [ ". (join ', ', @{$fail_crit->{'state'}}) ." ]\n"; # execution failure criteria is mandatory for state_filter
                                 }
                                 if ($_ eq "$cfg->{ldap}->{prefix}servicedependencynotificationfailurecriteria") {
                                     my $fail_crit = convert_dependendy_failure_criteria_2x($CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEDEPENDENCY}->{$dependency}->{$_}, 'notification', 0);
@@ -1548,7 +1554,7 @@ sub genHostConfig2x {
                                             if (grep /0/, @{$notification_filters->{$by}}) {
                                                 $notification_filter = 0;
                                             } else {
-                                                $notification_filter = "[ ". (join ', ', @{$notification_filters->{$by}}) ."]";
+                                                $notification_filter = "[ ". (join ', ', @{$notification_filters->{$by}}) ." ]";
                                             }
                                             print FH "\t".$by."s = $notification_filter\n";
                                         }

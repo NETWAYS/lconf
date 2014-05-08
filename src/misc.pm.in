@@ -326,7 +326,7 @@ sub convert_notification_options_to_filter_2x {
 
     # recovery requires state up
     if (grep /r/, @options) {
-        push @{$filter->{'state'}}, 'StateFilterOK';
+        push @{$filter->{'state'}}, 'OK';
     }
 
     # always add Problem|Custom|OK
