@@ -56,7 +56,8 @@ install -d -o $ICINGAUSER -g $ICINGAGROUP $LCONFTMP
 
 # generate icinga2.conf with lconf export only
 echo "include constants.conf" > $ICINGA2TMPCONFIG
-echo "include <itl/itl.conf>" > $ICINGA2TMPCONFIG
+echo "include <itl>" > $ICINGA2TMPCONFIG
+echo "include <plugins>" > $ICINGA2TMPCONFIG
 echo "include \"features-enabled/*.conf\"" >> $ICINGA2TMPCONFIG
 echo "include_recursive \"$LCONFTMP\" \"*.conf\"" >> $ICINGA2TMPCONFIG
 
