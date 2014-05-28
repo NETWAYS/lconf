@@ -204,7 +204,7 @@ sub genCommands2x {
     my $COMMANDS = shift;
     my $outputDir = shift;
     my $type = 'Check'; #FIXME for notifications/events
-    my $template = "plugin-check-command";
+    my $template = "generic-check-command";
 
     foreach my $command (keys %{$COMMANDS}) {
         # get target file's name and open it for writing
@@ -215,14 +215,10 @@ sub genCommands2x {
         print FH "\timport \"$template\"\n";
         foreach (keys %{$COMMANDS->{$command}}) {
             if ($_ =~ /commandline/) {
-                my $command_line = escape_str($COMMANDS->{$command}->{$_}); # escape quotes
+                my $command_line = $COMMANDS->{$command}->{$_}; # escape quotes
 
-                # TODO translate macros
-                # TODO detect $ARGn$
-                print FH "//\$HOSTADDRESS\$ etc macro translation missing. See https://www.netways.org/issues/2557\"\n";
-
-
-                print FH "\tcommand = \"$command_line\"\n";
+                #$command_line = escape_str($command_line); # escape quotes
+                print FH "\tcommand = $command_line\n";
             }
         }
         print FH "}\n";
@@ -231,6 +227,7 @@ sub genCommands2x {
         close(FH);
     }
 }
+
 
 #
 # CONTACTS

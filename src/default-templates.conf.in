@@ -21,6 +21,12 @@ template User "generic-user" {
   types = [ Problem, Recovery ]
 }
 
+template CheckCommand "generic-check-command" {
+  import "plugin-check-command"
+
+  vars.plugindir = PluginDir
+}
+
 template Notification "mail-host-notification" {
   command = "mail-host-notification"
 
