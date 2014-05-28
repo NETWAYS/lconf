@@ -142,9 +142,10 @@ sub LDAPsearch {
                 $counter--;
                 if ($attrName eq "$cfg->{ldap}->{prefix}hostcustomvar" || $attrName eq "$cfg->{ldap}->{prefix}servicecustomvar") {
                     @$attrVal[$counter] =~ m/([\d\w]*) (.*)/;
-                    $return->{$_}->{$attrName}->{$1} = $2;
                     if(!defined($1)) {
                         print("Warning: @$attrVal[$counter] in $_ is empty!\n");
+                    } else {
+                        $return->{$_}->{$attrName}->{$1} = $2;
                     }
                 } elsif ($attrName eq "$cfg->{ldap}->{prefix}timeperiodvalue") {
                     @$attrVal[$counter] =~ m/(.*) +([-\w:]+(\,?)+[-\w:]+)/;
