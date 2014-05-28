@@ -23,8 +23,20 @@ template User "generic-user" {
 
 template CheckCommand "generic-check-command" {
   import "plugin-check-command"
-
   vars.plugindir = PluginDir
+  vars.USER1 = PluginDir
+}
+
+template NotificationCommand "generic-notification-command" {
+  import "plugin-notification-command"
+  vars.plugindir = PluginDir
+  vars.USER1 = PluginDir
+}
+
+template EventCommand "generic-event-command" {
+  import "plugin-event-command"
+  vars.plugindir = PluginDir
+  vars.USER1 = PluginDir
 }
 
 template Notification "mail-host-notification" {
