@@ -285,9 +285,9 @@ sub TreeBuilder {
                 # special handling for customvars and descriptions --> multiple definitions possible
                 if ($val1 =~ /$cfg->{ldap}->{prefix}hostcustomvar/ || $val1 =~ /$cfg->{ldap}->{prefix}servicecustomvar/ || $val1 =~ /description/ || $val1 eq 'cn') {
                     foreach my $val2 (keys %{$CONFIG->{$searchDN}->{$val1}}) {
-                        DebugOutput('TREE BUILDER', "Found attribute hash '$val1\{$val2\}' with value '$CONFIG->{$searchDN}->{$val1}->{$val2}' => store!", 1);
+                        DebugOutput('TREE BUILDER', "Found attribute hash '$val1\{$val2\}' with value '$CONFIG->{$searchDN}->{$val1}->{$val2}' => store!", 1) if defined($CONFIG->{$searchDN}->{$val1}->{$val2});
                         $forward{$val1}{$val2} = $CONFIG->{$searchDN}->{$val1}->{$val2};
-                        DebugOutput('TREE BUILDER',"Main targets attributes: Added to $val1 -> $val2 $forward{$val1}{$val2}\n", 1);
+                        DebugOutput('TREE BUILDER',"Main targets attributes: Added to $val1 -> $val2 $forward{$val1}{$val2}\n", 1) if defined($forward{$val1}{$val2});
                     }
                 # an other special handling for hostdependencies...
                 } elsif ($val1 =~ /$cfg->{ldap}->{prefix}hostdependency/) {
