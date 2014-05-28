@@ -1406,7 +1406,7 @@ sub genHostConfig2x {
                         } elsif ($val1 eq "$cfg->{ldap}->{prefix}serviceeventhandler") {
 
                             my $event_command_name = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1};
-                            my $event_command_object_name = "$service-$event_command_name";
+                            my $event_command_object_name = "host-$CLIENTS->{$client}->{cn}-service-$service-$event_command_name";
 
                             my $event_command_line; # we don't have args for notification commands
                             foreach my $command (keys %{$COMMANDS}) {
