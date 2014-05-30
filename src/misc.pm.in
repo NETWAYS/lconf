@@ -416,6 +416,120 @@ sub convert_dependendy_failure_criteria_2x {
     return $filter;
 }
 
+sub convert_legacy_command_macros_2x {
+    my $str = shift;
+
+    # http://docs.icinga.org/icinga2/snapshot/chapter-8.html#runtime-macros
+
+    # user/contact macros
+    $str =~ s/\$CONTACTNAME\$/\$user.name\$/g;
+    $str =~ s/\$CONTACTALIAS\$/\$user.display_name\$/g;
+    $str =~ s/\$CONTACTEMAIL\$/\$user.email\$/g;
+    $str =~ s/\$CONTACTPAGER\$/\$user.pager\$/g;
+    $str =~ s/\$CONTACTADDRESS1\$/\$user.vars.address1\$/g;
+    $str =~ s/\$CONTACTADDRESS2\$/\$user.vars.address2\$/g;
+    $str =~ s/\$CONTACTADDRESS3\$/\$user.vars.address3\$/g;
+    $str =~ s/\$CONTACTADDRESS4\$/\$user.vars.address4\$/g;
+    $str =~ s/\$CONTACTADDRESS5\$/\$user.vars.address5\$/g;
+    $str =~ s/\$CONTACTADDRESS6\$/\$user.vars.address6\$/g;
+
+    # service
+    $str =~ s/\$SERVICEDESC\$/\$service.description\$/g;
+    $str =~ s/\$SERVICEDISPLAYNAME\$/\$service.display_name\$/g;
+    $str =~ s/\$SERVICECHECKCOMMAND\$/\$service.check_command\$/g;
+    $str =~ s/\$SERVICESTATE\$/\$service.state\$/g;
+    $str =~ s/\$SERVICESTATEID\$/\$service.state_id\$/g;
+    $str =~ s/\$SERVICESTATETYPE\$/\$service.state_type\$/g;
+    $str =~ s/\$SERVICEATTEMPT\$/\$service.check_attempt\$/g;
+    $str =~ s/\$MAXSERVICEATTEMPT\$/\$service.max_check_attempts\$/g;
+    $str =~ s/\$LASTSERVICESTATE\$/\$service.last_state\$/g;
+    $str =~ s/\$LASTSERVICESTATEID\$/\$service.last_state_id\$/g;
+    $str =~ s/\$LASTSERVICESTATETYPE\$/\$service.last_state_type\$/g;
+    $str =~ s/\$LASTSERVICESTATECHANGE\$/\$service.last_state_change\$/g;
+    $str =~ s/\$SERVICEDURATIONSEC\$/\$service.duration_sec\$/g;
+    $str =~ s/\$SERVICELATENCY\$/\$service.latency\$/g;
+    $str =~ s/\$SERVICEEXECUTIONTIME\$/\$service.execution_time\$/g;
+    $str =~ s/\$SERVICEOUTPUT\$/\$service.output\$/g;
+    $str =~ s/\$SERVICEPERFDATA\$/\$service.perfdata\$/g;
+    $str =~ s/\$LASTSERVICECHECK\$/\$service.last_check\$/g;
+    $str =~ s/\$SERVICENOTES\$/\$service.notes\$/g;
+    $str =~ s/\$SERVICENOTESURL\$/\$service.notes_url\$/g;
+    $str =~ s/\$SERVICEACTIONURL\$/\$service.action_url\$/g;
+
+    # host
+    $str =~ s/\$HOSTADDRESS\$/\$address\$/g; # special case for 2.x, there is no fallback to $host.name$!
+    $str =~ s/\$HOSTADDRESS6\$/\$address6\$/g; # special case for 2.x, there is no fallback to $host.name$!
+    $str =~ s/\$HOSTNAME\$/\$host.name\$/g;
+    $str =~ s/\$HOSTDISPLAYNAME\$/\$host.display_name\$/g;
+    $str =~ s/\$HOSTCHECKCOMMAND\$/\$host.check_command\$/g;
+    $str =~ s/\$HOSTALIAS\$/\$host.display_name\$/g;
+    $str =~ s/\$HOSTSTATE\$/\$host.state\$/g;
+    $str =~ s/\$HOSTSTATEID\$/\$host.state_id\$/g;
+    $str =~ s/\$HOSTSTATETYPE\$/\$host.state_type\$/g;
+    $str =~ s/\$HOSTATTEMPT\$/\$host.check_attempt\$/g;
+    $str =~ s/\$MAXHOSTATTEMPT\$/\$host.max_check_attempts\$/g;
+    $str =~ s/\$LASTHOSTSTATE\$/\$host.last_state\$/g;
+    $str =~ s/\$LASTHOSTSTATEID\$/\$host.last_state_id\$/g;
+    $str =~ s/\$LASTHOSTSTATETYPE\$/\$host.last_state_type\$/g;
+    $str =~ s/\$LASTHOSTSTATECHANGE\$/\$host.last_state_change\$/g;
+    $str =~ s/\$HOSTDURATIONSEC\$/\$host.duration_sec\$/g;
+    $str =~ s/\$HOSTLATENCY\$/\$host.latency\$/g;
+    $str =~ s/\$HOSTEXECUTIONTIME\$/\$host.execution_time\$/g;
+    $str =~ s/\$HOSTOUTPUT\$/\$host.output\$/g;
+    $str =~ s/\$HOSTPERFDATA\$/\$host.perfdata\$/g;
+    $str =~ s/\$LASTHOSTCHECK\$/\$host.last_check\$/g;
+    $str =~ s/\$HOSTNOTES\$/\$host.notes\$/g;
+    $str =~ s/\$HOSTNOTESURL\$/\$host.notes_url\$/g;
+    $str =~ s/\$HOSTACTIONURL\$/\$host.action_url\$/g;
+    $str =~ s/\$TOTALSERVICES\$/\$host.num_services\$/g;
+    $str =~ s/\$TOTALSERVICESOK\$/\$host.num_services_ok\$/g;
+    $str =~ s/\$TOTALSERVICESWARNING\$/\$host.num_services_warning\$/g;
+    $str =~ s/\$TOTALSERVICESUNKNOWN\$/\$host.num_services_unknown\$/g;
+    $str =~ s/\$TOTALSERVICESCRITICAL\$/\$host.num_services_critical\$/g;
+
+    # command
+    $str =~ s/\$COMMANDNAME\$/\$command.name\$/g;
+
+    # notification
+    $str =~ s/\$NOTIFICATIONTYPE\$/\$notification.type\$/g;
+    $str =~ s/\$NOTIFICATIONAUTHOR\$/\$notification.author\$/g;
+    $str =~ s/\$NOTIFICATIONCOMMENT\$/\$notification.comment\$/g;
+    $str =~ s/\$NOTIFICATIONAUTHORNAME\$/\$notification.author\$/g;
+    $str =~ s/\$NOTIFICATIONAUTHORALIAS\$/\$notification.author\$/g;
+
+    # global runtime
+    $str =~ s/\$TIMET\$/\$icinga.timet\$/g;
+    $str =~ s/\$LONGDATETIME\$/\$icinga.long_date_time\$/g;
+    $str =~ s/\$SHORTDATETIME\$/\$icinga.short_date_time\$/g;
+    $str =~ s/\$DATE\$/\$icinga.date\$/g;
+    $str =~ s/\$TIME\$/\$icinga.time\$/g;
+    $str =~ s/\$PROCESSSTARTTIME\$/\$icinga.uptime\$/g;
+
+    # global stats
+    $str =~ s/\$TOTALHOSTSUP\$/\$icinga.num_hosts_up\$/g;
+    $str =~ s/\$TOTALHOSTSDOWN\$/\$icinga.num_hosts_down\$/g;
+    $str =~ s/\$TOTALHOSTSUNREACHABLE\$/\$icinga.num_hosts_unreachable\$/g;
+    $str =~ s/\$TOTALSERVICESOK\$/\$icinga.num_services_ok\$/g;
+    $str =~ s/\$TOTALSERVICESWARNING\$/\$icinga.num_services_warning\$/g;
+    $str =~ s/\$TOTALSERVICESCRITICAL\$/\$icinga.num_services_critical\$/g;
+    $str =~ s/\$TOTALSERVICESUNKNOWN\$/\$icinga.num_services_unknown\$/g;
+
+    if (
+    $str =~ /\$(TOTALHOSTSDOWNUNHANDLED)\$/ ||
+    $str =~ /\$(TOTALHOSTSUNREACHABLEUNHANDLED)\$/ ||
+    $str =~ /\$(TOTALHOSTPROBLEMS)\$/ ||
+    $str =~ /\$(TOTALHOSTPROBLEMSUNHANDLED)\$/ ||
+    $str =~ /\$(TOTALSERVICESWARNINGUNHANDLED)\$/ ||
+    $str =~ /\$(TOTALSERVICESCRITICALUNHANDLED)\$/ ||
+    $str =~ /\$(TOTALSERVICESUNKNOWNUNHANDLED)\$/ ||
+    $str =~ /\$(TOTALSERVICEPROBLEMS)\$/ ||
+    $str =~ /\$(TOTALSERVICEPROBLEMSUNHANDLED)\$/
+    ) {
+        beVerbose("Migrate Runtime Macros", "Cannot convert $1 - manual interaction required.");
+    }
+
+    return $str;
+}
 
 1;
 

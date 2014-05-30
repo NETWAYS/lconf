@@ -221,6 +221,9 @@ sub genCommands2x {
                 # TODO detect $ARGn$
                 print FH "//\$HOSTADDRESS\$ etc macro translation missing. See https://www.netways.org/issues/2557\n";
 
+                # convert legacy runtime macros to 2.x
+                $command_line = convert_legacy_command_macros_2x($command_line);
+
                 # 1.x definition
                 if ($command_line =~ /\$(USER\d+)\$/) {
                         $command_line = "\"".escape_str($command_line)."\""; # escape quotes
