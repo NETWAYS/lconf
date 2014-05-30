@@ -1212,7 +1212,10 @@ sub genHostConfig2x {
                         DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Building notification for host '$CLIENTS->{$client}->{cn}' and user '$user'");
 
                         # build the notification based on the commands
-                        my @host_notification_commands = split /,/, $CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'contacthostnotificationcommands'};
+                        my @host_notification_commands = ();
+                        if (defined($CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'contacthostnotificationcommands'})) {
+                            @host_notification_commands = split /,/, $CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'contacthostnotificationcommands'};
+                        }
 
                         foreach my $notification_command_name (@host_notification_commands) {
                             my $notification_name = "host-".$CLIENTS->{$client}->{cn}."-".$notification_command_name."-".$notification_cnt;
@@ -1522,7 +1525,10 @@ sub genHostConfig2x {
                                 DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Building notification for service '$service' and user '$user'");
 
                                 # build the notification based on the commands
-                                my @service_notification_commands = split /,/, $CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'contactservicenotificationcommands'};
+                                my @service_notification_commands = ();
+                                if (defined($CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'contactservicenotificationcommands'})) {
+                                        @service_notification_commands = split /,/, $CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'contactservicenotificationcommands'};
+                                }
 
                                 foreach my $notification_command_name (@service_notification_commands) {
                                     my $notification_name = "host-".$CLIENTS->{$client}->{cn}."-service-".$CLIENTS->{$client}->{'SERVICES'}->{$service}->{cn}."-".$notification_command_name."-".$notification_cnt;
