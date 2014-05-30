@@ -7,6 +7,7 @@ autom4te.cache
 *.komodoproject
 *.diff
 *.patch
+.vagrant
 
 # built stuff
 contrib/create_lconf-web-dn-mid.pl
