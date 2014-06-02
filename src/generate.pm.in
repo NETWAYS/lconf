@@ -1264,7 +1264,7 @@ sub genHostConfig2x {
 
                             # notification period
                             if (defined($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'servicenotificationperiod'})) {
-                                print FH "\tperiod = \"$CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'servicenotificationperiod'})\"";
+                                print FH "\tperiod = \"$CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'servicenotificationperiod'}\"\n";
                             }
 
                             print FH "\tusers = [ \"$user\" ]\n";
@@ -1578,7 +1578,7 @@ sub genHostConfig2x {
 
                                     # notification period
                                     if (defined($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$cfg->{ldap}->{prefix}.'servicenotificationperiod'})) {
-                                        print FH "\tperiod = \"$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$cfg->{ldap}->{prefix}.'servicenotificationperiod'})\"";
+                                        print FH "\tperiod = \"$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$cfg->{ldap}->{prefix}.'servicenotificationperiod'}\"\n";
                                     }
 
                                     print FH "\tusers = [ \"$user\" ]\n";
