@@ -421,6 +421,10 @@ sub convert_legacy_command_macros_2x {
 
     # http://docs.icinga.org/icinga2/snapshot/chapter-8.html#runtime-macros
 
+    # custom vars as macros
+    $str =~ s/\$_HOST(\w+)\$/\$host.vars.$1\$/g;
+    $str =~ s/\$_SERVICE(\w+)\$/\$service.vars.$1\$/g;
+
     # user/contact macros
     $str =~ s/\$CONTACTNAME\$/\$user.name\$/g;
     $str =~ s/\$CONTACTALIAS\$/\$user.display_name\$/g;
