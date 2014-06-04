@@ -393,7 +393,7 @@ sub convert_dependendy_failure_criteria_2x {
     my @options = str2arr_by_delim_without_excludes($fail_criteria, ',', 1);
 
     if (grep(/n/, @options)) {
-        push @{$filter->{'state'}}, 'StateFilterOK';
+        push @{$filter->{'state'}}, 'OK';
         $filter->{'runeverything'} = 1;
         return $filter;
     }
