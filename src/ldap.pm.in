@@ -430,13 +430,14 @@ sub TreeBuilder {
             #DebugOutput('TREE BUILDER', "Forward Hash contains " .Dumper(%forward), 2);
             # create service and push every parent attribute to the service
             foreach my $val1 (keys %{forward}) {
-		DebugOutput('TREE BUILDER', "Processing forward hash key '$val1' with value '".Dumper($forward{$val1})."'",1);
+		        DebugOutput('TREE BUILDER', "Processing forward hash key '$val1' with value '".Dumper($forward{$val1})."'",1);
+
                 if (ref($forward{$val1}) eq "HASH") {
-		    DebugOutput('TREE BUILDER', "Processing forward hash key '$val1' with hash value '".Dumper($forward{$val1})."'",1);
+		            DebugOutput('TREE BUILDER', "Processing forward hash key '$val1' with hash value '".Dumper($forward{$val1})."'",1);
 
                     # if val1 is an ADDITIONAL service hash (containing multiple services)
                     # we must ignore it. a service can't affect another one here.
-                    if ($val1 eq 'SERVICES' || $val1 eq 'description' || $val1 eq 'objectclass') {
+                    if ($val1 eq 'SERVICES' || $val1 eq 'objectclass') {
                         DebugOutput('TREE BUILDER', "Ignoring '$val1' attribute for service to forward: $CONFIG->{$service}->{cn}", 1);
                         next;
                     }
