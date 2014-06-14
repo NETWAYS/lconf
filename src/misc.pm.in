@@ -299,9 +299,9 @@ sub convert_notification_options_to_filter_2x {
         'c' => 'Critical',
         'u' => 'Unknown',
         'd' => 'Down',
-        's' => 'DowntimeStart | DowntimeEnd | DowntimeRemoved',
+        's' => 'DowntimeStart, DowntimeEnd, DowntimeRemoved',
         'r' => 'Recovery',
-        'f' => 'FlappingStart | FlappingEnd'
+        'f' => 'FlappingStart, FlappingEnd'
     };
     my $filter_by = {
         'o' => 'state',
