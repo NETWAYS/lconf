@@ -435,7 +435,7 @@ if ($opt->{objectsCache}) {
     # get all hosts
     my $CLIENTS = LDAPsearch($ldap, $opt->{cleanup}, "sub", "objectclass=$cfg->{ldap}->{prefix}Host");
     foreach my $client (keys %{$CLIENTS}) {
-        $client =~ /cn=[-_\d\w\s]*,(.*)/;
+        $client =~ /cn=[-_.\d\w\s]*,(.*)/;
         $COMPARE_GROUPS->{$1} = $1;
     }
 
