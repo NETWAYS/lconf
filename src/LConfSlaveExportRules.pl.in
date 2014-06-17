@@ -250,6 +250,14 @@ foreach my $target (sort keys %{$cfg->{slaveexportrules}->{targets}}) {
 			foreach my $object (keys %{$filtered_objects}) {
 				$CLIENTS_slave->{$object} = $filtered_objects->{$object};
 			}
+			foreach my $client (keys %{$CLIENTS_slave}) {
+				# delete any host dependency found, this makes no sense on slaves
+                                if ($opt->{slaveexportdependencies} == 0) {
+                                	if (defined($CLIENTS_slave->{$client}->{HOSTDEPENDENCY})) {
+                                        	delete($CLIENTS_slave->{$client}->{HOSTDEPENDENCY});
+                                        }
+				}
+			}
 		}
 
 		if ($cfg->{slaveexportrules}->{rules}->{$rule}->{object} =~ /Service/i) {
