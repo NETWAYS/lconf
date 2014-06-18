@@ -5,6 +5,8 @@
 # version info
 VERSION=@PKG_VERSION@
 
+TARBALL_NAME=LConf
+
 # path settings
 prefix = @prefix@
 exec_prefix = @exec_prefix@
@@ -331,7 +333,9 @@ clean:
 	rm -f contrib/LConfDeployIcinga2.sh
 
 create-tarball:
-	./make-tarball --prefix LConf-${VERSION}/
+	$(eval version := $(shell git describe --tags HEAD | sed 's/^v//'))
+	git archive -o "../${TARBALL_NAME}-$(version).tar.gz" --prefix="${TARBALL_NAME}-$(version)/" HEAD
+	@echo "You find your tarball here: ../${TARBALL_NAME}-$(version).tar.gz"
 
 
 # vi: ts=4 sw=4 noexpandtab :
