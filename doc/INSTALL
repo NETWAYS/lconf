@@ -4,3 +4,55 @@ LConf Install
 Please refer to https://www.netways.org/projects/lconf/wiki for detailed instructions.
 
 
+Release Checklist
+=================
+
+Create support branch
+---------------------
+
+$ git checkout master
+$ git checkout -b support/1.4
+
+Look for old version info
+-------------------------
+
+$ grep -r '$oldversion' *
+
+Edit version info
+-----------------
+
+$ vim m4/verison.m4
+$ vim LConf.spec
+
+Regenerate configure
+--------------------
+
+$ autoconf
+
+Add a git tag
+-------------
+
+$ git tag v1.4.0
+
+Create release tarball
+----------------------
+
+$ ./configure && make create-tarball
+
+Push origin
+-----------
+
+$ git push origin support/1.4
+$ git push --tags
+
+Merge stable master / development
+---------------------------------
+
+$ git checkout next
+$ git merge support/1.4
+
+$ git checkout master
+$ git merge support/1.4
+
+
+
