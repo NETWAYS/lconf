@@ -4,6 +4,31 @@ LConf Changelog
 NOTE: Please read doc/UPGRADING for detailed information on changes and
 upgrade information!
 
+1.4.2 - 18/06/2014
+
+ENHANCEMENTS
+* Update Icinga 2 export for 2.0.0 #2557
+
+FIXES
+* SlaveExportRules: remove host dependencies from slave export too (Oliver Kaiser) #2635
+* Fix missing '.' in regexp for clients in cleanup #2302
+* Icinga 2: fix wrong notification types #2557
+* Remove deprecated retry_check_interval, normal_check_interval from default-templates.cfg #2653
+* Fix Export ignores activation of servicechecks on slave #2575
+* Icinga 2: Fix wrong dependency state filter #2557
+* Icinga 2: Fix action_url, notes_url, notes attribute export #2557
+* Icinga 2: Fix notification period #2557
+* Icinga 2: Convert commandline runtime macros automatically #2557
+* Icinga 2: Fix error on non-existing contact notification commands #2557
+* Re-implement legacy $USER1$ detection support in Icinga 2 *Commands #2557
+* Fix Icinga 2 CheckCommand definition. Requires PluginDir + "/check..." by convention #2557
+* Silence uninitialized custom var warning #2557
+* Suppress debug log if variable is empty #2557
+* Fix unique event command name in Icinga 2 Export #2557
+* LConfDeployIcinga2.sh: Fix itl/plugin includes #2557
+* Icinga 2 Export: Fix missing host notifications/escalations #2557
+
+
 1.4.1 - 13/03/2014
 
 Special thanks to Jörg Monpetain (VHV) for bug hunting and tests!
