@@ -879,7 +879,13 @@ sub genHostConfig1x {
                             print FH "\t$val2\t$CLIENTS->{$client}->{$val1}->{$val2}\n";
                         }
                     } else {
-                        print FH "\t$itemMap{$val1}\t$CLIENTS->{$client}->{$val1}\n";
+                         if ($itemMap{$val1} =~ /contact_groups/i) {
+                             my @groups = split(',', $CLIENTS->{$client}->{$val1});
+                             my $groups = join ",", grep length,  @groups;
+                             print FH "\t$itemMap{$val1}\t$groups\n";
+                         } else {
+                             print FH "\t$itemMap{$val1}\t$CLIENTS->{$client}->{$val1}\n";
+                         }
                     }
                 }
             }
@@ -912,7 +918,13 @@ sub genHostConfig1x {
                                     print FH "\t$val2\t$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}->{$val2}\n";
                                 }
                             } else {
-                                print FH "\t$itemMap{$val1}\t$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}\n";
+                                if ($itemMap{$val1} =~ /contact_groups/i) {
+                                    my @groups = split(',', $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1});
+                                    my $groups = join ",", grep length,  @groups;
+                                    print FH "\t$itemMap{$val1}\t$groups\n";
+                                } else {
+                                    print FH "\t$itemMap{$val1}\t$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}\n";
+                                }
                             }
                         }
                     }
@@ -1078,7 +1090,8 @@ sub genHostConfig2x {
                 } elsif ($val1 eq "$cfg->{ldap}->{prefix}parent") {
                     $host_parents_str = $CLIENTS->{$client}->{$val1};
                 } elsif ($val1 eq "$cfg->{ldap}->{prefix}hostgroups") {
-                    my $groups = $CLIENTS->{$client}->{$val1};
+                    my @groups = split(',', $CLIENTS->{$client}->{$val1});
+                    my $groups = join ",", grep length, @groups;
                     $groups =~ s/,/\", \"/g;
                     print FH "\tgroups = [ \"$groups\" ]\n";
                 } elsif ($val1 eq "$cfg->{ldap}->{prefix}alias") {
@@ -1399,7 +1412,8 @@ sub genHostConfig2x {
                             print FH "\t\t$itemMapIcinga2{$val1} = \"$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}\"\n";
                         }
                         elsif ($val1 =~ /servicegroups/i) {
-                            my $groups = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1};
+                            my @groups = split(',', $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1});
+                            my $groups = join ",", grep length, @groups;
                             $groups =~ s/,/\", \"/g;
                             print FH "\t\tgroups = [ \"$groups\" ],\n";
                         } elsif ($val1 =~ /checkinterval/i) {
