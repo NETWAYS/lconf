@@ -3,7 +3,7 @@
 LConf consists of two modules:
 
 * LConf Backend, holding the LDAP backend and export/import capabilities
-* LConf Fromtend (Standalone Web or Icinga Web Int
+* LConf Fromtend (Standalone Web or Icinga Web Integration)
 
 ## Icinga 1.x and Nagios
 
@@ -22,7 +22,7 @@ https://www.netways.org/projects/lconf/wiki/Wiki#Export-Icinga-2x-Configuration-
 * Host/Service Contacts and Contactgroups will automatically be converted into Host/Service Notification Objects, Commands and Users.
     * If there are no contact notification commands defined, the migration export does not generate any notification objects
 * Depencenies and Escalations will be converted into Icinga 2.x Dependency and Notification objects
-* All changed runtime macros (such as $HOSTADDRESS$) will be converted into the Icinga 2.x native runtime macros (e.g. $address$, $host.state$, etc)
+* All changed runtime macros (such as `$HOSTADDRESS$`) will be converted into the Icinga 2.x native runtime macros (e.g. `$address$`, `$host.state$`, etc)
 * LConf Export does not use any apply rules with assign/ignore. Look into the Icinga 2 configuration documentation for details on manual configuration.
 
 The migration export logic is integrated into `src/generate.pm` and uses helper functions
@@ -111,7 +111,7 @@ supported by Icinga 2.
 #### Converting Contacts to Notificiations
 
 Notifications have been revamped and changed in Icinga 2.x so there are certain requirements
-to allow the LConf export a migration.
+to allow a migration by the LConf export.
 
 Icinga 1.x uses the `host/service -> contact -> host/service_notification_commands` logic
 for generating notifications on alerts.
@@ -152,7 +152,7 @@ on export and the custom variable is skipped.
 
 #### Mapping Groups
 
-All groups in Icinga 1.x a separated by a comma `,` (with our without trailing whitespaces).
+All groups in Icinga 1.x a separated by a comma `,` (with or without trailing whitespaces).
 
     lconfhostgroups 	| webserver, testserver , internalserver
 
