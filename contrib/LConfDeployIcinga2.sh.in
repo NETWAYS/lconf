@@ -1,5 +1,5 @@
 #!/bin/bash
-# LConf deploy script for Icinga 2
+# LConf deploy script for Icinga 2 >= 2.2
 
 #################################################
 # config
@@ -33,17 +33,19 @@ ICINGA2TMPCONFIG="@TMP_DIR@/lconfexport-icinga2.tmp.conf"
 ICINGAUSER="@ICINGA2_USER@"
 ICINGAGROUP="@ICINGA2_USER@"
 if [ ! -x $ICINGA2BIN ] ; then
-ICINGABIN="@ICINGA2_BINPATH@/icinga2"
-if [ ! -x $ICINGA2BIN ] ; then
-echo "ERROR: Could not find icinga2 binary to check the config!"
-exit 2
+	ICINGA2BIN="@ICINGA2_BINPATH@/icinga2"
+	if [ ! -x $ICINGA2BIN ] ; then
+		echo "ERROR: Could not find icinga2 binary to check the config!"
+		exit 2
+	fi
 fi
-fi
+
+ICINGA2DAEMON="$ICINGA2BIN daemon"
 
 RUNUSER=$(whoami)
 SUDOCOMMAND=""
 if [ "$RUNUSER" != $ICINGAUSER ] ; then
-SUDOCOMMAND="sudo -u $ICINGAUSER -i"
+	SUDOCOMMAND="sudo -u $ICINGAUSER -i"
 fi
 
 
@@ -55,11 +57,13 @@ install -d -o $ICINGAUSER -g $ICINGAGROUP $LCONFDIR
 install -d -o $ICINGAUSER -g $ICINGAGROUP $LCONFTMP
 
 # generate icinga2.conf with lconf export only
-echo "const PluginDir = \"/usr/lib/nagios/plugins\"" > $ICINGA2TMPCONFIG
-echo "include <itl>" >> $ICINGA2TMPCONFIG
-echo "include <plugins>" >> $ICINGA2TMPCONFIG
-echo "include \"features-enabled/*.conf\"" >> $ICINGA2TMPCONFIG
-echo "include_recursive \"$LCONFTMP\" \"*.conf\"" >> $ICINGA2TMPCONFIG
+cat >$ICINGA2TMPCONFIG <<EOF
+const PluginDir = "/usr/lib/nagios/plugins"
+include <itl>
+include <plugins>
+include "features-enabled/*.conf"
+include_recursive "$LCONFTMP"
+EOF
 
 echo "export config from LDAP"
 # export original full config from LDAP
@@ -67,11 +71,11 @@ echo "export config from LDAP"
 (cd $LCONFBINPATH; $SUDOCOMMAND $LCONFBINPATH/LConfExport.pl -o $LCONFTMP --format 2)
 
 if [ $? != "0" ]; then
-exit $?	
+	exit $?
 fi
 
 # first test the config within the tmp dir
-if ( $SUDOCOMMAND $ICINGA2BIN -c $ICINGA2TMPCONFIG -C ) then # config test ##begin
+if ( $ICINGA2DAEMON -c $ICINGA2TMPCONFIG -C ) then # config test ##begin
 
 # generate config for satellites
 # this process may alter the original config
