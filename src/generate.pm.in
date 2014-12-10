@@ -1285,9 +1285,12 @@ sub genHostConfig2x {
                             print FH "}\n";
                             print FH "\n";
 
-                            # next notification
+                            # next notification command
                             $notification_cnt++;
                         }
+
+                        # next notification contact
+                        $notification_cnt++;
                     }
                 }
             }
@@ -1600,9 +1603,12 @@ sub genHostConfig2x {
                                     print FH "}\n";
                                     print FH "\n";
 
-                                    # next notification
+                                    # next notification command
                                     $notification_cnt++;
                                 }
+
+                                # next notification contact
+                                $notification_cnt++;
                             }
                         }
                     }
