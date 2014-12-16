@@ -217,17 +217,12 @@ sub genCommands2x {
             if ($_ =~ /commandline/) {
                 my $command_line = $COMMANDS->{$command}->{$_}; # escape quotes
 
-                # TODO translate macros
-                # TODO detect $ARGn$
-                print FH "//\$HOSTADDRESS\$ etc macro translation missing. See https://www.netways.org/issues/2557\n";
-
                 # convert legacy runtime macros to 2.x
                 $command_line = convert_legacy_command_macros_2x($command_line);
 
                 # 1.x definition
                 if ($command_line =~ /\$(USER\d+)\$/) {
                         $command_line = "\"".escape_str($command_line)."\""; # escape quotes
-                        print FH "\tvars.$1 = PluginDir\n"; # compat
                 }
                 if ($command_line !~ /^"/) {
                         $command_line = "\"".escape_str($command_line)."\""; # escape quotes
@@ -1232,7 +1227,7 @@ sub genHostConfig2x {
                 @users = uniq(@users);
                 #DebugOutput("$$ GENERATE HOSTCONFIG 2x", Dumper(@users));
             }
-            
+
             my $user_cnt = 0;
 
             # now that we've got all users, get their notification commands
@@ -1468,13 +1463,38 @@ sub genHostConfig2x {
                             }
                         } elsif ($val1 eq "$cfg->{ldap}->{prefix}serviceeventhandler") {
 
-                            my $event_command_name = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1};
+                            my ($event_command_name, @event_command_macros) = split /!/, "$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}";
+
+                            my $event_arg_c = 1;
+                            foreach my $macro_val (@event_command_macros) {
+                                # check command arg name for being an icinga 1.x macro and resolve its value
+                                if ($macro_val =~ /^\$(\w+)\$$/) {
+                                    if ($1 =~ /^_HOST(\w+)/) {
+                                        my $cv_val_macro_key = "_".$1;
+                                        # override the original cv value with the resolved host cv
+                                        $macro_val = $CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostcustomvar"}->{$cv_val_macro_key};
+                                    }
+                                    elsif ($1 =~ /^_SERVICE(\w+)/) {
+                                        my $cv_val_macro_key = "_".$1;
+                                        # override the original cv value with the resolved service cv
+                                        $macro_val = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{"$cfg->{ldap}->{prefix}servicecustomvar"}->{$cv_val_macro_key};
+                                    }
+                                }
+
+                                $vars_svc->{'EVENTARG'.$event_arg_c} = escape_str($macro_val); # special prefix 'EVENTARG' for eventhandler arguments
+
+                                $event_arg_c++;
+                            }
+
                             my $event_command_object_name = "host-$CLIENTS->{$client}->{cn}-service-$service-$event_command_name";
 
-                            my $event_command_line; # we don't have args for notification commands
+                            my $event_command_line;
                             foreach my $command (keys %{$COMMANDS}) {
                                 if ($COMMANDS->{$command}->{cn} eq $event_command_name) {
                                     $event_command_line = escape_str($COMMANDS->{$command}->{$cfg->{ldap}->{prefix}.'commandline'});
+
+                                    $event_command_line =~ s/ARG/EVENTARG/g; # required for eventhandler arguments
+
                                     goto FOUND_EVENT;
                                 }
                             }
@@ -1483,7 +1503,7 @@ sub genHostConfig2x {
 
                             $event_commands->{$event_command_object_name} = $event_command_line;
 
-                            print FH "\t\tevent_command = \"$event_command_object_name\",\n";
+                            print FH "\tevent_command = \"$event_command_object_name\",\n";
 
                         } else { # FIXME different check_interval, quote notation
                             #print FH "\t\t$itemMapIcinga2{$val1} = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1},\n";
