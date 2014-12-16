@@ -1125,6 +1125,12 @@ sub genHostConfig2x {
                     if (defined($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostmaxcheckattempts'})) {
                         print FH "\tmax_check_attempts = $CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostmaxcheckattempts'}\n";
                     }
+                    if (defined($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostactivechecksenabled'})) {
+                        print FH "\tenable_active_checks = $CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostactivechecksenabled'}\n";
+                    }
+                    if (defined($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostpassivechecksenabled'})) {
+                        print FH "\tenable_passive_checks = $CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostpassivechecksenabled'}\n";
+                    }
 
                     print FH "\tcheck_command = \"$host_check_command_name\"\n";
                 }
@@ -1425,6 +1431,10 @@ sub genHostConfig2x {
                             print FH "\t\tretry_interval = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}m,\n";
                         } elsif ($val1 =~ /maxcheckattempts/i) {
                             print FH "\t\tmax_check_attempts = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1},\n";
+                        } elsif ($val1 =~ /activechecksenabled/i) {
+                            print FH "\t\tenable_active_checks = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1},\n";
+                        } elsif ($val1 =~ /passivechecksenabled/i) {
+                            print FH "\t\tenable_passive_checks = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1},\n";
                         } elsif ($val1 =~ /customvar/i) {
                             foreach my $val2 (sort keys %{$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}}) {
                                 next if (!defined($val2) || $val2 eq "" ||
