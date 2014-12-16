@@ -407,6 +407,15 @@ sub genContactgroups2x {
         } else {
             print FH "\tdisplay_name = \"$CONTACTGROUPS->{$contactgroup}->{cn}\"\n";
         }
+
+        if (defined $CONTACTGROUPS->{$contactgroup}->{$cfg->{ldap}->{prefix}.'members'}) {
+	    @members = str2arr_by_delim_without_excludes($CONTACTGROUPS->{$contactgroup}->{$cfg->{ldap}->{prefix}.'members'}, ',', 1);
+	    if (@members) {
+		$membersstr = '["' . join( '","', @members) . '"]';
+		print FH "\tassign where user.name in $membersstr\n";
+	    }
+	}
+
         print FH "}\n";
 
         # close target file
