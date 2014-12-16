@@ -324,7 +324,7 @@ sub genContacts2x {
 
         foreach(sort keys %{$CONTACTS->{$contact}}) {
             if ($_ =~ /pager/ || $_ =~ /email/) {
-                print FH "\t\"$itemMapIcinga2{$_}\" = \"$CONTACTS->{$contact}->{$_}\"\n";
+                print FH "\t$itemMapIcinga2{$_} = \"$CONTACTS->{$contact}->{$_}\"\n";
             }
         }
 
@@ -1226,6 +1226,8 @@ sub genHostConfig2x {
                 @users = uniq(@users);
                 #DebugOutput("$$ GENERATE HOSTCONFIG 2x", Dumper(@users));
             }
+            
+            my $user_cnt = 0;
 
             # now that we've got all users, get their notification commands
             foreach my $user (@users) {
@@ -1245,7 +1247,7 @@ sub genHostConfig2x {
                         }
 
                         foreach my $notification_command_name (@host_notification_commands) {
-                            my $notification_name = "host-".$CLIENTS->{$client}->{cn}."-".$notification_command_name."-".$notification_cnt;
+                            my $notification_name = "host-".$CLIENTS->{$client}->{cn}."-".$notification_command_name."-".$notification_cnt."-".$user_cnt;
 
                             my $notification_command_object_name = "notification-".$notification_name; # generate a unique command name for this notification
 
@@ -1308,6 +1310,7 @@ sub genHostConfig2x {
                         # next notification contact
                         $notification_cnt++;
                     }
+                    $user_cnt++;
                 }
             }
 
