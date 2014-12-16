@@ -1287,8 +1287,13 @@ sub genHostConfig2x {
                             }
 
                             # notification period
-                            if (defined($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'servicenotificationperiod'})) {
-                                print FH "\tperiod = \"$CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'servicenotificationperiod'}\"\n";
+                            if (defined($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostnotificationperiod'})) {
+                                print FH "\tperiod = \"$CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostnotificationperiod'}\"\n";
+                            }
+
+                            # notification interval
+                            if (defined($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostnotificationinterval'})) {
+                                print FH "\tinterval = $CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostnotificationinterval'}m\n";
                             }
 
                             print FH "\tusers = [ \"$user\" ]\n";
@@ -1615,6 +1620,11 @@ sub genHostConfig2x {
                                     # notification period
                                     if (defined($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$cfg->{ldap}->{prefix}.'servicenotificationperiod'})) {
                                         print FH "\tperiod = \"$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$cfg->{ldap}->{prefix}.'servicenotificationperiod'}\"\n";
+                                    }
+
+                                    # notification interval
+                                    if (defined($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$cfg->{ldap}->{prefix}.'servicenotificationinterval'})) {
+                                        print FH "\tinterval = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$cfg->{ldap}->{prefix}.'servicenotificationinterval'}m\n";
                                     }
 
                                     print FH "\tusers = [ \"$user\" ]\n";
