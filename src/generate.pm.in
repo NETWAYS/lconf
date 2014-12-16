@@ -1682,7 +1682,6 @@ sub genHostConfig2x {
                 # 1.x definition
                 if ($command_line =~ /\$(USER\d+)\$/) {
                         $command_line = "\"".escape_str($command_line)."\""; # escape quotes
-                        print FH "\tvars.$1 = PluginDir\n"; # compat
                 }
                 if ($command_line !~ /^"/) {
                         $command_line = "\"".escape_str($command_line)."\""; # escape quotes
@@ -1699,7 +1698,6 @@ sub genHostConfig2x {
                 # 1.x definition
                 if ($command_line =~ /\$(USER\d+)\$/) {
                         $command_line = "\"".escape_str($command_line)."\""; # escape quotes
-                        print FH "\tvars.$1 = PluginDir\n"; # compat
                 }
                 if ($command_line !~ /^"/) {
                         $command_line = "\"".escape_str($command_line)."\""; # escape quotes
