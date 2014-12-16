@@ -1140,6 +1140,44 @@ sub genHostConfig2x {
                 if (defined($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostpassivechecksenabled'})) {
                     print FH "\tenable_passive_checks = $CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostpassivechecksenabled'}\n";
                 }
+                elsif ($val1 eq "$cfg->{ldap}->{prefix}hosteventhandler") {
+                    my ($event_command_name, @event_command_macros) = split /!/, "$CLIENTS->{$client}->{$val1}";
+
+                    my $event_arg_c = 1;
+                    foreach my $macro_val (@event_command_macros) {
+                        # check command arg name for being an icinga 1.x macro and resolve its value
+                        if ($macro_val =~ /^\$(\w+)\$$/) {
+                            if ($1 =~ /^_HOST(\w+)/) {
+                                my $cv_val_macro_key = "_".$1;
+                                # override the original cv value with the resolved host cv
+                                $macro_val = $CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostcustomvar"}->{$cv_val_macro_key};
+                            }
+                        }
+
+                        $vars->{'EVENTARG'.$event_arg_c} = escape_str($macro_val); # special prefix 'EVENTARG' for eventhandler arguments
+
+                        $event_arg_c++;
+                    }
+
+                    my $event_command_object_name = "host-$CLIENTS->{$client}->{cn}-$event_command_name";
+
+                    my $event_command_line;
+                    foreach my $command (keys %{$COMMANDS}) {
+                        if ($COMMANDS->{$command}->{cn} eq $event_command_name) {
+                            $event_command_line = escape_str($COMMANDS->{$command}->{$cfg->{ldap}->{prefix}.'commandline'});
+
+                            $event_command_line =~ s/ARG/EVENTARG/g; # required for eventhandler arguments
+
+                            goto FOUND_EVENT;
+                        }
+                    }
+
+                    FOUND_EVENT:
+
+                    $event_commands->{$event_command_object_name} = $event_command_line;
+
+                    print FH "\tevent_command = \"$event_command_object_name\",\n"
+                }
             }
 
             # custom attr
