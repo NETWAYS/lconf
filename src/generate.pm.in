@@ -325,6 +325,12 @@ sub genContacts2x {
         foreach(sort keys %{$CONTACTS->{$contact}}) {
             if ($_ =~ /pager/ || $_ =~ /email/) {
                 print FH "\t$itemMapIcinga2{$_} = \"$CONTACTS->{$contact}->{$_}\"\n";
+            } elsif ($_ =~ /contactgroups/ ) {
+                @groups = str2arr_by_delim_without_excludes($CONTACTS->{$contact}->{$_}, ',', 1);
+                if (@groups) {
+                    $contactstr = '["' . join( '","', @groups) . '"]';
+                    print FH "\t$itemMapIcinga2{$_} = $contactstr\n";
+                }
             }
         }
 
