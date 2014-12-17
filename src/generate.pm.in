@@ -1135,10 +1135,10 @@ sub genHostConfig2x {
                     print FH "\tcheck_period = \"$CLIENTS->{$client}->{$val1}\"\n";
                 }
                 if ($val1 eq "$cfg->{ldap}->{prefix}hostcheckinterval") {
-                    print FH "\tcheck_interval = $CLIENTS->{$client}->{$val1}m\n";
+                    print FH "\tcheck_interval = ".convert_interval_2x($CLIENTS->{$client}->{$val1})."\n";
                 }
                 if ($val1 eq "$cfg->{ldap}->{prefix}hostcheckretryinterval") {
-                    print FH "\tretry_interval = $CLIENTS->{$client}->{$val1}m\n";
+                    print FH "\tretry_interval = ".convert_interval_2x($CLIENTS->{$client}->{$val1})."\n";
                 }
                 if ($val1 eq "$cfg->{ldap}->{prefix}hostmaxcheckattempts") {
                     print FH "\tmax_check_attempts = $CLIENTS->{$client}->{$val1}\n";
@@ -1346,7 +1346,7 @@ sub genHostConfig2x {
 
                             # notification interval
                             if (defined($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostnotificationinterval'})) {
-                                print FH "\tinterval = $CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostnotificationinterval'}m\n";
+                                print FH "\tinterval = ".convert_interval_2x($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostnotificationinterval'})."\n";
                             }
 
                             print FH "\tusers = [ \"$user\" ]\n";
@@ -1393,12 +1393,12 @@ sub genHostConfig2x {
 
                     if (defined($host_escalation_firstnotification)) {
                         $begin = $host_escalation_firstnotification * $host_escalation_notificationinterval;
-                        print FH "\t\tbegin = ".$begin."m,\n";
+                        print FH "\t\tbegin = ".convert_interval_2x($begin).",\n";
                     }
 
                     if (defined($service_escalation_lastnotification)) {
                         $end = $host_escalation_lastnotification * $host_escalation_notificationinterval;
-                        print FH "\t\tend = ".$end."m,\n";
+                        print FH "\t\tend = ".convert_interval_2x($end).",\n";
                     }
 
                     print FH "\t}\n";
@@ -1492,9 +1492,9 @@ sub genHostConfig2x {
                         } elsif ($val1 =~ /checkperiod/i) {
                             print FH "\tcheck_period = \"$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}\"\n";
                         } elsif ($val1 =~ /checkinterval/i) {
-                            print FH "\tcheck_interval = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}m\n";
+                            print FH "\tcheck_interval = ".convert_interval_2x($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1})."\n";
                         } elsif ($val1 =~ /retryinterval/i) {
-                            print FH "\tretry_interval = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}m\n";
+                            print FH "\tretry_interval = ".convert_interval_2x($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1})."\n";
                         } elsif ($val1 =~ /maxcheckattempts/i) {
                             print FH "\tmax_check_attempts = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}\n";
                         } elsif ($val1 =~ /activechecksenabled/i) {
@@ -1708,7 +1708,7 @@ sub genHostConfig2x {
 
                                     # notification interval
                                     if (defined($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$cfg->{ldap}->{prefix}.'servicenotificationinterval'})) {
-                                        print FH "\tinterval = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$cfg->{ldap}->{prefix}.'servicenotificationinterval'}m\n";
+                                        print FH "\tinterval = ".convert_interval_2x($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$cfg->{ldap}->{prefix}.'servicenotificationinterval'})."\n";
                                     }
 
                                     print FH "\tusers = [ \"$user\" ]\n";
@@ -1755,12 +1755,12 @@ sub genHostConfig2x {
 
                             if (defined($service_escalation_firstnotification)) {
                                 $begin = $service_escalation_firstnotification * $service_escalation_notificationinterval;
-                                print FH "\t\tbegin = ".$begin."m,\n";
+                                print FH "\t\tbegin = ".convert_interval_2x($begin).",\n";
                             }
 
                             if (defined($service_escalation_lastnotification)) {
                                 $end = $service_escalation_lastnotification * $service_escalation_notificationinterval;
-                                print FH "\t\tend = ".$end."m,\n";
+                                print FH "\t\tend = ".convert_interval_2x($end).",\n";
                             }
 
                             print FH "\t}\n";

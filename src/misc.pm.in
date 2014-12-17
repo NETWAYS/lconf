@@ -301,6 +301,15 @@ sub print_sorted_hash {
     }
 }
 
+# convert interval values
+sub convert_interval_2x {
+    my $interval = shift;
+
+    $interval = trim($interval) . "m";
+
+    return $interval;
+}
+
 # convert notification_options to state|type_filter
 sub convert_notification_options_to_filter_2x {
     my $notification_options = shift;
