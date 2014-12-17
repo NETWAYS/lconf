@@ -358,37 +358,37 @@ if(defined($cfg->{export}->{format}) && $cfg->{export}->{format} == 2) {
 }
 
 # Prepare Forkmanager
-my $pm = Parallel::ForkManager->new($cfg->{export}->{childs});
+#my $pm = Parallel::ForkManager->new($cfg->{export}->{childs});
 
 # Callback from the childs
 # stolen from Forkmanager Examples:
 # http://search.cpan.org/~szabgab/Parallel-ForkManager-1.02/lib/Parallel/ForkManager.pm#Data_structure_retrieval
-my %retrieved_responses = ();  # for collecting responses of the childs
-$pm -> run_on_finish (
-    sub {
-        my ($pid, $exit_code, $ident, $exit_signal, $core_dump, $data_structure_reference) = @_;
-
-        # see what the child sent us, if anything
-        if (defined($data_structure_reference)) {  # test rather than assume child sent anything
-            if (0) {  # simple on/off switch to display the contents
-                my $reftype = ref($data_structure_reference);
-                print qq|ident "$ident" returned a "$reftype" reference.\n\n|;
-                print &Dumper($data_structure_reference) . qq|end of "$ident" sent structure\n\n|;
-            }
-
-            # we can also collect retrieved data structures for processing after all children have exited
-            $retrieved_responses{$ident} = $data_structure_reference;
-        } else {
-             print qq|Warning:Child did not send data to parent.\n\n|;
-        }
-    }
-);
+#my %retrieved_responses = ();  # for collecting responses of the childs
+#$pm -> run_on_finish (
+#    sub {
+#        my ($pid, $exit_code, $ident, $exit_signal, $core_dump, $data_structure_reference) = @_;
+#
+#        # see what the child sent us, if anything
+#        if (defined($data_structure_reference)) {  # test rather than assume child sent anything
+#            if (0) {  # simple on/off switch to display the contents
+#                my $reftype = ref($data_structure_reference);
+#                print qq|ident "$ident" returned a "$reftype" reference.\n\n|;
+#                print &Dumper($data_structure_reference) . qq|end of "$ident" sent structure\n\n|;
+#            }
+#
+#            # we can also collect retrieved data structures for processing after all children have exited
+#            $retrieved_responses{$ident} = $data_structure_reference;
+#        } else {
+#             print qq|Warning:Child did not send data to parent.\n\n|;
+#        }
+#    }
+#);
 
 ## Fork start (TreeBuilder, BuildHostConfig) for each client
 foreach my $client (keys %{$CLIENTS}) {
 
     # create new child
-    my $pid = $pm->start($client) and next;
+    #my $pid = $pm->start($client) and next;
 
     beVerbose("$$ CFG BUILD", "Host $client");
     my %TREE = ();
@@ -397,16 +397,16 @@ foreach my $client (keys %{$CLIENTS}) {
     $CLIENTS = BuildHostConfig($client, $CLIENTS, \%TREE);
 
     # finish child, give $client back to the parent
-    $pm->finish(0, \%{$CLIENTS->{$client}});
+    #$pm->finish(0, \%{$CLIENTS->{$client}});
 }
 
 # wait until all childs are finished
-$pm->wait_all_children;
+#$pm->wait_all_children;
 
 # get the data from the child back to $CLIENTS
-for (sort keys %retrieved_responses) {
-    $CLIENTS->{$_} = $retrieved_responses{$_};
-}
+#for (sort keys %retrieved_responses) {
+#    $CLIENTS->{$_} = $retrieved_responses{$_};
+#}
 ## Fork end
 
 # run custom script (mid)
