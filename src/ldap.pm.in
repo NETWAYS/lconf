@@ -49,6 +49,8 @@
 use Data::Dumper;
 $Data::Dumper::Sortkeys = 1;
 
+our %forward_cache = ();
+
 sub LDAPconnect {
     my $login = shift;
     my $ldap;
@@ -209,6 +211,10 @@ sub TreeBuilder {
     foreach my $level (@search) {
         $searchDN = $level.",".$searchDN;
         DebugOutput('TREE BUILDER',"searchDN: $searchDN\n", 1);
+	if( exists $forward_cache{$searchDN} ) {
+		%forward = %{dclone(\%{$forward_cache{$searchDN}})};
+		next;
+	}
 
         # get aliases
         my $result = HashGrep($CONFIG, 'dn', '^ou=[._!\w\/\d\s:-]+,'.$searchDN);
@@ -575,6 +581,7 @@ sub TreeBuilder {
                 }
             }
         }
+	$forward_cache{$searchDN} = dclone(\%forward);
     }
     #DebugOutput('TREE BUILDER', "Forward Hash contains" .Dumper(%forward), 2);
 
