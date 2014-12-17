@@ -229,6 +229,24 @@ sub slurp {
     }
 }
 
+sub ltrim {
+    my $str = shift;
+    $str =~ s/^\s+//;
+    return $str;
+};
+
+sub rtrim {
+    my $str = shift;
+    $str =~ s/\s+$//;
+    return $str;
+};
+
+sub trim {
+    my $str = shift;
+    $str =~ s/^\s+|\s+$//g;
+    return $str;
+};
+
 sub escape_str {
     my $str = shift;
 
