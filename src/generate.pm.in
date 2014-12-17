@@ -1131,23 +1131,23 @@ sub genHostConfig2x {
                     print FH "\tcheck_command = \"$host_check_command_name\"\n";
                 }
 
-                if (defined($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostcheckperiod'})) {
+                if ($val1 eq "$cfg->{ldap}->{prefix}hostcheckperiod") {
                     print FH "\tcheck_period = \"$CLIENTS->{$client}->{$val1}\"\n";
                 }
-                if (defined($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostcheckinterval'})) {
-                    print FH "\tcheck_interval = $CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostcheckinterval'}m\n";
+                if ($val1 eq "$cfg->{ldap}->{prefix}hostcheckinterval") {
+                    print FH "\tcheck_interval = $CLIENTS->{$client}->{$val1}m\n";
                 }
-                if (defined($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostcheckretryinterval'})) {
-                    print FH "\tcheck_interval = $CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostcheckretryinterval'}m\n";
+                if ($val1 eq "$cfg->{ldap}->{prefix}hostcheckretryinterval") {
+                    print FH "\tretry_interval = $CLIENTS->{$client}->{$val1}m\n";
                 }
-                if (defined($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostmaxcheckattempts'})) {
-                    print FH "\tmax_check_attempts = $CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostmaxcheckattempts'}\n";
+                if ($val1 eq "$cfg->{ldap}->{prefix}hostmaxcheckattempts") {
+                    print FH "\tmax_check_attempts = $CLIENTS->{$client}->{$val1}\n";
                 }
-                if (defined($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostactivechecksenabled'})) {
-                    print FH "\tenable_active_checks = $CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostactivechecksenabled'}\n";
+                if ($val1 eq "$cfg->{ldap}->{prefix}hostactivechecksenabled") {
+                    print FH "\tenable_active_checks = $CLIENTS->{$client}->{$val1}\n";
                 }
-                if (defined($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostpassivechecksenabled'})) {
-                    print FH "\tenable_passive_checks = $CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostpassivechecksenabled'}\n";
+                if ($val1 eq "$cfg->{ldap}->{prefix}hostpassivechecksenabled") {
+                    print FH "\tenable_passive_checks = $CLIENTS->{$client}->{$val1}\n";
                 }
                 elsif ($val1 eq "$cfg->{ldap}->{prefix}hosteventhandler") {
                     my ($event_command_name, @event_command_macros) = split /!/, "$CLIENTS->{$client}->{$val1}";
