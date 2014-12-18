@@ -1140,7 +1140,7 @@ sub genHostConfig2x {
                 if ($val1 eq "$cfg->{ldap}->{prefix}hostcheckretryinterval") {
                     print FH "\tretry_interval = ".convert_interval_2x($CLIENTS->{$client}->{$val1})."\n";
                 }
-                if ($val1 eq "$cfg->{ldap}->{prefix}hostmaxcheckattempts") {
+                if ($val1 eq "$cfg->{ldap}->{prefix}hostcheckmaxcheckattempts") {
                     print FH "\tmax_check_attempts = $CLIENTS->{$client}->{$val1}\n";
                 }
                 if ($val1 eq "$cfg->{ldap}->{prefix}hostactivechecksenabled") {
