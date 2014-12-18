@@ -216,6 +216,7 @@ sub TreeBuilder {
 		next;
 	}
 
+
         # get aliases
         my $result = HashGrep($CONFIG, 'dn', '^ou=[._!\w\/\d\s:-]+,'.$searchDN);
         my $ALIASES = HashGrep($result, 'aliasedobjectname', '.*');
@@ -331,8 +332,8 @@ sub TreeBuilder {
         # save TreeBuilder results depending on TreeRewrite setting
         # TreeRewrite is MainOverLink; push all attributes from main target to linked objects
         if (defined $cfg->{export}->{treerewrite} && $cfg->{export}->{treerewrite} =~ /MainOverLink/i) {
+
             foreach my $alias (keys %{$ALIASES}) {
-                #print" Found link $ALIASES->{$alias}->{ou} --> follow to target $ALIASES->{$alias}->{aliasedobjectname}\n";
                 DebugOutput('TREE BUILDER', "Found link $ALIASES->{$alias}->{ou} --> follow to target $ALIASES->{$alias}->{aliasedobjectname}\n", 1);
 
 		# link target exists?
@@ -347,12 +348,28 @@ sub TreeBuilder {
                 my %tmp_forward = TreeBuilder($ALIASES->{$alias}->{aliasedobjectname}, $CONFIG, \%empty_hash, $tree_builder_level);
 
 		foreach my $attribute (keys %{forward}) {
-			if ($attribute =~ /$cfg->{ldap}->{prefix}service.*/ || $attribute =~ /$cfg->{ldap}->{prefix}checkcommand.*/) {
+			if (	$attribute =~ /$cfg->{ldap}->{prefix}service.*/ || 
+				$attribute =~ /$cfg->{ldap}->{prefix}checkcommand.*/ ||
+				$attribute =~ /$cfg->{ldap}->{prefix}servicecustomvar/ ||
+				$attribute =~ /description/
+			) {
 				#print "BRB".Dumper(%tmp_forward);
+
 				foreach my $service (keys %{tmp_forward}->{SERVICES}) {
 					#print "Main: ".$attribute." -> ".${forward}{$attribute}."\n";
 					#print "Link: Service ".$service."\n";
-					${tmp_forward}{SERVICES}{$service}{$attribute} = ${forward}{$attribute};
+					if (	$attribute eq "description" ||
+						$attribute =~ /$cfg->{ldap}->{prefix}servicecustomvar/
+
+					) {
+
+						# TODO HASH for description and customvars
+						#foreach my $val2 (keys %{$CONFIG->{$service}->{$val1}});
+						#$forward{'SERVICES'}{$CONFIG->{$service}->{cn}}{$val1}{$val2} = $CONFIG->{$service}->{$val1}->{$val2};
+
+					} else {
+						${tmp_forward}{SERVICES}{$service}{$attribute} = ${forward}{$attribute};
+					}
 					#print "AA".${tmp_forward}{SERVICES}{$service}{$attribute}."\n\n";
 				}
 			}
@@ -567,41 +584,43 @@ sub TreeBuilder {
             }
         }
 
-        # the following code allows to organize services below hosts and below
-        # aliases, e.g. sorting services with structuralObjects.
-        # if main target is a host, add every structuralObject below and
-        # if target is not a host add structuralObjects below
+	$forward_cache{$searchDN} = dclone(\%forward);
+    }
 
-        # if main target is a Host or searchDN ends with target (that means, only if
-        # i'm at least down at the target) TreeBuilder is called.
-        if (defined $CONFIG->{$searchDN} && $CONFIG->{$searchDN}->{objectclass} eq $cfg->{ldap}->{prefix}.'Host' || ($searchDN =~ m/$target.$cfg->{ldap}->{rootDN}$/)) {
-            # Find structuralObjects
-            $result = HashGrep($CONFIG, 'dn', '^[\w]+=[._\w\/\d\s:-]+,'.$searchDN);
-            my $structuralObject = HashGrep($result, 'objectclass', $cfg->{ldap}->{prefix}.'StructuralObject');
-            foreach my $struct (keys %{$structuralObject}) {
-                # get the level of the target and of the structuralObjects.
-                my @target_level = split(',', $target.','.$cfg->{ldap}->{rootDN});
-                my @struct_level = split(',', $struct);
-                $target_level[0]="";
-                $struct_level[0]="";
-                $target_level = join(",", @target_level);
-                $struct_level = join(",", @struct_level);
+    # the following code allows to organize services below hosts and below
+    # aliases, e.g. sorting services with structuralObjects.
+    # if main target is a host, add every structuralObject below and
+    # if target is not a host add structuralObjects below
 
-                # if the target and the structural objects have the same level do not
-                # start a new TreeBuilder (avoids infinity loops). The structuralObjects
-                # will be processed anyway in the parent of the actual TreeBuilder
-                if ($target_level ne $struct_level) {
-                    my %tmp_forward = TreeBuilder($struct, $CONFIG,  dclone(\%forward), $tree_builder_level);
-                    foreach my $service (keys %{$tmp_forward{SERVICES}}) {
-                        foreach my $val1 (keys %{$tmp_forward{SERVICES}{$service}}) {
-                            $forward{'SERVICES'}{$service}{$val1} = $tmp_forward{SERVICES}{$service}{$val1};
-                        }
+    # if main target is a Host or searchDN ends with target (that means, only if
+    # i'm at least down at the target) TreeBuilder is called.
+    if (defined $CONFIG->{$searchDN} && $CONFIG->{$searchDN}->{objectclass} eq $cfg->{ldap}->{prefix}.'Host' || ($searchDN =~ m/$target.$cfg->{ldap}->{rootDN}$/)) {
+        # Find structuralObjects
+        $result = HashGrep($CONFIG, 'dn', '^[\w]+=[._\w\/\d\s:-]+,'.$searchDN);
+        my $structuralObject = HashGrep($result, 'objectclass', $cfg->{ldap}->{prefix}.'StructuralObject');
+        foreach my $struct (keys %{$structuralObject}) {
+            # get the level of the target and of the structuralObjects.
+            my @target_level = split(',', $target.','.$cfg->{ldap}->{rootDN});
+            my @struct_level = split(',', $struct);
+            $target_level[0]="";
+            $struct_level[0]="";
+            $target_level = join(",", @target_level);
+            $struct_level = join(",", @struct_level);
+
+            # if the target and the structural objects have the same level do not
+            # start a new TreeBuilder (avoids infinity loops). The structuralObjects
+            # will be processed anyway in the parent of the actual TreeBuilder
+            if ($target_level ne $struct_level) {
+                my %tmp_forward = TreeBuilder($struct, $CONFIG,  dclone(\%forward), $tree_builder_level);
+                foreach my $service (keys %{$tmp_forward{SERVICES}}) {
+                    foreach my $val1 (keys %{$tmp_forward{SERVICES}{$service}}) {
+                        $forward{'SERVICES'}{$service}{$val1} = $tmp_forward{SERVICES}{$service}{$val1};
                     }
                 }
             }
         }
-	$forward_cache{$searchDN} = dclone(\%forward);
     }
+
     #DebugOutput('TREE BUILDER', "Forward Hash contains" .Dumper(%forward), 2);
 
     DebugOutput('TREE BUILDER',"Stop (Level=$tree_builder_level): End of Treebuilder\n\n", 1);
