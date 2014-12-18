@@ -100,6 +100,7 @@ $cfg->{test}->{output}                   = "/tmp/lconf-test-out";
     @LDAP_PREFIX@timeperiodvalue                              => '',
     @LDAP_PREFIX@commandline                                  => 'command_line',
     @LDAP_PREFIX@members                                      => 'members',
+    @LDAP_PREFIX@hostgroupmembers                             => 'hostgroup_members',
     @LDAP_PREFIX@timeperiodexclude                            => 'exclude',
 
     # .2.2   | lconf attributes (contact)
@@ -223,6 +224,7 @@ $cfg->{test}->{output}                   = "/tmp/lconf-test-out";
     @LDAP_PREFIX@timeperiodvalue                              => '',
     @LDAP_PREFIX@commandline                                  => 'command_line',
     @LDAP_PREFIX@members                                      => 'members',
+    @LDAP_PREFIX@hostgroupmembers                             => 'groups',
     @LDAP_PREFIX@timeperiodexclude                            => 'exclude',
 
     # .2.2   | lconf attributes (contact)

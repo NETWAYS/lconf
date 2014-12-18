@@ -532,6 +532,13 @@ sub genHostgroups1x {
         } else {
             print FH "\talias\t$HOSTGROUPS->{$hostgroup}->{cn}\n";
         }
+
+        if (defined $HOSTGROUPS->{$hostgroup}->{$cfg->{ldap}->{prefix}.'hostgroupmembers'}) {
+            my @groups = split(',', $HOSTGROUPS->{$hostgroup}->{$cfg->{ldap}->{prefix}.'hostgroupmembers'});
+            my $groups = join ",", grep length,  @groups;
+            print FH "\thostgroup_members\t$groups\n";
+        }
+
         print FH "}\n";
 
         # close target file
@@ -556,6 +563,14 @@ sub genHostgroups2x {
         } else {
             print FH "\tdisplay_name = \"$HOSTGROUPS->{$hostgroup}->{cn}\"\n";
         }
+
+        if (defined $HOSTGROUPS->{$hostgroup}->{$cfg->{ldap}->{prefix}.'hostgroupmembers'}) {
+            my @groups = split(',', $HOSTGROUPS->{$hostgroup}->{$cfg->{ldap}->{prefix}.'hostgroupmembers'});
+            my $groups = join ",", grep length,  @groups;
+            $groups =~ s/,/\", \"/g;
+            print FH "\tgroups = [ \"$groups\" ]\n";
+        }
+
         print FH "}\n";
 
         # close target file
