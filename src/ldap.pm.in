@@ -210,7 +210,7 @@ sub TreeBuilder {
         DebugOutput('TREE BUILDER',"searchDN: $searchDN\n", 1);
 
         # get aliases
-        my $result = HashGrep($CONFIG, 'dn', '^ou=[._\w\/\d\s:-]+,'.$searchDN);
+        my $result = HashGrep($CONFIG, 'dn', '^ou=[._!\w\/\d\s:-]+,'.$searchDN);
         my $ALIASES = HashGrep($result, 'aliasedobjectname', '.*');
 
         # save TreeBuilder results depending on TreeRewrite setting
@@ -521,7 +521,7 @@ sub TreeBuilder {
 
         # process host escalations
         $result = HashGrep($CONFIG, 'dn', '^[\w]+=[._\w\/\d\s:-]+,'.$searchDN);
-	my $HOSTESCALATIONS = HashGrep($result, 'objectclass', $cfg->{ldap}->{prefix}.'hostescalation$');
+        my $HOSTESCALATIONS = HashGrep($result, 'objectclass', $cfg->{ldap}->{prefix}.'hostescalation$');
         foreach my $escalation (keys %{$HOSTESCALATIONS}) {
             foreach my $val1 (keys %{$HOSTESCALATIONS->{$escalation}}) {
                 if ($val1 =~ /$cfg->{ldap}->{prefix}hostescalation/) {
