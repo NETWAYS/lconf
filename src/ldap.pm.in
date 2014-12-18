@@ -332,16 +332,33 @@ sub TreeBuilder {
         # TreeRewrite is MainOverLink; push all attributes from main target to linked objects
         if (defined $cfg->{export}->{treerewrite} && $cfg->{export}->{treerewrite} =~ /MainOverLink/i) {
             foreach my $alias (keys %{$ALIASES}) {
+                print "Found link $ALIASES->{$alias}->{ou} --> follow to target $ALIASES->{$alias}->{aliasedobjectname}\n";
                 DebugOutput('TREE BUILDER', "Found link $ALIASES->{$alias}->{ou} --> follow to target $ALIASES->{$alias}->{aliasedobjectname}\n", 1);
-
-                # XXX special debug output
-                DebugOutput('TREE BUILDER', "Calling TreeBuilder recursivly with " . Dumper(%forward),2);
-                #my %tmp_forward = TreeBuilder($ALIASES->{$alias}->{aliasedobjectname}, $CONFIG,  {%{$forward}}, $tree_builder_level);
-                my %tmp_forward = TreeBuilder($ALIASES->{$alias}->{aliasedobjectname}, $CONFIG,  dclone(\%forward), $tree_builder_level);
 
 		# link target exists?
 		if(!defined $CONFIG->{$ALIASES->{$alias}->{aliasedobjectname}}->{objectclass}) {
-		    die "alias broken: $ALIASES->{$alias}->{dn}!";
+		    #die "alias broken: $ALIASES->{$alias}->{dn}!";
+		    print "alias broken: $ALIASES->{$alias}->{dn}!";
+		    next;
+		}
+
+                DebugOutput('TREE BUILDER', "Calling TreeBuilder recursivly with " . Dumper(%forward),2);
+                my %empty_hash = ();
+                my %tmp_forward = TreeBuilder($ALIASES->{$alias}->{aliasedobjectname}, $CONFIG, \%empty_hash, $tree_builder_level);
+
+		#print "AA\n";
+		foreach my $attribute (keys %{forward}) {
+			if ($attribute =~ /$cfg->{ldap}->{prefix}service.*/ || $attribute =~ /$cfg->{ldap}->{prefix}checkcommand.*/) {
+				#print "BRB".Dumper(%tmp_forward);
+				foreach my $service (keys %{tmp_forward}->{SERVICES}) {
+					${tmp_forward}->{SERVICES}->{$service}->{$attribute} = ${forward}->{$attribute};
+					#print "$attribute:".${forward}{$attribute}."\n";
+					#print "AA".$attribute."\n";
+					#print "AA".${tmp_forward}{SERVICES}{$service}{$attribute}."\n\n";
+				}
+			}
+
+                    #$forward{'SERVICES'}{$CONFIG->{$service}->{cn}}{$val1} = $forward{$val1};
 		}
 
 		DebugOutput('TREE BUILDER', "Checking alias '$ALIASES->{$alias}->{dn}': '".Dumper($CONFIG->{$ALIASES->{$alias}->{aliasedobjectname}}->{objectclass})."' eq '$cfg->{ldap}->{prefix}Service': ",1);
