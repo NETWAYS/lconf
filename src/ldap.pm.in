@@ -47,6 +47,7 @@
 # Nagios and the Nagios logo are registered trademarks of Ethan Galstad.
 
 use Data::Dumper;
+$Data::Dumper::Sortkeys = 1;
 
 sub LDAPconnect {
     my $login = shift;
