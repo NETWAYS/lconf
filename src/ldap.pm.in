@@ -332,7 +332,7 @@ sub TreeBuilder {
         # TreeRewrite is MainOverLink; push all attributes from main target to linked objects
         if (defined $cfg->{export}->{treerewrite} && $cfg->{export}->{treerewrite} =~ /MainOverLink/i) {
             foreach my $alias (keys %{$ALIASES}) {
-                print" Found link $ALIASES->{$alias}->{ou} --> follow to target $ALIASES->{$alias}->{aliasedobjectname}\n";
+                #print" Found link $ALIASES->{$alias}->{ou} --> follow to target $ALIASES->{$alias}->{aliasedobjectname}\n";
                 DebugOutput('TREE BUILDER', "Found link $ALIASES->{$alias}->{ou} --> follow to target $ALIASES->{$alias}->{aliasedobjectname}\n", 1);
 
 		# link target exists?
@@ -359,6 +359,8 @@ sub TreeBuilder {
 
                     #$forward{'SERVICES'}{$CONFIG->{$service}->{cn}}{$val1} = $forward{$val1};
 		}
+		
+		#print "Dumper: ".Dumper(%tmp_forward)."\n";
 
 		DebugOutput('TREE BUILDER', "Checking alias '$ALIASES->{$alias}->{dn}': '".Dumper($CONFIG->{$ALIASES->{$alias}->{aliasedobjectname}}->{objectclass})."' eq '$cfg->{ldap}->{prefix}Service': ",1);
 		DebugOutput('TREE BUILDER', "Checking alias '$ALIASES->{$alias}->{dn}': '".Dumper($CONFIG->{$ALIASES->{$alias}->{aliasedobjectname}}->{objectclass})."' eq '$cfg->{ldap}->{prefix}Service': " . Dumper(%forward),2);
@@ -399,6 +401,7 @@ sub TreeBuilder {
 			else {
                             DebugOutput('TREE BUILDER', "No direct link '$tmp_forward{SERVICES}{$service}->{cn}' with '$ALIASES->{$alias}->{ou}': " . Dumper(%forward),2);
                             $forward{'SERVICES'}{$service}{$val1} = $tmp_forward{SERVICES}{$service}{$val1};
+			    #print "ADD SERVICE: ".$forward{'SERVICES'}{$service}{$val1}."\n";
                         }
                     }
 
@@ -408,19 +411,19 @@ sub TreeBuilder {
                 DebugOutput('TREE BUILDER', "Processing forward hash with " . Dumper(%tmp_forward),2);
                 # process services from link forward
                 DebugOutput('TreeBuilder', "Process services from link", 1);
-                foreach my $attribute (keys %tmp_forward) {
-                    DebugOutput('TreeBuilder', "Found service from link: $attribute", 1);
+                #foreach my $attribute (keys %tmp_forward) {
+                #    DebugOutput('TreeBuilder', "Found service from link: $attribute", 1);
 
-                    # SERVICES must be forwarded, with all their attributes resolved
-                    # linked tree attributes cannot be forwarded into main tree causing
-                    # trouble with many links and their different order
-                    # additive logic for service attributes with attributes from main
-                    # still apply (details https://www.netways.org/issues/2268#note-5)
-                    if ($attribute eq 'SERVICES') {
-                        #DebugOutput('TreeBuilder', "Forward services attribute ".Dumper($tmp_forward{$attribute}), 2);
-                        $forward{$attribute} = $tmp_forward{$attribute};
-                    }
-                }
+                #    # SERVICES must be forwarded, with all their attributes resolved
+                #    # linked tree attributes cannot be forwarded into main tree causing
+                #    # trouble with many links and their different order
+                #    # additive logic for service attributes with attributes from main
+                #    # still apply (details https://www.netways.org/issues/2268#note-5)
+                #    if ($attribute eq 'SERVICES') {
+                #        #DebugOutput('TreeBuilder', "Forward services attribute ".Dumper($tmp_forward{$attribute}), 2);
+                #        $forward{$attribute} = $tmp_forward{$attribute};
+                #    }
+                #}
 
 		# jump here if all services from alias are processed (or if an alias targets a service directly)
 		SERVICES_PROCESSED:
