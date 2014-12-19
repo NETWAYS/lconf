@@ -217,17 +217,12 @@ sub genCommands2x {
             if ($_ =~ /commandline/) {
                 my $command_line = $COMMANDS->{$command}->{$_}; # escape quotes
 
-                # TODO translate macros
-                # TODO detect $ARGn$
-                print FH "//\$HOSTADDRESS\$ etc macro translation missing. See https://www.netways.org/issues/2557\n";
-
                 # convert legacy runtime macros to 2.x
                 $command_line = convert_legacy_command_macros_2x($command_line);
 
                 # 1.x definition
                 if ($command_line =~ /\$(USER\d+)\$/) {
                         $command_line = "\"".escape_str($command_line)."\""; # escape quotes
-                        print FH "\tvars.$1 = PluginDir\n"; # compat
                 }
                 if ($command_line !~ /^"/) {
                         $command_line = "\"".escape_str($command_line)."\""; # escape quotes
@@ -324,7 +319,13 @@ sub genContacts2x {
 
         foreach(sort keys %{$CONTACTS->{$contact}}) {
             if ($_ =~ /pager/ || $_ =~ /email/) {
-                print FH "\t\"$itemMapIcinga2{$_}\" = \"$CONTACTS->{$contact}->{$_}\"\n";
+                print FH "\t$itemMapIcinga2{$_} = \"$CONTACTS->{$contact}->{$_}\"\n";
+            } elsif ($_ =~ /contactgroups/ ) {
+                @groups = str2arr_by_delim_without_excludes($CONTACTS->{$contact}->{$_}, ',', 1);
+                if (@groups) {
+                    $contactstr = '["' . join( '","', @groups) . '"]';
+                    print FH "\t$itemMapIcinga2{$_} = $contactstr\n";
+                }
             }
         }
 
@@ -406,6 +407,15 @@ sub genContactgroups2x {
         } else {
             print FH "\tdisplay_name = \"$CONTACTGROUPS->{$contactgroup}->{cn}\"\n";
         }
+
+        if (defined $CONTACTGROUPS->{$contactgroup}->{$cfg->{ldap}->{prefix}.'members'}) {
+	    @members = str2arr_by_delim_without_excludes($CONTACTGROUPS->{$contactgroup}->{$cfg->{ldap}->{prefix}.'members'}, ',', 1);
+	    if (@members) {
+		$membersstr = '["' . join( '","', @members) . '"]';
+		print FH "\tassign where user.name in $membersstr\n";
+	    }
+	}
+
         print FH "}\n";
 
         # close target file
@@ -522,6 +532,13 @@ sub genHostgroups1x {
         } else {
             print FH "\talias\t$HOSTGROUPS->{$hostgroup}->{cn}\n";
         }
+
+        if (defined $HOSTGROUPS->{$hostgroup}->{$cfg->{ldap}->{prefix}.'hostgroupmembers'}) {
+            my @groups = split(',', $HOSTGROUPS->{$hostgroup}->{$cfg->{ldap}->{prefix}.'hostgroupmembers'});
+            my $groups = join ",", grep length,  @groups;
+            print FH "\thostgroup_members\t$groups\n";
+        }
+
         print FH "}\n";
 
         # close target file
@@ -546,6 +563,14 @@ sub genHostgroups2x {
         } else {
             print FH "\tdisplay_name = \"$HOSTGROUPS->{$hostgroup}->{cn}\"\n";
         }
+
+        if (defined $HOSTGROUPS->{$hostgroup}->{$cfg->{ldap}->{prefix}.'hostgroupmembers'}) {
+            my @groups = split(',', $HOSTGROUPS->{$hostgroup}->{$cfg->{ldap}->{prefix}.'hostgroupmembers'});
+            my $groups = join ",", grep length,  @groups;
+            $groups =~ s/,/\", \"/g;
+            print FH "\tgroups = [ \"$groups\" ]\n";
+        }
+
         print FH "}\n";
 
         # close target file
@@ -1065,38 +1090,7 @@ sub genHostConfig2x {
             my $host_parents_str = "";
             # process each item...
             foreach my $val1 (sort keys %{$CLIENTS->{$client}}) {
-                if ($val1 eq "$cfg->{ldap}->{prefix}address" ||
-                    $val1 eq "$cfg->{ldap}->{prefix}address6" ||
-                    $val1 eq "$cfg->{ldap}->{prefix}hostactionurl" ||
-                    $val1 eq "$cfg->{ldap}->{prefix}hostnotesurl" ||
-                    $val1 eq "$cfg->{ldap}->{prefix}hostnotes" ||
-                    $val1 eq "$cfg->{ldap}->{prefix}iconimage" ||
-                    $val1 eq "$cfg->{ldap}->{prefix}iconimagealt"
-                    ) {
-                    print FH "\t$itemMapIcinga2{$val1} = \"$CLIENTS->{$client}->{$val1}\"\n";
-
-                } elsif ($val1 eq "$cfg->{ldap}->{prefix}statusmapimage") {
-                    $vars->{$itemMapIcinga2{$val1}} = escape_str($CLIENTS->{$client}->{$val1});
-
-                } elsif ($val1 =~ /customvar/i) {
-                    foreach my $val2 (sort keys %{$CLIENTS->{$client}->{$val1}}) {
-                        next if (!defined($val2) || $val2 eq "" ||
-                                    $val2 eq "_" || !$CLIENTS->{$client}->{$val1}->{$val2});
-                        $key = $val2;
-                        $key =~ s/_//;
-                        $vars->{$key} = escape_str($CLIENTS->{$client}->{$val1}->{$val2});
-                    }
-
-                } elsif ($val1 eq "$cfg->{ldap}->{prefix}parent") {
-                    $host_parents_str = $CLIENTS->{$client}->{$val1};
-                } elsif ($val1 eq "$cfg->{ldap}->{prefix}hostgroups") {
-                    my @groups = split(',', $CLIENTS->{$client}->{$val1});
-                    my $groups = join ",", grep length, @groups;
-                    $groups =~ s/,/\", \"/g;
-                    print FH "\tgroups = [ \"$groups\" ]\n";
-                } elsif ($val1 eq "$cfg->{ldap}->{prefix}alias") {
-                    print FH "\tdisplay_name = \"$CLIENTS->{$client}->{$val1}\"\n";
-                } elsif ($val1 eq "$cfg->{ldap}->{prefix}hostcheckcommand" || $val1 eq "$cfg->{ldap}->{prefix}checkcommand") {
+                if ($val1 eq "$cfg->{ldap}->{prefix}hostcheckcommand" || $val1 eq "$cfg->{ldap}->{prefix}checkcommand") {
 
                     my $host_check_command_str = $CLIENTS->{$client}->{$val1};
                     my ($host_check_command_name, @host_check_command_args) = split /!/, $host_check_command_str;
@@ -1116,17 +1110,90 @@ sub genHostConfig2x {
                         $arg_c++;
                     }
 
-                    if (defined($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostcheckinterval'})) {
-                        print FH "\tcheck_interval = $CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostcheckinterval'}m\n";
+                    print FH "\tcheck_command = \"$host_check_command_name\"\n";
+                } elsif ($val1 eq "$cfg->{ldap}->{prefix}address" ||
+                    $val1 eq "$cfg->{ldap}->{prefix}address6" ||
+                    $val1 eq "$cfg->{ldap}->{prefix}hostactionurl" ||
+                    $val1 eq "$cfg->{ldap}->{prefix}hostnotesurl" ||
+                    $val1 eq "$cfg->{ldap}->{prefix}hostnotes" ||
+                    $val1 eq "$cfg->{ldap}->{prefix}iconimage" ||
+                    $val1 eq "$cfg->{ldap}->{prefix}iconimagealt"
+                    ) {
+                    print FH "\t$itemMapIcinga2{$val1} = \"$CLIENTS->{$client}->{$val1}\"\n";
+                } elsif ($val1 eq "$cfg->{ldap}->{prefix}statusmapimage") {
+                    $vars->{$itemMapIcinga2{$val1}} = escape_str($CLIENTS->{$client}->{$val1});
+                } elsif ($val1 eq "$cfg->{ldap}->{prefix}hostcustomvar") {
+                    foreach my $val2 (sort keys %{$CLIENTS->{$client}->{$val1}}) {
+                        next if (!defined($val2) || $val2 eq "" ||
+                                    $val2 eq "_" || !$CLIENTS->{$client}->{$val1}->{$val2});
+                        $key = $val2;
+                        $key =~ s/_//;
+                        $vars->{$key} = escape_str($CLIENTS->{$client}->{$val1}->{$val2});
                     }
-                    if (defined($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostcheckretryinterval'})) {
-                        print FH "\tcheck_interval = $CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostcheckretryinterval'}m\n";
-                    }
-                    if (defined($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostmaxcheckattempts'})) {
-                        print FH "\tmax_check_attempts = $CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostmaxcheckattempts'}\n";
+                } elsif ($val1 eq "$cfg->{ldap}->{prefix}parent") {
+                    $host_parents_str = $CLIENTS->{$client}->{$val1};
+                } elsif ($val1 eq "$cfg->{ldap}->{prefix}hostgroups") {
+                    my @groups = split(',', $CLIENTS->{$client}->{$val1});
+                    my $groups = join ",", grep length, @groups;
+                    $groups =~ s/,/\", \"/g;
+                    print FH "\tgroups = [ \"$groups\" ]\n";
+                } elsif ($val1 eq "$cfg->{ldap}->{prefix}alias") {
+                    print FH "\tdisplay_name = \"$CLIENTS->{$client}->{$val1}\"\n";
+                } elsif ($val1 eq "$cfg->{ldap}->{prefix}hostdisplayname") {
+                    print FH "\tdisplay_name = \"$CLIENTS->{$client}->{$val1}\"\n";
+                } elsif ($val1 eq "$cfg->{ldap}->{prefix}hostcheckperiod") {
+                    print FH "\tcheck_period = \"$CLIENTS->{$client}->{$val1}\"\n";
+                } elsif ($val1 eq "$cfg->{ldap}->{prefix}hostcheckinterval") {
+                    print FH "\tcheck_interval = ".convert_interval_2x($CLIENTS->{$client}->{$val1})."\n";
+                } elsif ($val1 eq "$cfg->{ldap}->{prefix}hostcheckretryinterval") {
+                    print FH "\tretry_interval = ".convert_interval_2x($CLIENTS->{$client}->{$val1})."\n";
+                } elsif ($val1 eq "$cfg->{ldap}->{prefix}hostcheckmaxcheckattempts") {
+                    print FH "\tmax_check_attempts = $CLIENTS->{$client}->{$val1}\n";
+                } elsif ($val1 eq "$cfg->{ldap}->{prefix}hostactivechecksenabled") {
+                    print FH "\tenable_active_checks = $CLIENTS->{$client}->{$val1}\n";
+                } elsif ($val1 eq "$cfg->{ldap}->{prefix}hostpassivechecksenabled") {
+                    print FH "\tenable_passive_checks = $CLIENTS->{$client}->{$val1}\n";
+                } elsif ($val1 eq "$cfg->{ldap}->{prefix}hostprocessperfdata") {
+                    print FH "\tenable_perfdata = $CLIENTS->{$client}->{$val1}\n";
+                } elsif ($val1 eq "$cfg->{ldap}->{prefix}hostnotificationsenabled") {
+                    print FH "\tenable_notifications = $CLIENTS->{$client}->{$val1}\n";
+                } elsif ($val1 eq "$cfg->{ldap}->{prefix}hosteventhandler") {
+                    my ($event_command_name, @event_command_macros) = split /!/, "$CLIENTS->{$client}->{$val1}";
+
+                    my $event_arg_c = 1;
+                    foreach my $macro_val (@event_command_macros) {
+                        # check command arg name for being an icinga 1.x macro and resolve its value
+                        if ($macro_val =~ /^\$(\w+)\$$/) {
+                            if ($1 =~ /^_HOST(\w+)/) {
+                                my $cv_val_macro_key = "_".$1;
+                                # override the original cv value with the resolved host cv
+                                $macro_val = $CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostcustomvar"}->{$cv_val_macro_key};
+                            }
+                        }
+
+                        $vars->{'EVENTARG'.$event_arg_c} = escape_str($macro_val); # special prefix 'EVENTARG' for eventhandler arguments
+
+                        $event_arg_c++;
                     }
 
-                    print FH "\tcheck_command = \"$host_check_command_name\"\n";
+                    my $event_command_object_name = "host-$CLIENTS->{$client}->{cn}-$event_command_name";
+
+                    my $event_command_line;
+                    foreach my $command (keys %{$COMMANDS}) {
+                        if ($COMMANDS->{$command}->{cn} eq $event_command_name) {
+                            $event_command_line = escape_str($COMMANDS->{$command}->{$cfg->{ldap}->{prefix}.'commandline'});
+
+                            $event_command_line =~ s/ARG/EVENTARG/g; # required for eventhandler arguments
+
+                            goto FOUND_EVENT;
+                        }
+                    }
+
+                    FOUND_EVENT:
+
+                    $event_commands->{$event_command_object_name} = $event_command_line;
+
+                    print FH "\tevent_command = \"$event_command_object_name\",\n"
                 }
             }
 
@@ -1216,6 +1283,8 @@ sub genHostConfig2x {
                 #DebugOutput("$$ GENERATE HOSTCONFIG 2x", Dumper(@users));
             }
 
+            my $user_cnt = 0;
+
             # now that we've got all users, get their notification commands
             foreach my $user (@users) {
                 my $notification_cnt = 0;
@@ -1231,10 +1300,13 @@ sub genHostConfig2x {
                         my @host_notification_commands = ();
                         if (defined($CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'contacthostnotificationcommands'})) {
                             @host_notification_commands = split /,/, $CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'contacthostnotificationcommands'};
+                        } else {
+                            DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Can not build notification for host '$CLIENTS->{$client}->{cn}' and user '$user', please define a contact host notification command!");
+                            next;
                         }
 
                         foreach my $notification_command_name (@host_notification_commands) {
-                            my $notification_name = "host-".$CLIENTS->{$client}->{cn}."-".$notification_command_name."-".$notification_cnt;
+                            my $notification_name = "host-".$CLIENTS->{$client}->{cn}."-".$notification_command_name."-".$notification_cnt."-".$user_cnt;
 
                             my $notification_command_object_name = "notification-".$notification_name; # generate a unique command name for this notification
 
@@ -1276,8 +1348,13 @@ sub genHostConfig2x {
                             }
 
                             # notification period
-                            if (defined($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'servicenotificationperiod'})) {
-                                print FH "\tperiod = \"$CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'servicenotificationperiod'}\"\n";
+                            if (defined($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostnotificationperiod'})) {
+                                print FH "\tperiod = \"$CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostnotificationperiod'}\"\n";
+                            }
+
+                            # notification interval
+                            if (defined($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostnotificationinterval'})) {
+                                print FH "\tinterval = ".convert_interval_2x($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostnotificationinterval'})."\n";
                             }
 
                             print FH "\tusers = [ \"$user\" ]\n";
@@ -1285,10 +1362,14 @@ sub genHostConfig2x {
                             print FH "}\n";
                             print FH "\n";
 
-                            # next notification
+                            # next notification command
                             $notification_cnt++;
                         }
+
+                        # next notification contact
+                        $notification_cnt++;
                     }
+                    $user_cnt++;
                 }
             }
 
@@ -1320,12 +1401,12 @@ sub genHostConfig2x {
 
                     if (defined($host_escalation_firstnotification)) {
                         $begin = $host_escalation_firstnotification * $host_escalation_notificationinterval;
-                        print FH "\t\tbegin = ".$begin."m,\n";
+                        print FH "\t\tbegin = ".convert_interval_2x($begin).",\n";
                     }
 
                     if (defined($service_escalation_lastnotification)) {
                         $end = $host_escalation_lastnotification * $host_escalation_notificationinterval;
-                        print FH "\t\tend = ".$end."m,\n";
+                        print FH "\t\tend = ".convert_interval_2x($end).",\n";
                     }
 
                     print FH "\t}\n";
@@ -1410,19 +1491,22 @@ sub genHostConfig2x {
                                $val1 eq "$cfg->{ldap}->{prefix}iconimagealt"
                                ) {
                             print FH "\t\t$itemMapIcinga2{$val1} = \"$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}\"\n";
-                        }
-                        elsif ($val1 =~ /servicegroups/i) {
+                        } elsif ($val1 eq "$cfg->{ldap}->{prefix}servicegroups") {
                             my @groups = split(',', $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1});
                             my $groups = join ",", grep length, @groups;
                             $groups =~ s/,/\", \"/g;
-                            print FH "\t\tgroups = [ \"$groups\" ],\n";
-                        } elsif ($val1 =~ /checkinterval/i) {
-                            print FH "\t\tcheck_interval = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}m,\n";
-                        } elsif ($val1 =~ /retryinterval/i) {
-                            print FH "\t\tretry_interval = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}m,\n";
-                        } elsif ($val1 =~ /maxcheckattempts/i) {
-                            print FH "\t\tmax_check_attempts = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1},\n";
-                        } elsif ($val1 =~ /customvar/i) {
+                            print FH "\tgroups = [ \"$groups\" ]\n";
+                        } elsif ($val1 eq "$cfg->{ldap}->{prefix}servicedisplayname") {
+                            print FH "\tdisplay_name = \"$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}\"\n";
+                        } elsif ($val1 eq "$cfg->{ldap}->{prefix}servicecheckperiod") {
+                            print FH "\tcheck_period = \"$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}\"\n";
+                        } elsif ($val1 eq "$cfg->{ldap}->{prefix}servicecheckinteral") {
+                            print FH "\tcheck_interval = ".convert_interval_2x($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1})."\n";
+                        } elsif ($val1 eq "$cfg->{ldap}->{prefix}servicecheckretryinteral") {
+                            print FH "\tretry_interval = ".convert_interval_2x($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1})."\n";
+                        } elsif ($val1 eq "$cfg->{ldap}->{prefix}servicecheckmaxcheckattempts") {
+                            print FH "\tmax_check_attempts = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}\n";
+                        } elsif ($val1 eq "$cfg->{ldap}->{prefix}servicecustomvar") {
                             foreach my $val2 (sort keys %{$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}}) {
                                 next if (!defined($val2) || $val2 eq "" ||
                                     $val2 eq "_" || !$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}->{$val2});
@@ -1430,15 +1514,48 @@ sub genHostConfig2x {
                                 $key =~ s/_//;
                                 $vars_svc->{$key} = escape_str($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}->{$val2});
                             }
+                        } elsif ($val1 eq "$cfg->{ldap}->{prefix}serviceactivechecksenabled") {
+                            print FH "\tenable_active_checks = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}\n";
+                        } elsif ($val1 eq "$cfg->{ldap}->{prefix}servicepassivechecksenabled") {
+                            print FH "\tenable_passive_checks = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}\n";
+                        } elsif ($val1 eq "$cfg->{ldap}->{prefix}serviceprocessperfdata") {
+                            print FH "\tenable_perfdata = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}\n";
+                        } elsif ($val1 eq "$cfg->{ldap}->{prefix}servicenotificationsenabled") {
+                            print FH "\tenable_notifications = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}\n";
                         } elsif ($val1 eq "$cfg->{ldap}->{prefix}serviceeventhandler") {
 
-                            my $event_command_name = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1};
+                            my ($event_command_name, @event_command_macros) = split /!/, "$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}";
+
+                            my $event_arg_c = 1;
+                            foreach my $macro_val (@event_command_macros) {
+                                # check command arg name for being an icinga 1.x macro and resolve its value
+                                if ($macro_val =~ /^\$(\w+)\$$/) {
+                                    if ($1 =~ /^_HOST(\w+)/) {
+                                        my $cv_val_macro_key = "_".$1;
+                                        # override the original cv value with the resolved host cv
+                                        $macro_val = $CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostcustomvar"}->{$cv_val_macro_key};
+                                    }
+                                    elsif ($1 =~ /^_SERVICE(\w+)/) {
+                                        my $cv_val_macro_key = "_".$1;
+                                        # override the original cv value with the resolved service cv
+                                        $macro_val = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{"$cfg->{ldap}->{prefix}servicecustomvar"}->{$cv_val_macro_key};
+                                    }
+                                }
+
+                                $vars_svc->{'EVENTARG'.$event_arg_c} = escape_str($macro_val); # special prefix 'EVENTARG' for eventhandler arguments
+
+                                $event_arg_c++;
+                            }
+
                             my $event_command_object_name = "host-$CLIENTS->{$client}->{cn}-service-$service-$event_command_name";
 
-                            my $event_command_line; # we don't have args for notification commands
+                            my $event_command_line;
                             foreach my $command (keys %{$COMMANDS}) {
                                 if ($COMMANDS->{$command}->{cn} eq $event_command_name) {
-                                    $event_command_line = $COMMANDS->{$command}->{$cfg->{ldap}->{prefix}.'commandline'};
+                                    $event_command_line = escape_str($COMMANDS->{$command}->{$cfg->{ldap}->{prefix}.'commandline'});
+
+                                    $event_command_line =~ s/ARG/EVENTARG/g; # required for eventhandler arguments
+
                                     goto FOUND_EVENT;
                                 }
                             }
@@ -1447,10 +1564,7 @@ sub genHostConfig2x {
 
                             $event_commands->{$event_command_object_name} = $event_command_line;
 
-                            print FH "\t\tevent_command = \"$event_command_object_name\",\n";
-
-                        } else { # FIXME different check_interval, quote notation
-                            #print FH "\t\t$itemMapIcinga2{$val1} = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1},\n";
+                            print FH "\tevent_command = \"$event_command_object_name\"\n";
                         }
                     }
 
@@ -1529,6 +1643,8 @@ sub genHostConfig2x {
                         @users = uniq(@users);
                         #DebugOutput("$$ GENERATE HOSTCONFIG 2x", Dumper(@users));
                     }
+                    
+                    my $user_cnt = 0;
 
                     # now that we've got all users, get their notification commands
                     foreach my $user (@users) {
@@ -1545,10 +1661,13 @@ sub genHostConfig2x {
                                 my @service_notification_commands = ();
                                 if (defined($CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'contactservicenotificationcommands'})) {
                                         @service_notification_commands = split /,/, $CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'contactservicenotificationcommands'};
+                                } else {
+                                    DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Can not build notification for service '$service' and user '$user', please define a contact service notification command!");
+                                    next;
                                 }
 
                                 foreach my $notification_command_name (@service_notification_commands) {
-                                    my $notification_name = "host-".$CLIENTS->{$client}->{cn}."-service-".$CLIENTS->{$client}->{'SERVICES'}->{$service}->{cn}."-".$notification_command_name."-".$notification_cnt;
+                                    my $notification_name = "host-".$CLIENTS->{$client}->{cn}."-service-".$CLIENTS->{$client}->{'SERVICES'}->{$service}->{cn}."-".$notification_command_name."-".$notification_cnt."-".$user_cnt;
 
                                     my $notification_command_object_name = "notification-".$notification_name; # generate a unique command name for this notification
 
@@ -1595,15 +1714,24 @@ sub genHostConfig2x {
                                         print FH "\tperiod = \"$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$cfg->{ldap}->{prefix}.'servicenotificationperiod'}\"\n";
                                     }
 
+                                    # notification interval
+                                    if (defined($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$cfg->{ldap}->{prefix}.'servicenotificationinterval'})) {
+                                        print FH "\tinterval = ".convert_interval_2x($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$cfg->{ldap}->{prefix}.'servicenotificationinterval'})."\n";
+                                    }
+
                                     print FH "\tusers = [ \"$user\" ]\n";
 
                                     print FH "}\n";
                                     print FH "\n";
 
-                                    # next notification
+                                    # next notification command
                                     $notification_cnt++;
                                 }
+
+                                # next notification contact
+                                $notification_cnt++;
                             }
+                            $user_cnt++;
                         }
                     }
 
@@ -1635,23 +1763,23 @@ sub genHostConfig2x {
 
                             if (defined($service_escalation_firstnotification)) {
                                 $begin = $service_escalation_firstnotification * $service_escalation_notificationinterval;
-                                print FH "\t\tbegin = ".$begin."m,\n";
+                                print FH "\t\tbegin = ".convert_interval_2x($begin).",\n";
                             }
 
                             if (defined($service_escalation_lastnotification)) {
                                 $end = $service_escalation_lastnotification * $service_escalation_notificationinterval;
-                                print FH "\t\tend = ".$end."m,\n";
+                                print FH "\t\tend = ".convert_interval_2x($end).",\n";
                             }
 
                             print FH "\t}\n";
 
                             if (defined($service_escalation_contacts)) {
                                 my @users = split /,/, $service_escalation_contacts;
-                                print FH "\tusers = [ \"".join("\", \"", @users)."\" ],\n";
+                                print FH "\tusers = [ \"".join("\", \"", @users)."\" ]\n";
                             }
                             if (defined($service_escalation_contactgroups)) {
                                 my @usergroups = split /,/, $service_escalation_contactgroups;
-                                print FH "\tuser_groups = [ \"".join("\", \"", @usergroups)."\" ],\n";
+                                print FH "\tuser_groups = [ \"".join("\", \"", @usergroups)."\" ]\n";
                             }
 
                             print FH "}\n";
@@ -1676,7 +1804,6 @@ sub genHostConfig2x {
                 # 1.x definition
                 if ($command_line =~ /\$(USER\d+)\$/) {
                         $command_line = "\"".escape_str($command_line)."\""; # escape quotes
-                        print FH "\tvars.$1 = PluginDir\n"; # compat
                 }
                 if ($command_line !~ /^"/) {
                         $command_line = "\"".escape_str($command_line)."\""; # escape quotes
@@ -1693,7 +1820,6 @@ sub genHostConfig2x {
                 # 1.x definition
                 if ($command_line =~ /\$(USER\d+)\$/) {
                         $command_line = "\"".escape_str($command_line)."\""; # escape quotes
-                        print FH "\tvars.$1 = PluginDir\n"; # compat
                 }
                 if ($command_line !~ /^"/) {
                         $command_line = "\"".escape_str($command_line)."\""; # escape quotes
@@ -1712,4 +1838,3 @@ sub genHostConfig2x {
 1;
 
 # vi: sw=4 ts=4 expandtab :
-

@@ -100,6 +100,7 @@ $cfg->{test}->{output}                   = "/tmp/lconf-test-out";
     @LDAP_PREFIX@timeperiodvalue                              => '',
     @LDAP_PREFIX@commandline                                  => 'command_line',
     @LDAP_PREFIX@members                                      => 'members',
+    @LDAP_PREFIX@hostgroupmembers                             => 'hostgroup_members',
     @LDAP_PREFIX@timeperiodexclude                            => 'exclude',
 
     # .2.2   | lconf attributes (contact)
@@ -223,6 +224,7 @@ $cfg->{test}->{output}                   = "/tmp/lconf-test-out";
     @LDAP_PREFIX@timeperiodvalue                              => '',
     @LDAP_PREFIX@commandline                                  => 'command_line',
     @LDAP_PREFIX@members                                      => 'members',
+    @LDAP_PREFIX@hostgroupmembers                             => 'groups',
     @LDAP_PREFIX@timeperiodexclude                            => 'exclude',
 
     # .2.2   | lconf attributes (contact)
@@ -237,7 +239,7 @@ $cfg->{test}->{output}                   = "/tmp/lconf-test-out";
     @LDAP_PREFIX@contactservicenotificationsenabled           => 'service_notifications_enabled',
     @LDAP_PREFIX@contacthostnotificationsenabled              => 'host_notifications_enabled',
     @LDAP_PREFIX@contactcansubmitcommands                     => 'can_submit_commands',
-    @LDAP_PREFIX@contactgroups                                => 'usergroups',
+    @LDAP_PREFIX@contactgroups                                => 'groups',
 
     # .2.3 | lconf attributes (host)
     @LDAP_PREFIX@address                                      => 'address',
@@ -288,7 +290,7 @@ $cfg->{test}->{output}                   = "/tmp/lconf-test-out";
     @LDAP_PREFIX@servicecheckinterval                         => 'check_interval',
     @LDAP_PREFIX@servicecheckretryinterval                    => 'retry_interval',
     @LDAP_PREFIX@servicecheckmaxcheckattempts                 => 'max_check_attempts',
-    @LDAP_PREFIX@serviceprocessperfdata                       => 'process_perf_data',
+    @LDAP_PREFIX@serviceprocessperfdata                       => 'enable_perfdata',
     @LDAP_PREFIX@serviceactivechecksenabled                   => 'enable_active_checks',
     @LDAP_PREFIX@servicepassivechecksenabled                  => 'enable_passive_checks',
     @LDAP_PREFIX@serviceflapdetectionenabled                  => 'enable_flapping',

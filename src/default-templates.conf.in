@@ -8,12 +8,22 @@ template Host "generic-host" {
   retry_interval = 1m
 
   check_command = "hostalive"
+
+  enable_notifications = true
+  enable_flapping = true
+  enable_perfdata = true
+  enable_event_handler = true
 }
+
 
 template Service "generic-service" {
   max_check_attempts = 3
   check_interval = 5m
   retry_interval = 1m
+
+  enable_notifications = true
+  enable_flapping = true
+  enable_perfdata = true
 }
 
 template User "generic-user" {

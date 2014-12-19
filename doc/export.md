@@ -75,7 +75,6 @@ will not attempt to change the string to lower case!
 
 on the exported service then.
 
-
 #### Icinga 2.x Apply Rules
 
 Use [apply rules](http://docs.icinga.org/icinga2/latest/doc/module/icinga2/chapter/monitoring-basics#using-apply)
@@ -135,6 +134,25 @@ object.
 > The relation `host/service -> contacts -> notification_command` will generate one `Notification`
 > object per command per contact per host/service. This is certainly something you do not want
 > for readability and maintenance. Consider using notification apply rules instead.
+
+The following host and service attributes are migrated:
+
+* `lconf{host,service}contacts` and `lconf{host,service}contactgroups` are not
+exported to Icinga 2.x but only serve as notification object generation point.
+* `lconf{host,service}notificationperiod`, `lconf{host,service}notificationinterval`
+and `lconf{host,service}notificationoptions`
+are not exported to host or service objects, but are inherited into the newly
+created notification objects as `period`, `interval` and `types` & `states` attributes.
+* `lconf{host,service}notificationsenabled` are mapped as host/service `enable_notifications`
+attribute.
+
+These contact attributes cannot be mapped due to the unknown scope these users
+will be added to newly created notification objects. Please ensure that you
+manually manage notification users and their filters, for example in the default
+`generic-user` template provided in `default-templates.conf`.
+
+* lconfContactServiceNotificationPeriod & lconfContactHostNotificationPeriod
+* lconfContactServiceNotificationOptions & lconfContactHostNotificationOptions
 
 The LConf exporter works in a similar fashion as described [here](http://docs.icinga.org/icinga2/latest/doc/module/icinga2/chapter/migration#manual-config-migration-hints-notifications).
 
@@ -210,6 +228,9 @@ will be converted to
 If custom variables are used as command arguments like `$_HOSTMYCUSTOMVAR$`, the export
 logic tries to fetch its current value from the host or service object and pass that directly
 into `vars.ARG...` as new value.
+
+If you are using event handler command arguments, these custom attributes are exported using
+the `EVENTARG` prefix instead of `ARG` for preserving their unique namespace.
 
 #### Mapping Command Runtime Macros
 

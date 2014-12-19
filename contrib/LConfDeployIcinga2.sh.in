@@ -22,7 +22,7 @@ ICINGA2BIN="@ICINGA2_BINPATH@/icinga2"
 # Path of your LConf installation
 LCONFBINPATH="@BIN_DIR@"
 # Define where to export the config to
-LCONFDIR="@ICINGA2_CONFIG@/conf.d/lconf"
+LCONFDIR="@ICINGA2_CONFIG@/lconf"
 # Define where to export the temporary config to
 LCONFTMP="@TMP_DIR@/lconfexport.tmp"
 # Define where your icinga config lies

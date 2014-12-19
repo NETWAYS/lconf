@@ -229,10 +229,28 @@ sub slurp {
     }
 }
 
+sub ltrim {
+    my $str = shift;
+    $str =~ s/^\s+//;
+    return $str;
+};
+
+sub rtrim {
+    my $str = shift;
+    $str =~ s/\s+$//;
+    return $str;
+};
+
+sub trim {
+    my $str = shift;
+    $str =~ s/^\s+|\s+$//g;
+    return $str;
+};
+
 sub escape_str {
     my $str = shift;
 
-    $str =~s/\\/\\\\/g;
+    $str =~ s/\\/\\\\/g;
     $str =~ s/"/\\"/g;
 
     return $str;
@@ -283,6 +301,15 @@ sub print_sorted_hash {
     }
 }
 
+# convert interval values
+sub convert_interval_2x {
+    my $interval = shift;
+
+    $interval = trim($interval) . "m";
+
+    return $interval;
+}
+
 # convert notification_options to state|type_filter
 sub convert_notification_options_to_filter_2x {
     my $notification_options = shift;
@@ -326,21 +353,37 @@ sub convert_notification_options_to_filter_2x {
 
     # recovery requires state up
     if (grep /r/, @options) {
-        push @{$filter->{'state'}}, 'OK';
+        if ($is_host == 1) {
+            push @{$filter->{'state'}}, 'Up';
+        } else {
+            push @{$filter->{'state'}}, 'OK';
+        }
     }
 
-    # always add Problem|Custom|OK
+    # always add Problem|Custom|OK|Up
     push @{$filter->{'type'}}, 'Problem';
     push @{$filter->{'type'}}, 'Custom';
-    push @{$filter->{'state'}}, 'OK';
+    if ($is_host == 1) {
+        push @{$filter->{'state'}}, 'Up';
+    } else {
+        push @{$filter->{'state'}}, 'OK';
+    }
 
     # verify if there's 'a' (all) and add all filters
     if (grep /a/, @options) {
         foreach my $by (keys %{$filter_by}) {
             my $value = $filter_names->{$by};
 
-            if ($value eq "OK" && $is_host == 1) {
-                $value = "Up";
+            if ($is_host == 1) {
+                if ($value eq "OK") {
+                    $value = "Up";
+                } elsif ($value eq "Warning" || $value eq "Critical" || $values eq "Unknown") {
+                    next;
+                }
+            } else {
+                if ($value eq "Down") {
+                    next;
+                }
             }
 
             push @{$filter->{$filter_by->{$by}}}, $value;
@@ -352,13 +395,23 @@ sub convert_notification_options_to_filter_2x {
     foreach my $option (@options) {
 
         my $value = $filter_names->{$option};
-
-        if ($value eq "OK" && $is_host == 1) {
-            $value = "Up";
+        if ($is_host == 1) {
+            if ($value eq "OK") {
+                $value = "Up";
+            } elsif ($value eq "Warning" || $value eq "Critical" || $value eq "Unknown") {
+                next;
+            }
+        } else {
+            if ($value eq "Down") {
+                next;
+            }
         }
 
         push @{$filter->{$filter_by->{$option}}}, $value;
     }
+
+    @{$filter->{state}} = uniq @{$filter->{state}};
+    @{$filter->{type}} = uniq @{$filter->{type}};
 
     return $filter;
 }
