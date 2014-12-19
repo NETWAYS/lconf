@@ -358,6 +358,9 @@ sub TreeBuilder {
 							${tmp_forward}{SERVICES}{$service}{$attribute}{$val1} = ${forward}{$attribute}{$val1};
 						}
 					} else {
+                        #if there is a + sign in the attribute collected in the
+                        #link/alias tree,just add it to the attribute collected
+                        #in the main tree
 						if (defined ${tmp_forward}{SERVICES}{$service}{$attribute} && 
 						    ${tmp_forward}{SERVICES}{$service}{$attribute} =~ /(^\+|,\+)/
 						   ) {
@@ -495,9 +498,14 @@ sub TreeBuilder {
             foreach my $val1 (keys %{$CONFIG->{$service}}) {
                 if ($val1 =~ /$cfg->{ldap}->{prefix}/ || $val1 eq 'description' || $val1 eq 'cn' || $val1 =~ /objectclass/i) {
                     # additive inheritance?
+                    # prepend the inherited attribute (begins with + sign) to the existing attribute string
                     if ($CONFIG->{$service}->{$val1} && $CONFIG->{$service}->{$val1} =~ /^\s*\+/) {
-                        my $tmp_var = $CONFIG->{$service}->{$val1}; #$tmp_var =~ s/\+//;
-                        $forward{'SERVICES'}{$CONFIG->{$service}->{cn}}{$val1} .= ','.$tmp_var;
+                        my $tmp_var = $CONFIG->{$service}->{$val1}; $tmp_var =~ s/\s//;
+                        if ($forward{'SERVICES'}{$CONFIG->{$service}->{cn}}{$val1}) {
+                            $forward{'SERVICES'}{$CONFIG->{$service}->{cn}}{$val1} = $tmp_var.",".$forward{'SERVICES'}{$CONFIG->{$service}->{cn}}{$val1};
+                        } else {
+                            $forward{'SERVICES'}{$CONFIG->{$service}->{cn}}{$val1} = $tmp_var;
+                        }
                     } elsif ($val1 =~ /$cfg->{ldap}->{prefix}servicedependency/) {
                         if(defined $CONFIG->{$service}->{"$cfg->{ldap}->{prefix}servicedependency"}) {
                             $forward{'SERVICES'}{$CONFIG->{$service}->{cn}}{SERVICEDEPENDENCY}->{$CONFIG->{$service}->{"$cfg->{ldap}->{prefix}servicedependency"}}->{$val1} = $CONFIG->{$service}->{$val1};
