@@ -75,7 +75,6 @@ will not attempt to change the string to lower case!
 
 on the exported service then.
 
-
 #### Icinga 2.x Apply Rules
 
 Use [apply rules](http://docs.icinga.org/icinga2/latest/doc/module/icinga2/chapter/monitoring-basics#using-apply)
@@ -229,6 +228,9 @@ will be converted to
 If custom variables are used as command arguments like `$_HOSTMYCUSTOMVAR$`, the export
 logic tries to fetch its current value from the host or service object and pass that directly
 into `vars.ARG...` as new value.
+
+If you are using event handler command arguments, these custom attributes are exported using
+the `EVENTARG` prefix instead of `ARG` for preserving their unique namespace.
 
 #### Mapping Command Runtime Macros
 
