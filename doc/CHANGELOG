@@ -3,6 +3,13 @@
 NOTE: Please read doc/upgrading.md for detailed information on changes and
 upgrade information!
 
+## 1.5.0 Beta1 - 19/12/2014
+
+### CHANGES
+
+* #2680: Rewritten TreeBuilder export
+
+
 ## 1.4.3 - 19/12/2014
 
 ### CHANGES
