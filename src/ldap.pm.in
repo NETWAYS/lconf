@@ -312,7 +312,7 @@ sub TreeBuilder {
                     DebugOutput('TREE BUILDER', "Found attribute '$val1' with value '".Dumper($CONFIG->{$searchDN}->{$val1})."' => store!", 1);
                     # additive inheritance?
                     if ($CONFIG->{$searchDN}->{$val1} && $CONFIG->{$searchDN}->{$val1} =~ /^\s*\+/) {
-                        my $tmp_var = $CONFIG->{$searchDN}->{$val1}; $tmp_var =~ s/\+//;
+                        my $tmp_var = $CONFIG->{$searchDN}->{$val1}; #$tmp_var =~ s/\+//;
                         $forward{$val1} .= ','.$tmp_var;
                     } else {
                         $forward{$val1} = $CONFIG->{$searchDN}->{$val1};
@@ -338,7 +338,6 @@ sub TreeBuilder {
 
 		# link target exists?
 		if(!defined $CONFIG->{$ALIASES->{$alias}->{aliasedobjectname}}->{objectclass}) {
-		    #die "alias broken: $ALIASES->{$alias}->{dn}!";
 		    print "alias broken: $ALIASES->{$alias}->{dn}!";
 		    next;
 		}
@@ -352,32 +351,26 @@ sub TreeBuilder {
 				$attribute =~ /$cfg->{ldap}->{prefix}checkcommand.*/ ||
 				$attribute =~ /$cfg->{ldap}->{prefix}servicecustomvar/ ||
 				$attribute =~ /description/
-			) {
-				#print "BRB".Dumper(%tmp_forward);
-
+			   ) {
 				foreach my $service (keys %{tmp_forward}->{SERVICES}) {
-					#print "Main: ".$attribute." -> ".${forward}{$attribute}."\n";
-					#print "Link: Service ".$service."\n";
-					if (	$attribute eq "description" ||
-						$attribute =~ /$cfg->{ldap}->{prefix}servicecustomvar/
-
-					) {
-
-						# TODO HASH for description and customvars
-						#foreach my $val2 (keys %{$CONFIG->{$service}->{$val1}});
-						#$forward{'SERVICES'}{$CONFIG->{$service}->{cn}}{$val1}{$val2} = $CONFIG->{$service}->{$val1}->{$val2};
-
+					if (ref($forward{$attribute}) eq "HASH") {
+						foreach my $val1 (keys %{${forward}{$attribute}}) {
+							${tmp_forward}{SERVICES}{$service}{$attribute}{$val1} = ${forward}{$attribute}{$val1};
+						}
 					} else {
-						${tmp_forward}{SERVICES}{$service}{$attribute} = ${forward}{$attribute};
+						if (defined ${tmp_forward}{SERVICES}{$service}{$attribute} && 
+						    ${tmp_forward}{SERVICES}{$service}{$attribute} =~ /(^\+|,\+)/
+						   ) {
+							my $tmp_var = ${forward}{$attribute}; $tmp_var =~ s/\+//;
+							${tmp_forward}{SERVICES}{$service}{$attribute} .= ','.$tmp_var;
+						} else {
+							${tmp_forward}{SERVICES}{$service}{$attribute} = ${forward}{$attribute};
+						}
 					}
-					#print "AA".${tmp_forward}{SERVICES}{$service}{$attribute}."\n\n";
 				}
 			}
-
-                    #$forward{'SERVICES'}{$CONFIG->{$service}->{cn}}{$val1} = $forward{$val1};
 		}
 		
-		#print "Dumper: ".Dumper(%tmp_forward)."\n";
 
 		DebugOutput('TREE BUILDER', "Checking alias '$ALIASES->{$alias}->{dn}': '".Dumper($CONFIG->{$ALIASES->{$alias}->{aliasedobjectname}}->{objectclass})."' eq '$cfg->{ldap}->{prefix}Service': ",1);
 		DebugOutput('TREE BUILDER', "Checking alias '$ALIASES->{$alias}->{dn}': '".Dumper($CONFIG->{$ALIASES->{$alias}->{aliasedobjectname}}->{objectclass})."' eq '$cfg->{ldap}->{prefix}Service': " . Dumper(%forward),2);
@@ -418,7 +411,6 @@ sub TreeBuilder {
 			else {
                             DebugOutput('TREE BUILDER', "No direct link '$tmp_forward{SERVICES}{$service}->{cn}' with '$ALIASES->{$alias}->{ou}': " . Dumper(%forward),2);
                             $forward{'SERVICES'}{$service}{$val1} = $tmp_forward{SERVICES}{$service}{$val1};
-			    #print "ADD SERVICE: ".$forward{'SERVICES'}{$service}{$val1}."\n";
                         }
                     }
 
@@ -504,7 +496,7 @@ sub TreeBuilder {
                 if ($val1 =~ /$cfg->{ldap}->{prefix}/ || $val1 eq 'description' || $val1 eq 'cn' || $val1 =~ /objectclass/i) {
                     # additive inheritance?
                     if ($CONFIG->{$service}->{$val1} && $CONFIG->{$service}->{$val1} =~ /^\s*\+/) {
-                        my $tmp_var = $CONFIG->{$service}->{$val1}; $tmp_var =~ s/\+//;
+                        my $tmp_var = $CONFIG->{$service}->{$val1}; #$tmp_var =~ s/\+//;
                         $forward{'SERVICES'}{$CONFIG->{$service}->{cn}}{$val1} .= ','.$tmp_var;
                     } elsif ($val1 =~ /$cfg->{ldap}->{prefix}servicedependency/) {
                         if(defined $CONFIG->{$service}->{"$cfg->{ldap}->{prefix}servicedependency"}) {
@@ -639,8 +631,20 @@ sub BuildHostConfig {
     # add host attributes
     foreach my $val1 (keys %{$TREE}) {
         if ($val1 =~ /$cfg->{ldap}->{prefix}host/ || $val1 eq "$cfg->{ldap}->{prefix}address" || $val1 eq "$cfg->{ldap}->{prefix}parent" || $val1 eq "$cfg->{ldap}->{prefix}alias" || $val1 eq 'description' || $val1 eq 'cn' || $val1 =~ /objectclass/i) {
-            $CLIENTS->{$client}->{$val1} = $TREE->{$val1};
-            DebugOutput('CONFIG BUILDER', "Added attribute $val1 = $CLIENTS->{$client}->{$val1}", 1);
+	        # Remove + signes from additives service attributes
+		if( $val1 =~ /$cfg->{ldap}->{prefix}hostcontactgroups/ || 
+		    $val1 =~ /$cfg->{ldap}->{prefix}hostcontacts/
+		) {
+                        my $tmp_var = $TREE->{$val1}; 
+			$tmp_var =~ s/,,/,/g;
+			$tmp_var =~ s/^,//g;
+			$tmp_var =~ s/,$//g;
+			$tmp_var =~ s/\+//g;
+			$CLIENTS->{$client}->{$val1} = $tmp_var;
+		} else {
+			$CLIENTS->{$client}->{$val1} = $TREE->{$val1};
+			DebugOutput('CONFIG BUILDER', "Added attribute $val1 = $CLIENTS->{$client}->{$val1}", 1);
+		}
         }
     }
 
@@ -664,8 +668,21 @@ sub BuildHostConfig {
         DebugOutput('CONFIG BUILDER', "Found service: $service", 1);
         foreach my $val1 (keys %{$TREE->{SERVICES}->{$service}}) {
             if ($val1 =~ /$cfg->{ldap}->{prefix}service/ || $val1 eq "$cfg->{ldap}->{prefix}checkcommand" || $val1 eq 'description' || $val1 eq 'cn' || $val1 =~ /objectclass/i) {
-                $CLIENTS->{$client}->{SERVICES}->{$service}->{$val1} = $TREE->{SERVICES}->{$service}->{$val1};
-                DebugOutput('CONFIG BUILDER', "Added service attribute: $client $service $val1", 1);
+			
+	        # Remove + signes from additives service attributes
+		if( $val1 =~ /$cfg->{ldap}->{prefix}servicecontactgroups/ || 
+		    $val1 =~ /$cfg->{ldap}->{prefix}servicecontacts/
+		) {
+                        my $tmp_var = $TREE->{SERVICES}->{$service}->{$val1}; 
+			$tmp_var =~ s/,,/,/g;
+			$tmp_var =~ s/^,//g;
+			$tmp_var =~ s/,$//g;
+			$tmp_var =~ s/\+//g;
+			$CLIENTS->{$client}->{SERVICES}->{$service}->{$val1} = $tmp_var;
+		} else {
+			$CLIENTS->{$client}->{SERVICES}->{$service}->{$val1} = $TREE->{SERVICES}->{$service}->{$val1};
+			DebugOutput('CONFIG BUILDER', "Added service attribute: $client $service $val1", 1);
+		}
 
                 # service-/customvar re-write
                 # replace HOSTNAME in servicedescription with the name of the assigned host
