@@ -5,6 +5,15 @@ upgrade information!
 
 ## 1.4.3 - 19/12/2014
 
+### CHANGES
+
+* Bug #2777: Add support for Icinga2 2.2
+* Bug #2678: Hostgroupmembers property of hostgroup objects are not exported
+* Bug #2664: icinga2: multiple service contacts generate duplicate notification objects
+* Feature #2773: Add doc/export.md explaining the 2.x migration differences in detail
+* Feature #2783: icinga2: export should trim whitespaces in interval values
+* Feature #2789: icinga 2: Add default enable_* attribute to generic-* templates in default-templates.conf
+
 ### FIXES
 
 * Bug #2499: Export ignores ou containing !

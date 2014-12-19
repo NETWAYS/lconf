@@ -11,7 +11,7 @@
 
 Name:           LConf
 Summary:        LDAP based configuration tool for Icinga and Nagios
-Version:        1.4.2
+Version:        1.4.3
 Release:        %{revision}%{?dist}%{?custom}
 Url:            https://www.netways.org/projects/lconf
 License:        GPL v2 or later
