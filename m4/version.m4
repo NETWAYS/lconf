@@ -9,6 +9,6 @@ dnl dnl to tag a specific release. Icinga releases do not use
 dnl dnl this name.
 dnl dnl
 dnl
-m4_define([LCONF_VERSION], [1.5.0.beta1])
-m4_define([LCONF_RELEASE_DATE], [2014-12-19])
+m4_define([LCONF_VERSION], [1.5.0.beta2])
+m4_define([LCONF_RELEASE_DATE], [2015-02-10])
 
