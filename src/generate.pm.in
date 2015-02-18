@@ -1116,8 +1116,8 @@ sub genHostConfig2x {
                     $val1 eq "$cfg->{ldap}->{prefix}hostactionurl" ||
                     $val1 eq "$cfg->{ldap}->{prefix}hostnotesurl" ||
                     $val1 eq "$cfg->{ldap}->{prefix}hostnotes" ||
-                    $val1 eq "$cfg->{ldap}->{prefix}iconimage" ||
-                    $val1 eq "$cfg->{ldap}->{prefix}iconimagealt"
+                    $val1 eq "$cfg->{ldap}->{prefix}hosticonimage" ||
+                    $val1 eq "$cfg->{ldap}->{prefix}hosticonimagealt"
                     ) {
                     print FH "\t$itemMapIcinga2{$val1} = \"$CLIENTS->{$client}->{$val1}\"\n";
                 } elsif ($val1 eq "$cfg->{ldap}->{prefix}statusmapimage") {

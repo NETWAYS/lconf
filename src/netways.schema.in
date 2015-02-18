@@ -361,6 +361,17 @@ attributetype ( 1.3.6.1.4.1.26840.144.2.3.531 NAME '@LDAP_PREFIX@HostIsVolatile'
     SUBSTR caseIgnoreSubstringsMatch
     SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
 
+attributetype ( 1.3.6.1.4.1.26840.144.2.3.532 NAME '@LDAP_PREFIX@HostIconImage'
+    DESC 'Nagios / Icinga Icon Image URL (icon_image vendors/nagios.gif)'
+    EQUALITY caseIgnoreMatch
+    SUBSTR caseIgnoreSubstringsMatch
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.3.533 NAME '@LDAP_PREFIX@HostIconImageAlt'
+    DESC 'Nagios / Icinga Icon Image Alt (icon_image_alt Nagios Service)'
+    EQUALITY caseIgnoreMatch
+    SUBSTR caseIgnoreSubstringsMatch
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
 
 #
 # .2.4   | @LDAP_PREFIX@ attributes (service)
@@ -692,7 +703,8 @@ objectclass ( 1.3.6.1.4.1.26840.144.3.1 NAME '@LDAP_PREFIX@TemplateHost'
         @LDAP_PREFIX@Parent $ @LDAP_PREFIX@HostCheckcommand $ @LDAP_PREFIX@Hostgroups $
         @LDAP_PREFIX@HostDependency $ @LDAP_PREFIX@HostDependencyExecutionFailureCriteria $ @LDAP_PREFIX@HostDependencyNotificationFailureCriteria $
         @LDAP_PREFIX@HostCheckFreshness $ @LDAP_PREFIX@HostFreshnessThreshold $ @LDAP_PREFIX@HostNotes $ @LDAP_PREFIX@HostDisplayName $ 
-        @LDAP_PREFIX@HostLowFlapThreshold $ @LDAP_PREFIX@HostHighFlapThreshold $ @LDAP_PREFIX@HostIsVolatile ) )
+        @LDAP_PREFIX@HostLowFlapThreshold $ @LDAP_PREFIX@HostHighFlapThreshold $ @LDAP_PREFIX@HostIsVolatile  $
+        @LDAP_PREFIX@HostIconImage $ @LDAP_PREFIX@HostIconImageAlt) )
 
 objectclass ( 1.3.6.1.4.1.26840.144.3.2 NAME '@LDAP_PREFIX@TemplateService'
     DESC 'Tempalte for a Nagios / Icinga service'
@@ -727,6 +739,7 @@ objectclass ( 1.3.6.1.4.1.26840.144.4.1 NAME '@LDAP_PREFIX@StructuralObject'
         @LDAP_PREFIX@Parent $ @LDAP_PREFIX@HostCheckcommand $ @LDAP_PREFIX@Hostgroups $
         @LDAP_PREFIX@HostDependency $ @LDAP_PREFIX@HostDependencyExecutionFailureCriteria $ @LDAP_PREFIX@HostDependencyNotificationFailureCriteria $
         @LDAP_PREFIX@HostCheckFreshness $ @LDAP_PREFIX@HostFreshnessThreshold $ @LDAP_PREFIX@HostNotes $ @LDAP_PREFIX@HostDisplayName $
+        @LDAP_PREFIX@HostIconImage $ @LDAP_PREFIX@HostIconImageAlt $
         @LDAP_PREFIX@ServiceCustomvar $ @LDAP_PREFIX@ServiceContacts $ @LDAP_PREFIX@ServiceContactgroups $
         @LDAP_PREFIX@ServiceNotificationOptions $ @LDAP_PREFIX@ServiceNotificationInterval $ @LDAP_PREFIX@ServiceNotificationPeriod $ @LDAP_PREFIX@ServiceNotificationsEnabled $
         @LDAP_PREFIX@ServiceCheckPeriod $ @LDAP_PREFIX@ServiceCheckInterval $ @LDAP_PREFIX@ServiceCheckRetryInterval $ @LDAP_PREFIX@ServiceCheckMaxCheckAttempts $

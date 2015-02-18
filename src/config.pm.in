@@ -153,6 +153,8 @@ $cfg->{test}->{output}                   = "/tmp/lconf-test-out";
     @LDAP_PREFIX@hostlowflapthreshold                         => 'low_flap_threshold',
     @LDAP_PREFIX@hosthighflapthreshold                        => 'high_flap_threshold',
     @LDAP_PREFIX@hostisvolatile                               => 'is_volatile',
+    @LDAP_PREFIX@hosticonimage                                => 'icon_image',
+    @LDAP_PREFIX@hosticonimagealt                             => 'icon_image_alt',
 
     # .2.4 | lconf attributes (service)
     @LDAP_PREFIX@checkcommand                                 => 'check_command',
@@ -277,6 +279,8 @@ $cfg->{test}->{output}                   = "/tmp/lconf-test-out";
     @LDAP_PREFIX@hostlowflapthreshold                         => 'flapping_threshold',
     @LDAP_PREFIX@hosthighflapthreshold                        => 'flapping_threshold',
     @LDAP_PREFIX@hostisvolatile                               => 'volatile',
+    @LDAP_PREFIX@hosticonimage                                => 'icon_image',
+    @LDAP_PREFIX@hosticonimagealt                             => 'icon_image_alt',
 
     # .2.4 | lconf attributes (service)
     @LDAP_PREFIX@checkcommand                                 => 'check_command',
