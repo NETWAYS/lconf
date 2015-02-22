@@ -40,9 +40,7 @@ BuildArch:      noarch
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 
 Requires:       perl(Net::LDAP)
-Requires:	perl(Parallel::ForkManager) >= 0.7.6
 BuildRequires:  perl(Net::LDAP)
-BuildRequires:  perl(Parallel::ForkManager) >= 0.7.6
 
 %if "%{_vendor}" == "suse"
 %define slavesynccmdpipepath %{_localstatedir}/run/icinga/icinga.cmd

@@ -180,18 +180,11 @@ AC_MSG_NOTICE([checking for perl... ])
 perl -e "use strict" 2>/dev/null
 if test $? != 0; then AC_MSG_ERROR([ Could not find and exec perl; perl packages are installed? ]); fi
 
-for module in Net::LDAP Net::LDAP::Entry Parallel::ForkManager; do
+for module in Net::LDAP Net::LDAP::Entry; do
     AC_MSG_NOTICE([checking for perl $module... ])
     perl -e "use $module" 2>/dev/null
     if test $? != 0; then AC_MSG_ERROR([ Could not find perl module '$module'; perl package is installed? ]); fi
 done
-
-forkmanager_min="0.7.6"
-AC_MSG_NOTICE([checking for perl Parallel::ForkManager version... ])
-#perl -MParallel::ForkManager -Mversion -e 'my $version = version->new($Parallel::ForkManager::VERSION); my $iwant = version->new('$forkmanager_min'); print "Version found: $version\n"; exit 1 unless $version >= $iwant;'
-perl -e "use  Parallel::ForkManager $forkmanager_min" 
-if test $? != 0; then AC_MSG_ERROR([ perl module 'Parallel::ForkManager' needs to be at least version $forkmanager_min ]); fi
-
 
 # exit
 AC_CONFIG_FILES([Makefile])

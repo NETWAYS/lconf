@@ -121,7 +121,6 @@ use POSIX qw/strftime/;
 use Fcntl qw(:flock);
 use Storable qw(dclone);
 use Scalar::Util qw/reftype/;
-use Parallel::ForkManager;
 
 # lconf includes
 use lib '@SYSCONF_DIR@';
@@ -357,34 +356,7 @@ if(defined($cfg->{export}->{format}) && $cfg->{export}->{format} == 2) {
     copyGeneric("@SYSCONF_DIR@/default-templates.cfg", $opt->{outputDir});
 }
 
-# Prepare Forkmanager
-#my $pm = Parallel::ForkManager->new($cfg->{export}->{childs});
-
-# Callback from the childs
-# stolen from Forkmanager Examples:
-# http://search.cpan.org/~szabgab/Parallel-ForkManager-1.02/lib/Parallel/ForkManager.pm#Data_structure_retrieval
-#my %retrieved_responses = ();  # for collecting responses of the childs
-#$pm -> run_on_finish (
-#    sub {
-#        my ($pid, $exit_code, $ident, $exit_signal, $core_dump, $data_structure_reference) = @_;
-#
-#        # see what the child sent us, if anything
-#        if (defined($data_structure_reference)) {  # test rather than assume child sent anything
-#            if (0) {  # simple on/off switch to display the contents
-#                my $reftype = ref($data_structure_reference);
-#                print qq|ident "$ident" returned a "$reftype" reference.\n\n|;
-#                print &Dumper($data_structure_reference) . qq|end of "$ident" sent structure\n\n|;
-#            }
-#
-#            # we can also collect retrieved data structures for processing after all children have exited
-#            $retrieved_responses{$ident} = $data_structure_reference;
-#        } else {
-#             print qq|Warning:Child did not send data to parent.\n\n|;
-#        }
-#    }
-#);
-
-## Fork start (TreeBuilder, BuildHostConfig) for each client
+## Start (TreeBuilder, BuildHostConfig) for each client
 foreach my $client (keys %{$CLIENTS}) {
 
     # create new child
@@ -395,19 +367,7 @@ foreach my $client (keys %{$CLIENTS}) {
     # start with level 0
     %TREE = TreeBuilder($client, $CONFIG, \%TREE, 0);
     $CLIENTS = BuildHostConfig($client, $CLIENTS, \%TREE);
-
-    # finish child, give $client back to the parent
-    #$pm->finish(0, \%{$CLIENTS->{$client}});
 }
-
-# wait until all childs are finished
-#$pm->wait_all_children;
-
-# get the data from the child back to $CLIENTS
-#for (sort keys %retrieved_responses) {
-#    $CLIENTS->{$_} = $retrieved_responses{$_};
-#}
-## Fork end
 
 # run custom script (mid)
 # it is important that the mid script runs after all childs are finished (after
@@ -446,7 +406,7 @@ if ($cfg->{export}->{enablemidmaster} == 1) {
 # reference to $CLIENTS or a reference to a clone of $CLIENTS (if midmaster ist
 # enable,see above)
 foreach my $client (keys %{$CLIENTS_REF}) {
-    # generate .cfg for one client 
+    # generate config for one client 
     genHostConfig($CONFIG, $CLIENTS_REF, $client);
 }
 
