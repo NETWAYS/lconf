@@ -126,7 +126,6 @@ use Scalar::Util qw/reftype/;
 use lib '@SYSCONF_DIR@';
 use config;
 
-
 use lib '@LIB_DIR@';
 use ldap;
 use generate;
@@ -152,7 +151,7 @@ GetOptions(
     "y|yes"         => \$opt->{yes},
     "h|help"        => \$opt->{help},
     "V|version"     => \$opt->{version}
-);
+  );
 
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
 # help and version page
@@ -220,7 +219,6 @@ if(!defined($cfg->{export}->{enablemidmaster})) {
     $cfg->{export}->{enablemidmaster} = 0;
 }
 
-
 # export already running?
 open(LOCK, ">$cfg->{export}->{lock}") or LeaveScript(2, "Cannot open $cfg->{export}->{lock}");
 flock(LOCK, LOCK_EX|LOCK_NB) or LeaveScript(2, "LConfExport locked! Someone is already using it!");
@@ -284,6 +282,7 @@ if (defined $cfg->{export}->{onlydiffs} && $cfg->{export}->{onlydiffs} == 1 && !
         if ($LASTMODIFIED->{$val1}->{objectclass} =~ /$cfg->{ldap}->{prefix}Host/i) {
             $DIFF_EXPORT->{$LASTMODIFIED->{$val1}->{dn}} = $LASTMODIFIED->{$val1}->{dn};
         } else {
+
             # search for links
             # split and reverse the DN
             my $searchDN = $val1;
@@ -313,7 +312,7 @@ if (defined $cfg->{export}->{onlydiffs} && $cfg->{export}->{onlydiffs} == 1 && !
 
                 my $TMP_HOSTS = LDAPsearch($ldap, $do, "sub", "objectclass=$cfg->{ldap}->{prefix}Host");
                 foreach (keys %{$TMP_HOSTS}) {
-                        $DIFF_EXPORT->{$_} = $_;
+                    $DIFF_EXPORT->{$_} = $_;
                 }
             }
         }
@@ -322,15 +321,16 @@ if (defined $cfg->{export}->{onlydiffs} && $cfg->{export}->{onlydiffs} == 1 && !
 
 # get all clients to monitor
 my $CLIENTS = HashGrep($CONFIG, 'objectclass', $cfg->{ldap}->{prefix}.'Host$');
-    # modify $CLIENTS if $cfg->{export}->{onlydiffs} was set
-    if ($cfg->{export}->{onlydiffs}) {
-        foreach my $client (keys %{$CLIENTS}) {
-            delete $CLIENTS->{$client} if !defined $DIFF_EXPORT->{$client};
-        }
-    }
 
-    # modify $CLIENTS if a filter was set
-    if (defined $opt->{filter}) { my $tmp_hash = HashGrep($CLIENTS, 'cn', $opt->{filter}); $CLIENTS = $tmp_hash; }
+# modify $CLIENTS if $cfg->{export}->{onlydiffs} was set
+if ($cfg->{export}->{onlydiffs}) {
+    foreach my $client (keys %{$CLIENTS}) {
+        delete $CLIENTS->{$client} if !defined $DIFF_EXPORT->{$client};
+    }
+}
+
+# modify $CLIENTS if a filter was set
+if (defined $opt->{filter}) { my $tmp_hash = HashGrep($CLIENTS, 'cn', $opt->{filter}); $CLIENTS = $tmp_hash; }
 
 # drop all hosts obove baseDN (eg. examples)
 foreach my $client (keys %{$CLIENTS}) {
@@ -364,6 +364,7 @@ foreach my $client (keys %{$CLIENTS}) {
 
     beVerbose("$$ CFG BUILD", "Host $client");
     my %TREE = ();
+
     # start with level 0
     %TREE = TreeBuilder($client, $CONFIG, \%TREE, 0);
     $CLIENTS = BuildHostConfig($client, $CLIENTS, \%TREE);
@@ -393,6 +394,7 @@ genServicegroups($CONFIG, $CLIENTS);
 if ($cfg->{export}->{enablemidmaster} == 1) {
 
     if (-f '@EXPORT_SCRIPT_DIR@/mid-master.pl') {
+
         # create a copy of modified config just for the master
         $CLIENTS_REF = dclone($CLIENTS);
         require '@EXPORT_SCRIPT_DIR@/mid-master.pl';
@@ -401,12 +403,13 @@ if ($cfg->{export}->{enablemidmaster} == 1) {
 }
 
 # Generating the .cfg files could be done in childs but this is slower as
-# generate the .cfg files in the parent process! 
+# generate the .cfg files in the parent process!
 # We are using $CLIENTS_REF instead of $CLIENTS! $CLIENTS_REF could be a
 # reference to $CLIENTS or a reference to a clone of $CLIENTS (if midmaster ist
 # enable,see above)
 foreach my $client (keys %{$CLIENTS_REF}) {
-    # generate config for one client 
+
+    # generate config for one client
     genHostConfig($CONFIG, $CLIENTS_REF, $client);
 }
 
@@ -439,6 +442,7 @@ $ldap->unbind();
 
 # just modify the hashdump, if $CLIENTS if $cfg->{export}->{onlydiffs} was set
 if ($cfg->{export}->{onlydiffs} && $cfg->{export}->{onlydiffs} == 1) {
+
     # import hashdump
     my $data; my $VAR1;
     open FILE, "<$cfg->{export}->{hashdump}" or die $!; while(<FILE>) { $data .= $_; } close FILE;

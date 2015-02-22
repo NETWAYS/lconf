@@ -119,8 +119,7 @@ GetOptions(
     "v|verbose:s"       => \$opt->{verbose},
     "h|help"            => \$opt->{help},
     "V|version"         => \$opt->{version}
-);
-
+  );
 
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
 # help and version page
@@ -131,7 +130,6 @@ if (defined $opt->{version}) { print $version."\n"; exit 0; }
 
 # should print help?
 if ($opt->{help}) { pod2usage(1); }
-
 
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
 # let's go!
@@ -174,6 +172,7 @@ our $ldap = LDAPconnect('login');
 
 # if '$optObjectsCache' is specified => run import
 if ($opt->{objectsCache}) {
+
     # specified file is available?
     LeaveScript(2, "'$opt->{objectsCache}' is not a available") if !-f $opt->{objectsCache};
 
@@ -186,248 +185,257 @@ if ($opt->{objectsCache}) {
     beVerbose("OBJECTS CACHE", "work with file '$opt->{objectsCache}'");
 
     # filter stuff from objects cache
-            # get entry points for each item
-            my $counter = 0;
-            foreach(@OBJECTSCACHE) {
-                push(@ID_TIMEPERIODS, $counter)         if $_ =~ /define timeperiod\s+/;
-                push(@ID_CONTACTS, $counter)            if $_ =~ /define contact\s+/;
-                push(@ID_CONTACTGROUPS, $counter)       if $_ =~ /define contactgroup\s+/;
-                push(@ID_HOSTS, $counter)               if $_ =~ /define host\s+/;
-                push(@ID_HOSTGROUPS, $counter)          if $_ =~ /define hostgroup\s+/;
-                push(@ID_COMMANDS, $counter)            if $_ =~ /define command\s+/;
-                push(@ID_SERVICES, $counter)            if $_ =~ /define service\s+/;
+    # get entry points for each item
+    my $counter = 0;
+    foreach(@OBJECTSCACHE) {
+        push(@ID_TIMEPERIODS, $counter)         if $_ =~ /define timeperiod\s+/;
+        push(@ID_CONTACTS, $counter)            if $_ =~ /define contact\s+/;
+        push(@ID_CONTACTGROUPS, $counter)       if $_ =~ /define contactgroup\s+/;
+        push(@ID_HOSTS, $counter)               if $_ =~ /define host\s+/;
+        push(@ID_HOSTGROUPS, $counter)          if $_ =~ /define hostgroup\s+/;
+        push(@ID_COMMANDS, $counter)            if $_ =~ /define command\s+/;
+        push(@ID_SERVICES, $counter)            if $_ =~ /define service\s+/;
 
-                $counter++;
+        $counter++;
+    }
+
+    # get full items
+    $TIMEPERIODS    = getItems(@ID_TIMEPERIODS);            beVerbose("OBJECTS CACHE", "TIMEPERIODS imported");
+    $CONTACTS       = getItems(@ID_CONTACTS);               beVerbose("OBJECTS CACHE", "CONTACTS imported");
+    $CONTACTGROUPS  = getItems(@ID_CONTACTGROUPS);          beVerbose("OBJECTS CACHE", "CONTACTGROUPS imported");
+    $HOSTS          = getItems(@ID_HOSTS);                  beVerbose("OBJECTS CACHE", "HOSTS imported");
+    $HOSTGROUPS     = getItems(@ID_HOSTGROUPS);             beVerbose("OBJECTS CACHE", "HOSTGROUPS imported");
+    $COMMANDS       = getItems(@ID_COMMANDS);               beVerbose("OBJECTS CACHE", "COMMANDS imported");
+    $SERVICES       = getServiceItems(@ID_SERVICES);        beVerbose("OBJECTS CACHE", "SERVICES imported");
+
+    # write lconf config to ldap
+    # timeperiods
+    # set target folder
+    $targetDN = 'ou=timeperiods,'.$cfg->{ldap}->{workDN};
+
+    # check folder
+    checkDN($targetDN);
+
+    foreach my $timeperiod (keys %{$TIMEPERIODS}) {
+
+        # create new object
+        my $entry = Net::LDAP::Entry->new;
+        $entry->dn("cn=$timeperiod,$targetDN");
+        $entry->add(objectClass => "$cfg->{ldap}->{prefix}Timeperiod");
+        beVerbose("LDAP ADD", "cn=$timeperiod,$targetDN");
+
+        foreach(keys %{$TIMEPERIODS->{$timeperiod}}) {
+            if (grep { /$_/ } values %{$newItemMap->{$_}}) {
+                $entry->add(values %{$newItemMap->{$_}} => "$TIMEPERIODS->{$timeperiod}->{$_}");
+            } else {
+                $entry->add("$cfg->{ldap}->{prefix}TimeperiodValue" => "$_ $TIMEPERIODS->{$timeperiod}->{$_}");
+            }
+        }
+
+        # update ldap
+        my $result = $entry->update($ldap);
+        if ($result->code != 0) {
+            beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error);
+            $exit->{code} = 2; $exit->{message} = $result->error;
+            goto EXIT;
+        }
+    }
+
+    # commands
+    # set target folder
+    $targetDN = 'ou=commands,'.$cfg->{ldap}->{workDN};
+
+    # check folder
+    checkDN($targetDN);
+
+    foreach my $command (keys %{$COMMANDS}) {
+
+        # create new object
+        my $entry = Net::LDAP::Entry->new;
+        $entry->dn("cn=$command,$targetDN");
+        $entry->add(objectClass => "$cfg->{ldap}->{prefix}Command");
+        beVerbose("LDAP ADD", "cn=$command,$targetDN");
+
+        foreach(keys %{$COMMANDS->{$command}}) {
+
+            # convert command to utf-8 and add to entry
+            utf8::encode($COMMANDS->{$command}->{$_});
+            $entry->add(values %{$newItemMap->{$_}} => "$COMMANDS->{$command}->{$_}") if values %{$newItemMap->{$_}};
+        }
+
+        # update ldap
+        my $result = $entry->update($ldap);
+        if ($result->code != 0) {
+            beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error);
+            $exit->{code} = 2; $exit->{message} = $result->error;
+            goto EXIT;
+        }
+    }
+
+    # contacts
+    # set target folder
+    $targetDN = 'ou=contacts,'.$cfg->{ldap}->{workDN};
+
+    # check folder
+    checkDN($targetDN);
+
+    foreach my $contact (keys %{$CONTACTS}) {
+
+        # create new object
+        my $entry = Net::LDAP::Entry->new;
+        $entry->dn("cn=$contact,$targetDN");
+        $entry->add(objectClass => "$cfg->{ldap}->{prefix}Contact");
+        beVerbose("LDAP ADD", "cn=$contact,$targetDN");
+
+        foreach(keys %{$CONTACTS->{$contact}}) {
+            $entry->add(values %{$newItemMap->{$_}} => "$CONTACTS->{$contact}->{$_}") if values %{$newItemMap->{$_}};
+        }
+
+        if(!defined($CONTACTS->{$contact}->{'alias'})) {
+            $entry->add("lconfalias" => "$CONTACTS->{$contact}->'contact_name'");
+        }
+
+        # update ldap
+        my $result = $entry->update($ldap);
+        if ($result->code != 0) {
+            beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error);
+            $exit->{code} = 2; $exit->{message} = $result->error;
+            goto EXIT;
+        }
+    }
+
+    # contactgroup
+    # set target folder
+    $targetDN = 'ou=contactgroups,'.$cfg->{ldap}->{workDN};
+
+    # check folder
+    checkDN($targetDN);
+
+    foreach my $contactgroup (keys %{$CONTACTGROUPS}) {
+
+        # create new object
+        my $entry = Net::LDAP::Entry->new;
+        $entry->dn("cn=$contactgroup,$targetDN");
+        $entry->add(objectClass => "$cfg->{ldap}->{prefix}Contactgroup");
+        $entry->add(cn => "$contactgroup");
+        beVerbose("LDAP ADD", "cn=$contactgroup,$targetDN");
+
+        foreach(keys %{$CONTACTGROUPS->{$contactgroup}}) {
+            $entry->add(values %{$newItemMap->{$_}} => "$CONTACTGROUPS->{$contactgroup}->{$_}") if values %{$newItemMap->{$_}};
+        }
+
+        if(!defined($CONTACTGROUPS->{$contactgroup}->{'alias'})) {
+            $entry->add("lconfalias" => "$CONTACTGROUPS->{$contactgroup}->'contactgroup_name'");
+        }
+
+        # update ldap
+        my $result = $entry->update($ldap);
+        if ($result->code != 0) {
+            beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error);
+            $exit->{code} = 2; $exit->{message} = $result->error;
+            goto EXIT;
+        }
+    }
+
+    # hostgroups
+    # set target folder
+    $targetDN = 'ou=hostgroups,'.$cfg->{ldap}->{workDN};
+
+    # check folder
+    checkDN($targetDN);
+
+    foreach my $hostgroup (keys %{$HOSTGROUPS}) {
+
+        # create new object
+        my $entry = Net::LDAP::Entry->new;
+        $entry->dn("cn=$hostgroup,$targetDN");
+        $entry->add(objectClass => "$cfg->{ldap}->{prefix}Hostgroup");
+        $entry->add(cn => "$hostgroup");
+        beVerbose("LDAP ADD", "cn=$hostgroup,$targetDN");
+
+        foreach(keys %{$HOSTGROUPS->{$hostgroup}}) {
+            $entry->add(values %{$newItemMap->{$_}} => "$HOSTGROUPS->{$hostgroup}->{$_}") if values %{$newItemMap->{$_}};
+        }
+
+        if(!defined($HOSTGROUPS->{$hostgroup}->{'alias'})) {
+            $entry->add("lconfalias" => "$HOSTGROUPS->{$hostgroup}->'hostgroup_name'");
+        }
+
+        # update ldap
+        my $result = $entry->update($ldap);
+        if ($result->code != 0) {
+            beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error);
+            $exit->{code} = 2; $exit->{message} = $result->error;
+            goto EXIT;
+        }
+    }
+
+    # hosts
+    # check folder
+    checkDN($cfg->{ldap}->{importDN});
+
+    foreach my $host (keys %{$HOSTS}) {
+
+        # create new object
+        my $entry = Net::LDAP::Entry->new;
+        $entry->dn("cn=$host,$cfg->{ldap}->{importDN}");
+        $entry->add(objectClass => "$cfg->{ldap}->{prefix}Host");
+        beVerbose("LDAP ADD", "cn=$host,$cfg->{ldap}->{importDN}");
+
+        foreach(keys %{$HOSTS->{$host}}) {
+            if (values %{$newItemMap->{$_}}) {
+                my $attName = getRightAttributeType($newItemMap->{$_}, 'host');
+                $entry->add($attName => "$HOSTS->{$host}->{$_}");
+            } elsif ($_ =~ /^_/){
+                $entry->add("$cfg->{ldap}->{prefix}hostcustomvar" => "$_ $HOSTS->{$host}->{$_}");
+            }
+        }
+
+        # update ldap
+        my $result = $entry->update($ldap);
+        if ($result->code != 0) {
+            beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error);
+            $exit->{code} = 2; $exit->{message} = $result->error;
+            goto EXIT;
+        }
+    }
+
+    # services
+    foreach my $host (keys %{$SERVICES}) {
+
+        # set target folder
+        $targetDN = "cn=$host,$cfg->{ldap}->{importDN}";
+
+        foreach my $service (keys %{$SERVICES->{$host}}) {
+
+            # create new object
+            my $entry = Net::LDAP::Entry->new;
+            $entry->dn("cn=$service,$targetDN");
+            $entry->add(objectClass => "$cfg->{ldap}->{prefix}Service");
+            $entry->add(cn => "$service");
+            beVerbose("LDAP ADD", "cn=$service,$targetDN");
+
+            foreach(keys %{$SERVICES->{$host}->{$service}}) {
+                if (values %{$newItemMap->{$_}}) {
+                    my $attName = getRightAttributeType($newItemMap->{$_}, 'service');
+
+                    # convert command to utf-8 and add to entry
+                    utf8::encode($SERVICES->{$host}->{$service}->{$_});
+                    $entry->add($attName => "$SERVICES->{$host}->{$service}->{$_}");
+                } elsif ($_ =~ /^_/){
+                    $entry->add("$cfg->{ldap}->{prefix}servicecustomvar" => "$_ $SERVICES->{$host}->{$service}->{$_}");
+                }
             }
 
-            # get full items
-            $TIMEPERIODS    = getItems(@ID_TIMEPERIODS);            beVerbose("OBJECTS CACHE", "TIMEPERIODS imported");
-            $CONTACTS       = getItems(@ID_CONTACTS);               beVerbose("OBJECTS CACHE", "CONTACTS imported");
-            $CONTACTGROUPS  = getItems(@ID_CONTACTGROUPS);          beVerbose("OBJECTS CACHE", "CONTACTGROUPS imported");
-            $HOSTS          = getItems(@ID_HOSTS);                  beVerbose("OBJECTS CACHE", "HOSTS imported");
-            $HOSTGROUPS     = getItems(@ID_HOSTGROUPS);             beVerbose("OBJECTS CACHE", "HOSTGROUPS imported");
-            $COMMANDS       = getItems(@ID_COMMANDS);               beVerbose("OBJECTS CACHE", "COMMANDS imported");
-            $SERVICES       = getServiceItems(@ID_SERVICES);        beVerbose("OBJECTS CACHE", "SERVICES imported");
-
-            # write lconf config to ldap
-                    # timeperiods
-                            # set target folder
-                            $targetDN = 'ou=timeperiods,'.$cfg->{ldap}->{workDN};
-
-                            # check folder
-                            checkDN($targetDN);
-
-                            foreach my $timeperiod (keys %{$TIMEPERIODS}) {
-                                # create new object
-                                my $entry = Net::LDAP::Entry->new;
-                                $entry->dn("cn=$timeperiod,$targetDN");
-                                $entry->add(objectClass => "$cfg->{ldap}->{prefix}Timeperiod");
-                                beVerbose("LDAP ADD", "cn=$timeperiod,$targetDN");
-
-                                foreach(keys %{$TIMEPERIODS->{$timeperiod}}) {
-                                    if (grep { /$_/ } values %{$newItemMap->{$_}}) {
-                                        $entry->add(values %{$newItemMap->{$_}} => "$TIMEPERIODS->{$timeperiod}->{$_}");
-                                    } else {
-                                        $entry->add("$cfg->{ldap}->{prefix}TimeperiodValue" => "$_ $TIMEPERIODS->{$timeperiod}->{$_}");
-                                    }
-                                }
-
-                                # update ldap
-                                my $result = $entry->update($ldap);
-                                if ($result->code != 0) {
-                                    beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error);
-                                    $exit->{code} = 2; $exit->{message} = $result->error;
-                                    goto EXIT;
-                                }
-                            }
-
-                    # commands
-                            # set target folder
-                            $targetDN = 'ou=commands,'.$cfg->{ldap}->{workDN};
-
-                            # check folder
-                            checkDN($targetDN);
-
-                            foreach my $command (keys %{$COMMANDS}) {
-                                # create new object
-                                my $entry = Net::LDAP::Entry->new;
-                                $entry->dn("cn=$command,$targetDN");
-                                $entry->add(objectClass => "$cfg->{ldap}->{prefix}Command");
-                                beVerbose("LDAP ADD", "cn=$command,$targetDN");
-
-                                foreach(keys %{$COMMANDS->{$command}}) {
-                                    # convert command to utf-8 and add to entry
-                                    utf8::encode($COMMANDS->{$command}->{$_});
-                                    $entry->add(values %{$newItemMap->{$_}} => "$COMMANDS->{$command}->{$_}") if values %{$newItemMap->{$_}};
-                                }
-
-                                # update ldap
-                                my $result = $entry->update($ldap);
-                                if ($result->code != 0) {
-                                    beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error);
-                                    $exit->{code} = 2; $exit->{message} = $result->error;
-                                    goto EXIT;
-                                }
-                            }
-
-                    # contacts
-                            # set target folder
-                            $targetDN = 'ou=contacts,'.$cfg->{ldap}->{workDN};
-
-                            # check folder
-                            checkDN($targetDN);
-
-                            foreach my $contact (keys %{$CONTACTS}) {
-                                # create new object
-                                my $entry = Net::LDAP::Entry->new;
-                                $entry->dn("cn=$contact,$targetDN");
-                                $entry->add(objectClass => "$cfg->{ldap}->{prefix}Contact");
-                                beVerbose("LDAP ADD", "cn=$contact,$targetDN");
-
-                                foreach(keys %{$CONTACTS->{$contact}}) {
-                                    $entry->add(values %{$newItemMap->{$_}} => "$CONTACTS->{$contact}->{$_}") if values %{$newItemMap->{$_}};
-                                }
-
-                                if(!defined($CONTACTS->{$contact}->{'alias'})) {
-                                    $entry->add("lconfalias" => "$CONTACTS->{$contact}->'contact_name'");
-                                }
-
-                                # update ldap
-                                my $result = $entry->update($ldap);
-                                if ($result->code != 0) {
-                                    beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error);
-                                    $exit->{code} = 2; $exit->{message} = $result->error;
-                                    goto EXIT;
-                                }
-                            }
-
-                    # contactgroup
-                            # set target folder
-                            $targetDN = 'ou=contactgroups,'.$cfg->{ldap}->{workDN};
-
-                            # check folder
-                            checkDN($targetDN);
-
-                            foreach my $contactgroup (keys %{$CONTACTGROUPS}) {
-                                # create new object
-                                my $entry = Net::LDAP::Entry->new;
-                                $entry->dn("cn=$contactgroup,$targetDN");
-                                $entry->add(objectClass => "$cfg->{ldap}->{prefix}Contactgroup");
-                                $entry->add(cn => "$contactgroup");
-                                beVerbose("LDAP ADD", "cn=$contactgroup,$targetDN");
-
-                                foreach(keys %{$CONTACTGROUPS->{$contactgroup}}) {
-                                    $entry->add(values %{$newItemMap->{$_}} => "$CONTACTGROUPS->{$contactgroup}->{$_}") if values %{$newItemMap->{$_}};
-                                }
-
-                                if(!defined($CONTACTGROUPS->{$contactgroup}->{'alias'})) {
-                                    $entry->add("lconfalias" => "$CONTACTGROUPS->{$contactgroup}->'contactgroup_name'");
-                                }
-
-                                # update ldap
-                                my $result = $entry->update($ldap);
-                                if ($result->code != 0) {
-                                    beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error);
-                                    $exit->{code} = 2; $exit->{message} = $result->error;
-                                    goto EXIT;
-                                }
-                            }
-
-                    # hostgroups
-                            # set target folder
-                            $targetDN = 'ou=hostgroups,'.$cfg->{ldap}->{workDN};
-
-                            # check folder
-                            checkDN($targetDN);
-
-                            foreach my $hostgroup (keys %{$HOSTGROUPS}) {
-                                # create new object
-                                my $entry = Net::LDAP::Entry->new;
-                                $entry->dn("cn=$hostgroup,$targetDN");
-                                $entry->add(objectClass => "$cfg->{ldap}->{prefix}Hostgroup");
-                                $entry->add(cn => "$hostgroup");
-                                beVerbose("LDAP ADD", "cn=$hostgroup,$targetDN");
-
-                                foreach(keys %{$HOSTGROUPS->{$hostgroup}}) {
-                                    $entry->add(values %{$newItemMap->{$_}} => "$HOSTGROUPS->{$hostgroup}->{$_}") if values %{$newItemMap->{$_}};
-                                }
-
-                                if(!defined($HOSTGROUPS->{$hostgroup}->{'alias'})) {
-                                    $entry->add("lconfalias" => "$HOSTGROUPS->{$hostgroup}->'hostgroup_name'");
-                                }
-
-                                # update ldap
-                                my $result = $entry->update($ldap);
-                                if ($result->code != 0) {
-                                    beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error);
-                                    $exit->{code} = 2; $exit->{message} = $result->error;
-                                    goto EXIT;
-                                }
-                            }
-
-                    # hosts
-                            # check folder
-                            checkDN($cfg->{ldap}->{importDN});
-
-                            foreach my $host (keys %{$HOSTS}) {
-                                # create new object
-                                my $entry = Net::LDAP::Entry->new;
-                                $entry->dn("cn=$host,$cfg->{ldap}->{importDN}");
-                                $entry->add(objectClass => "$cfg->{ldap}->{prefix}Host");
-                                beVerbose("LDAP ADD", "cn=$host,$cfg->{ldap}->{importDN}");
-
-                                foreach(keys %{$HOSTS->{$host}}) {
-                                    if (values %{$newItemMap->{$_}}) {
-                                        my $attName = getRightAttributeType($newItemMap->{$_}, 'host');
-                                        $entry->add($attName => "$HOSTS->{$host}->{$_}");
-                                    } elsif ($_ =~ /^_/){
-                                        $entry->add("$cfg->{ldap}->{prefix}hostcustomvar" => "$_ $HOSTS->{$host}->{$_}");
-                                    }
-                                }
-
-                                # update ldap
-                                my $result = $entry->update($ldap);
-                                if ($result->code != 0) {
-                                    beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error);
-                                    $exit->{code} = 2; $exit->{message} = $result->error;
-                                    goto EXIT;
-                                }
-                            }
-
-                    # services
-                            foreach my $host (keys %{$SERVICES}) {
-                                # set target folder
-                                $targetDN = "cn=$host,$cfg->{ldap}->{importDN}";
-
-                                foreach my $service (keys %{$SERVICES->{$host}}) {
-                                    # create new object
-                                    my $entry = Net::LDAP::Entry->new;
-                                    $entry->dn("cn=$service,$targetDN");
-                                    $entry->add(objectClass => "$cfg->{ldap}->{prefix}Service");
-                                    $entry->add(cn => "$service");
-                                    beVerbose("LDAP ADD", "cn=$service,$targetDN");
-
-                                    foreach(keys %{$SERVICES->{$host}->{$service}}) {
-                                        if (values %{$newItemMap->{$_}}) {
-                                            my $attName = getRightAttributeType($newItemMap->{$_}, 'service');
-
-                                            # convert command to utf-8 and add to entry
-                                            utf8::encode($SERVICES->{$host}->{$service}->{$_});
-                                            $entry->add($attName => "$SERVICES->{$host}->{$service}->{$_}");
-                                        } elsif ($_ =~ /^_/){
-                                            $entry->add("$cfg->{ldap}->{prefix}servicecustomvar" => "$_ $SERVICES->{$host}->{$service}->{$_}");
-                                        }
-                                    }
-
-                                    # update ldap
-                                    my $result = $entry->update($ldap);
-                                    if ($result->code != 0) {
-                                        beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error);
-                                        $exit->{code} = 2; $exit->{message} = $result->error;
-                                        goto EXIT;
-                                    }
-                                }
-                            }
+            # update ldap
+            my $result = $entry->update($ldap);
+            if ($result->code != 0) {
+                beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error);
+                $exit->{code} = 2; $exit->{message} = $result->error;
+                goto EXIT;
+            }
+        }
+    }
 } elsif ($opt->{cleanup}) {
     my $result = LDAPsearch($ldap, $opt->{cleanup}, "base", "objectclass=*");
     LeaveScript(2, "Can't find '$opt->{cleanup}' in on LDAP host '$cfg->{ldap}->{server}") if !$result;
@@ -441,6 +449,7 @@ if ($opt->{objectsCache}) {
 
     # compare whole stuff
     foreach my $compare_group (keys %{$COMPARE_GROUPS}) {
+
         # host attributes
         compareAttributes($compare_group, "$cfg->{ldap}->{prefix}Host");
 
@@ -458,7 +467,6 @@ $ldap->unbind();
 EXIT:
 LeaveScript($exit->{code}, $exit->{message});
 
-
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
 # functions...
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
@@ -468,6 +476,7 @@ sub getItems {
     my $hash;
 
     foreach(@ID_ARRAY) {
+
         # determine name for hashref
         $OBJECTSCACHE[$_+1] =~ m/[\w]+\s(.*)/;
         my $name = $1;
@@ -513,6 +522,7 @@ sub getServiceItems {
     my $hash;
 
     foreach(@ID_ARRAY) {
+
         # determine name for hashref
         $OBJECTSCACHE[$_+1] =~ m/[\w]+\s(.*)/;
         my $name1 = $1;
@@ -546,6 +556,7 @@ sub checkDN {
     my $result = LDAPsearch($ldap, $path[1], "one", $path[0]);
 
     if (!defined $result) {
+
         # get ou attribute
         $dn =~ m/(\w+)=([\w\d]+).*/;
 
@@ -582,6 +593,7 @@ sub compareAttributes {
     my $ITEMS = LDAPsearch($ldap, $searchDN, 'sub', "objectclass=$objectClass");
     foreach my $item (keys %{$ITEMS}) {
         foreach(keys %{$ITEMS->{$item}}) {
+
             # exclude 'cn', 'dn' and 'objectclass'; leave them untouched
             if ($_ ne 'cn' && $_ ne 'dn' && $_ ne 'objectclass') {
                 if (!defined $COMPARE->{$_}->{$ITEMS->{$item}->{$_}}) {
@@ -601,9 +613,11 @@ sub compareAttributes {
     foreach my $val1 (keys %{$COMPARE}) {
         foreach my $val2 (keys %{$COMPARE->{$val1}}) {
             if ($COMPARE->{$val1}->{$val2} >= $countThreshold) {
+
                 # search stuff to delete
                 my $to_delete = LDAPsearch($ldap, $searchDN, "sub", "$val1=$val2");
                 foreach(keys %{$to_delete}) {
+
                     # delete old entries
                     my $result = $ldap->modify($_, delete => { $val1 => $val2 });
                     if ($result->code != 0) {

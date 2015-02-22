@@ -79,6 +79,7 @@ sub genTimeperiods1x {
     my $outputDir = shift;
 
     foreach my $timeperiod (keys %{$TIMEPERIODS}) {
+
         # get target file's name and open it for writing
         my $writeFile = BuildFilepath($TIMEPERIODS->{$timeperiod}->{dn}, $outputDir);
         open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
@@ -116,6 +117,7 @@ sub genTimeperiods2x {
     my $outputDir = shift;
 
     foreach my $timeperiod (keys %{$TIMEPERIODS}) {
+
         # get target file's name and open it for writing
         my $writeFile = BuildFilepath($TIMEPERIODS->{$timeperiod}->{dn}, $outputDir);
         open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
@@ -179,6 +181,7 @@ sub genCommands1x {
     my $outputDir = shift;
 
     foreach my $command (keys %{$COMMANDS}) {
+
         # get target file's name and open it for writing
         my $writeFile = BuildFilepath($COMMANDS->{$command}->{dn}, $outputDir);
         open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
@@ -207,6 +210,7 @@ sub genCommands2x {
     my $template = "generic-check-command";
 
     foreach my $command (keys %{$COMMANDS}) {
+
         # get target file's name and open it for writing
         my $writeFile = BuildFilepath($COMMANDS->{$command}->{dn}, $outputDir);
         open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
@@ -222,10 +226,10 @@ sub genCommands2x {
 
                 # 1.x definition
                 if ($command_line =~ /\$(USER\d+)\$/) {
-                        $command_line = "\"".escape_str($command_line)."\""; # escape quotes
+                    $command_line = "\"".escape_str($command_line)."\""; # escape quotes
                 }
                 if ($command_line !~ /^"/) {
-                        $command_line = "\"".escape_str($command_line)."\""; # escape quotes
+                    $command_line = "\"".escape_str($command_line)."\""; # escape quotes
                 }
                 print FH "\tcommand = $command_line\n";
             }
@@ -271,6 +275,7 @@ sub genContacts1x {
     my $outputDir = shift;
 
     foreach my $contact (keys %{$CONTACTS}) {
+
         # get target file's name and open it for writing
         my $writeFile = BuildFilepath($CONTACTS->{$contact}->{dn}, $outputDir);
         open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
@@ -299,6 +304,7 @@ sub genContacts2x {
     my $outputDir = shift;
 
     foreach my $contact (keys %{$CONTACTS}) {
+
         # get target file's name and open it for writing
         my $writeFile = BuildFilepath($CONTACTS->{$contact}->{dn}, $outputDir);
         open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
@@ -371,6 +377,7 @@ sub genContactgroups1x {
     my $outputDir = shift;
 
     foreach my $contactgroup (keys %{$CONTACTGROUPS}) {
+
         # get target file's name and open it for writing
         my $writeFile = BuildFilepath($CONTACTGROUPS->{$contactgroup}->{dn}, $outputDir);
         open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
@@ -397,6 +404,7 @@ sub genContactgroups2x {
     my $outputDir = shift;
 
     foreach my $contactgroup (keys %{$CONTACTGROUPS}) {
+
         # get target file's name and open it for writing
         my $writeFile = BuildFilepath($CONTACTGROUPS->{$contactgroup}->{dn}, $outputDir);
         open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
@@ -409,12 +417,12 @@ sub genContactgroups2x {
         }
 
         if (defined $CONTACTGROUPS->{$contactgroup}->{$cfg->{ldap}->{prefix}.'members'}) {
-	    @members = str2arr_by_delim_without_excludes($CONTACTGROUPS->{$contactgroup}->{$cfg->{ldap}->{prefix}.'members'}, ',', 1);
-	    if (@members) {
-		$membersstr = '["' . join( '","', @members) . '"]';
-		print FH "\tassign where user.name in $membersstr\n";
-	    }
-	}
+            @members = str2arr_by_delim_without_excludes($CONTACTGROUPS->{$contactgroup}->{$cfg->{ldap}->{prefix}.'members'}, ',', 1);
+            if (@members) {
+                $membersstr = '["' . join( '","', @members) . '"]';
+                print FH "\tassign where user.name in $membersstr\n";
+            }
+        }
 
         print FH "}\n";
 
@@ -448,11 +456,14 @@ sub genHostgroups {
 
     # process hostgroups by hostgroup object
     foreach my $hostgroup (keys %{$HOSTGROUPS}) {
+
         # if there are 'member'-attributes, push the values to $CLIENT hash
         if (defined $HOSTGROUPS->{$hostgroup}->{$cfg->{ldap}->{prefix}.'members'}) {
+
             # multiple values? split...
             my @hosts = split(/\,/, $HOSTGROUPS->{$hostgroup}->{$cfg->{ldap}->{prefix}.'members'});
             foreach my $host (@hosts) {
+
                 # find the right host
                 my $tmp_hash = HashGrep($CLIENTS, 'objectclass', $cfg->{ldap}->{prefix}.'Host');
                 my $hostsearch = HashGrep($tmp_hash, 'dn', '^cn='.$host.',');
@@ -475,6 +486,7 @@ sub genHostgroups {
     # get all hostgroups defined by hostobject
     foreach my $client (keys %{$CLIENTS}) {
         if (defined $CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostgroups"}) {
+
             # multiple or a single hostgroup?
             if ($CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostgroups"} =~ /,/) {
                 my @val = split(/\s*,\s*/, $CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostgroups"});
@@ -486,17 +498,21 @@ sub genHostgroups {
             # look for host's hostgroups and their services (seperated logic)
             my @hhgs = split(/\s*,\s*/, $CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostgroups"});
             foreach my $hg (@hhgs) {
+
                 # find the right hostgroup
                 my $hostgroup = HashGrep($HOSTGROUPS, 'dn', '^cn='.$hg.',');
+
                 # only one, but we'll get a hash anyways
                 foreach my $hostgroupdn (keys %{$hostgroup}) {
                     DebugOutput("GENERATE HOSTGROUPCONFIG", "Generate host services for hostgroup '$hg'", 1);
+
                     # look for services below hostgroup
                     my $hg_result = HashGrep($CONFIG, 'dn', '^[\w]+=[._\w\/\d\s:-]+,'.$hostgroupdn);
                     my $HOSTGROUPSERVICES = HashGrep($hg_result, 'objectclass', $cfg->{ldap}->{prefix}.'Service$');
                     foreach my $service (keys %{$HOSTGROUPSERVICES}) {
                         DebugOutput("GENERATE HOSTGROUPCONFIG", " HostDN: '$client'", 1);
                         DebugOutput("GENERATE HOSTGROUPCONFIG", " ServiceDN: '$service'", 1);
+
                         # we'll override all host SERVICES if there are duplicates
                         # clone the hash to prevent wrong references on dumping host services
                         $CLIENTS->{$client}->{SERVICES}->{$HOSTGROUPSERVICES->{$service}->{'cn'}} = dclone($HOSTGROUPSERVICES->{$service});
@@ -520,6 +536,7 @@ sub genHostgroups1x {
 
     # write hostgroup files
     foreach my $hostgroup (keys %{$HOSTGROUPS}) {
+
         # set file path
         my $writeFile = $outputDir."/hostgroups/$HOSTGROUPS->{$hostgroup}->{cn}.cfg";
 
@@ -552,6 +569,7 @@ sub genHostgroups2x {
 
     # write hostgroup files
     foreach my $hostgroup (keys %{$HOSTGROUPS}) {
+
         # set file path
         my $writeFile = $outputDir."/hostgroups/$HOSTGROUPS->{$hostgroup}->{cn}.conf";
 
@@ -620,6 +638,7 @@ sub genHostgroupEscalations1x {
         close(FH);
     }
 }
+
 #FIXME stash escalations as host notifications for each host inside the hostgroup (see above)
 sub genHostgroupEscalations2x {
     my $CONFIG  = shift;
@@ -629,6 +648,7 @@ sub genHostgroupEscalations2x {
     my $outputDir = shift;
 
     foreach my $escalation (keys %{$HOSTESCALATIONS}) {
+
 =pod
         my $writeFile = $outputDir."/hostescalations/$he_result->{$escalation}->{cn}.cfg";
 
@@ -647,6 +667,7 @@ sub genHostgroupEscalations2x {
         # close target file
         close(FH);
 =cut
+
     }
 }
 
@@ -675,14 +696,17 @@ sub genServicegroups {
 
     # process servicegroups
     foreach my $servicegroup (keys %{$SERVICEGROUPS}) {
+
         # if there are 'member'-attributes, push the values to $CLIENT hash
         if (defined $SERVICEGROUPS->{$servicegroup}->{$cfg->{ldap}->{prefix}.'members'}) {
             my @val = split(/\s*,\s*/, $SERVICEGROUPS->{$servicegroup}->{"$cfg->{ldap}->{prefix}members"});
             my $counter = 0;
 
             while($counter <= $#val) {
+
                 # search full name in client hash :(
                 foreach my $client (keys %{$CLIENTS}) {
+
                     # if real name was found, add to $CLIENT hash
                     if ($client =~ /^cn=$val[$counter],/) {
                         if ($CLIENTS->{$client}->{SERVICES}->{$val[$counter+1]}->{"$cfg->{ldap}->{prefix}servicegroups"}) {
@@ -701,12 +725,13 @@ sub genServicegroups {
 
         # look for service escalations below servicegroup
         genServicegroupEscalations($CONFIG, $CLIENTS, $outputDir, $servicegroup);
-      }
+    }
 
     # get all servicegroups defined by serviceobject
     foreach my $client (keys %{$CLIENTS}) {
         foreach my $service (keys %{$CLIENTS->{$client}->{SERVICES}}) {
             if (defined $CLIENTS->{$client}->{SERVICES}->{$service}->{"$cfg->{ldap}->{prefix}servicegroups"}) {
+
                 # multiple or a single servicegroup?
                 if ($CLIENTS->{$client}->{SERVICES}->{$service}->{"$cfg->{ldap}->{prefix}servicegroups"} =~ /,/) {
                     my @val = split(/\s*,\s*/, $CLIENTS->{$client}->{SERVICES}->{$service}->{"$cfg->{ldap}->{prefix}servicegroups"});
@@ -731,6 +756,7 @@ sub genServicegroups1x {
 
     # write servicegroup files
     foreach my $servicegroup (keys %{$SERVICEGROUPS}) {
+
         # set file path
         my $writeFile = $outputDir."/servicegroups/$SERVICEGROUPS->{$servicegroup}->{cn}.cfg";
 
@@ -756,6 +782,7 @@ sub genServicegroups2x {
 
     # write servicegroup files
     foreach my $servicegroup (keys %{$SERVICEGROUPS}) {
+
         # set file path
         my $writeFile = $outputDir."/servicegroups/$SERVICEGROUPS->{$servicegroup}->{cn}.conf";
 
@@ -844,6 +871,7 @@ sub genServicegroupEscalations2x {
         close(FH);
     }
 =cut
+
 }
 
 #
@@ -878,6 +906,7 @@ sub genHostConfig1x {
 
     DebugOutput("$$ GENERATE HOSTCONFIG 1x", "Generate config for $client", 1);
     if (defined $CLIENTS->{$client}->{dn}) {
+
         # only gen config if lconfhostdisable is not set
         if (!defined $CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostdisable"}) {
             #
@@ -894,23 +923,25 @@ sub genHostConfig1x {
 
             # process each item...
             foreach my $val1 (sort keys %{$CLIENTS->{$client}}) {
+
                 # ...but look after type; only host items
                 # and no service dependency attributes;
                 # they will be handled in an other way
                 if (($val1 =~ /$cfg->{ldap}->{prefix}host/ || $val1 eq "$cfg->{ldap}->{prefix}address" || $val1 eq "$cfg->{ldap}->{prefix}parent" || $val1 eq "$cfg->{ldap}->{prefix}alias") && $val1 !~ /$cfg->{ldap}->{prefix}hostdependency/) {
+
                     # customvar or a default item?
                     if ($val1 =~ /customvar/i) {
                         foreach my $val2 (sort keys %{$CLIENTS->{$client}->{$val1}}) {
                             print FH "\t$val2\t$CLIENTS->{$client}->{$val1}->{$val2}\n";
                         }
                     } else {
-                         if ($itemMap{$val1} =~ /contact_groups/i) {
-                             my @groups = split(',', $CLIENTS->{$client}->{$val1});
-                             my $groups = join ",", grep length,  @groups;
-                             print FH "\t$itemMap{$val1}\t$groups\n";
-                         } else {
-                             print FH "\t$itemMap{$val1}\t$CLIENTS->{$client}->{$val1}\n";
-                         }
+                        if ($itemMap{$val1} =~ /contact_groups/i) {
+                            my @groups = split(',', $CLIENTS->{$client}->{$val1});
+                            my $groups = join ",", grep length,  @groups;
+                            print FH "\t$itemMap{$val1}\t$groups\n";
+                        } else {
+                            print FH "\t$itemMap{$val1}\t$CLIENTS->{$client}->{$val1}\n";
+                        }
                     }
                 }
             }
@@ -924,6 +955,7 @@ sub genHostConfig1x {
             #
             foreach my $service (keys %{$CLIENTS->{$client}->{'SERVICES'}}) {
                 DebugOutput("$$ GENERATE HOSTCONFIG", "Found service $service", 1);
+
                 # only gen service if lconfservicedisable is not set
                 if (!defined $CLIENTS->{$client}->{'SERVICES'}->{$service}->{"$cfg->{ldap}->{prefix}servicedisable"}) {
                     print FH "define service {\n";
@@ -933,8 +965,10 @@ sub genHostConfig1x {
 
                     # process each item
                     foreach my $val1 (sort keys %{$CLIENTS->{$client}->{'SERVICES'}->{$service}}) {
+
                         # ...but look after type; only service items!
                         if (($val1 =~ /$cfg->{ldap}->{prefix}service/ || $val1 eq "$cfg->{ldap}->{prefix}checkcommand") && $val1 !~ /$cfg->{ldap}->{prefix}servicedependency/) {
+
                             # customvar or a default item?
                             if ($val1 =~ /customvar/i) {
                                 foreach my $val2 (sort keys %{$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}}) {
@@ -965,6 +999,7 @@ sub genHostConfig1x {
             # HOST DEPENDENCIES
             #
             foreach my $dependency (sort keys %{$CLIENTS->{$client}->{'HOSTDEPENDENCY'}}) {
+
                 # only if host is not disabled
                 if (!$CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostdisable"}) {
                     print FH "define hostdependency {\n";
@@ -982,6 +1017,7 @@ sub genHostConfig1x {
             # SERVICE DEPENDENCIES
             #
             foreach my $service (sort keys %{$CLIENTS->{$client}->{'SERVICES'}}) {
+
                 # only gen service if lconfservicedisable is not set
                 if (!defined $CLIENTS->{$client}->{'SERVICES'}->{$service}->{"$cfg->{ldap}->{prefix}servicedisable"}) {
                     if (defined $CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEDEPENDENCY}) {
@@ -1014,6 +1050,7 @@ sub genHostConfig1x {
             # HOST ESCALATIONS
             #
             foreach my $escalation (sort keys %{$CLIENTS->{$client}->{'HOSTESCALATION'}}) {
+
                 # only if host is not disabled
                 if (!$CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostdisable"}) {
                     print FH "define hostescalation {\n";
@@ -1030,6 +1067,7 @@ sub genHostConfig1x {
             # SERVICE ESCALATIONS
             #
             foreach my $service (sort keys %{$CLIENTS->{$client}->{'SERVICES'}}) {
+
                 # only gen service if lconfservicedisable is not set
                 if (!defined $CLIENTS->{$client}->{'SERVICES'}->{$service}->{"$cfg->{ldap}->{prefix}servicedisable"}) {
                     if (defined $CLIENTS->{$client}->{'SERVICES'}->{$service}->{SERVICEESCALATION}) {
@@ -1065,8 +1103,8 @@ sub genHostConfig2x {
     my $CONTACTS = HashGrep($CONFIG, 'objectclass', $cfg->{ldap}->{prefix}.'Contact$');
     my $COMMANDS = HashGrep($CONFIG, 'objectclass', $cfg->{ldap}->{prefix}.'Command$');
 
-
     if (defined $CLIENTS->{$client}->{dn}) {
+
         # only gen config if lconfhostdisable is not set
         if (!defined $CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostdisable"}) {
 
@@ -1088,6 +1126,7 @@ sub genHostConfig2x {
             print FH "\timport \"generic-host\"\n";
 
             my $host_parents_str = "";
+
             # process each item...
             foreach my $val1 (sort keys %{$CLIENTS->{$client}}) {
                 if ($val1 eq "$cfg->{ldap}->{prefix}hostcheckcommand" || $val1 eq "$cfg->{ldap}->{prefix}checkcommand") {
@@ -1097,10 +1136,12 @@ sub genHostConfig2x {
 
                     my $arg_c = 1;
                     foreach my $macro_val (@host_check_command_args) {
+
                         # check command arg name for being an icinga 1.x macro and resolve its value
                         if ($macro_val =~ /^\$(\w+)\$$/) {
                             if ($1 =~ /^_HOST(\w+)/) {
                                 my $cv_val_macro_key = "_".$1;
+
                                 # override the original cv value
                                 $macro_val = $CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostcustomvar"}->{$cv_val_macro_key};
                             }
@@ -1118,14 +1159,14 @@ sub genHostConfig2x {
                     $val1 eq "$cfg->{ldap}->{prefix}hostnotes" ||
                     $val1 eq "$cfg->{ldap}->{prefix}hosticonimage" ||
                     $val1 eq "$cfg->{ldap}->{prefix}hosticonimagealt"
-                    ) {
+                  ) {
                     print FH "\t$itemMapIcinga2{$val1} = \"$CLIENTS->{$client}->{$val1}\"\n";
                 } elsif ($val1 eq "$cfg->{ldap}->{prefix}statusmapimage") {
                     $vars->{$itemMapIcinga2{$val1}} = escape_str($CLIENTS->{$client}->{$val1});
                 } elsif ($val1 eq "$cfg->{ldap}->{prefix}hostcustomvar") {
                     foreach my $val2 (sort keys %{$CLIENTS->{$client}->{$val1}}) {
                         next if (!defined($val2) || $val2 eq "" ||
-                                    $val2 eq "_" || !$CLIENTS->{$client}->{$val1}->{$val2});
+                            $val2 eq "_" || !$CLIENTS->{$client}->{$val1}->{$val2});
                         $key = $val2;
                         $key =~ s/_//;
                         $vars->{$key} = escape_str($CLIENTS->{$client}->{$val1}->{$val2});
@@ -1162,10 +1203,12 @@ sub genHostConfig2x {
 
                     my $event_arg_c = 1;
                     foreach my $macro_val (@event_command_macros) {
+
                         # check command arg name for being an icinga 1.x macro and resolve its value
                         if ($macro_val =~ /^\$(\w+)\$$/) {
                             if ($1 =~ /^_HOST(\w+)/) {
                                 my $cv_val_macro_key = "_".$1;
+
                                 # override the original cv value with the resolved host cv
                                 $macro_val = $CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostcustomvar"}->{$cv_val_macro_key};
                             }
@@ -1259,6 +1302,7 @@ sub genHostConfig2x {
             # parse contacts, contactgroups
             my @users = ();
             if (defined($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostcontactgroups'})) {
+
                 # yikes, comma separated groups string
                 my $groups_str = $CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostcontactgroups'};
 
@@ -1271,6 +1315,7 @@ sub genHostConfig2x {
                     # STAGE 1: get all contactgroup members which are matching
                     foreach my $contactgroup (keys %{$CONTACTGROUPS}) {
                         DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Generating Notifications, STAGE 1: Looking for contactgroup '$CONTACTGROUPS->{$contactgroup}->{cn}' members attribute.");
+
                         #DebugOutput("$$ GENERATE HOSTCONFIG 2x", Dumper($CONTACTGROUPS->{$contactgroup}));
                         if ($CONTACTGROUPS->{$contactgroup}->{cn} eq $group) {
                             if (defined($CONTACTGROUPS->{$contactgroup}->{$cfg->{ldap}->{prefix}.'members'})) {
@@ -1285,6 +1330,7 @@ sub genHostConfig2x {
                         DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Generating Notifications, STAGE 2: Looking for contacts '$CONTACTS->{$contact}->{cn}' attribute contactgroups matching the current contactgroup '$group'.");
                         if (defined($CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'contactgroups'})) {
                             DebugOutput("$$ GENERATE HOSTCONFIG 2x", "contactgroups attribute found: '$CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'contactgroups'}'. Matches '$group'?.");
+
                             # this is ugly, find a better match condition
                             if ($CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'contactgroups'} =~ /$group/) {
                                 push @users, $CONTACTS->{$contact}->{cn};
@@ -1300,12 +1346,15 @@ sub genHostConfig2x {
                 my @contacts = split /,/, $CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostcontacts'};
                 push @users, @contacts;
             } else {
+
                 #DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Skipping $CLIENTS->{$client}->{cn} notification, no contacts found.");
             }
 
             if (@users) {
+
                 # make sure that group members and contacts remain unique
                 @users = uniq(@users);
+
                 #DebugOutput("$$ GENERATE HOSTCONFIG 2x", Dumper(@users));
             }
 
@@ -1314,9 +1363,11 @@ sub genHostConfig2x {
             # now that we've got all users, get their notification commands
             foreach my $user (@users) {
                 my $notification_cnt = 0;
+
                 #DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Looking for user $user in ".Dumper($CONTACTS));
 
                 foreach my $contact (keys %{$CONTACTS}) {
+
                     #DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Looking for user $user in ".Dumper($CONTACTS->{$contact}));
 
                     if ($CONTACTS->{$contact}->{cn} eq $user) {
@@ -1328,6 +1379,7 @@ sub genHostConfig2x {
                             @host_notification_commands = split /,/, $CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'contacthostnotificationcommands'};
                         } else {
                             beVerbose("$$ GENERATE HOSTCONFIG 2x", "Can not build notification for host '$CLIENTS->{$client}->{cn}' and contact '$user', please define a contact host notification command!");
+
                             # TODO: Should we use the default mail notification command?
                             next;
                         }
@@ -1489,15 +1541,18 @@ sub genHostConfig2x {
 
                             my $arg_c = 1;
                             foreach my $macro_val (@checkcommand_macros) {
+
                                 # check command arg name for being an icinga 1.x macro and resolve its value
                                 if ($macro_val =~ /^\$(\w+)\$$/) {
                                     if ($1 =~ /^_HOST(\w+)/) {
                                         my $cv_val_macro_key = "_".$1;
+
                                         # override the original cv value with the resolved host cv
                                         $macro_val = $CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostcustomvar"}->{$cv_val_macro_key};
                                     }
                                     elsif ($1 =~ /^_SERVICE(\w+)/) {
                                         my $cv_val_macro_key = "_".$1;
+
                                         # override the original cv value with the resolved service cv
                                         $macro_val = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{"$cfg->{ldap}->{prefix}servicecustomvar"}->{$cv_val_macro_key};
                                     }
@@ -1512,11 +1567,11 @@ sub genHostConfig2x {
 
                         }
                         elsif ($val1 eq "$cfg->{ldap}->{prefix}serviceactionurl" ||
-                               $val1 eq "$cfg->{ldap}->{prefix}servicenotesurl" ||
-                               $val1 eq "$cfg->{ldap}->{prefix}servicenotes" ||
-                               $val1 eq "$cfg->{ldap}->{prefix}iconimage" ||
-                               $val1 eq "$cfg->{ldap}->{prefix}iconimagealt"
-                               ) {
+                            $val1 eq "$cfg->{ldap}->{prefix}servicenotesurl" ||
+                            $val1 eq "$cfg->{ldap}->{prefix}servicenotes" ||
+                            $val1 eq "$cfg->{ldap}->{prefix}iconimage" ||
+                            $val1 eq "$cfg->{ldap}->{prefix}iconimagealt"
+                          ) {
                             print FH "\t\t$itemMapIcinga2{$val1} = \"$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}\"\n";
                         } elsif ($val1 eq "$cfg->{ldap}->{prefix}servicegroups") {
                             my @groups = split(',', $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1});
@@ -1555,15 +1610,18 @@ sub genHostConfig2x {
 
                             my $event_arg_c = 1;
                             foreach my $macro_val (@event_command_macros) {
+
                                 # check command arg name for being an icinga 1.x macro and resolve its value
                                 if ($macro_val =~ /^\$(\w+)\$$/) {
                                     if ($1 =~ /^_HOST(\w+)/) {
                                         my $cv_val_macro_key = "_".$1;
+
                                         # override the original cv value with the resolved host cv
                                         $macro_val = $CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostcustomvar"}->{$cv_val_macro_key};
                                     }
                                     elsif ($1 =~ /^_SERVICE(\w+)/) {
                                         my $cv_val_macro_key = "_".$1;
+
                                         # override the original cv value with the resolved service cv
                                         $macro_val = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{"$cfg->{ldap}->{prefix}servicecustomvar"}->{$cv_val_macro_key};
                                     }
@@ -1647,6 +1705,7 @@ sub genHostConfig2x {
                     # parse contacts, contactgroups
                     my @users = ();
                     if (defined($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$cfg->{ldap}->{prefix}.'servicecontactgroups'})) {
+
                         # fancy, we've got multiple contactgroups as well
                         my $groups_str = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$cfg->{ldap}->{prefix}.'servicecontactgroups'};
                         DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Migrating contactgroups: '$groups_str' from service '$service'.");
@@ -1658,6 +1717,7 @@ sub genHostConfig2x {
                             # STAGE 1: get all contactgroup members which are matching
                             foreach my $contactgroup (keys %{$CONTACTGROUPS}) {
                                 DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Generating Notifications, STAGE 1: Looking for contactgroup '$CONTACTGROUPS->{$contactgroup}->{cn}' members attribute.");
+
                                 #DebugOutput("$$ GENERATE HOSTCONFIG 2x", Dumper($CONTACTGROUPS->{$contactgroup}));
                                 if ($CONTACTGROUPS->{$contactgroup}->{cn} eq $group) {
                                     if (defined($CONTACTGROUPS->{$contactgroup}->{$cfg->{ldap}->{prefix}.'members'})) {
@@ -1672,6 +1732,7 @@ sub genHostConfig2x {
                                 DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Generating Notifications, STAGE 2: Looking for contacts '$CONTACTS->{$contact}->{cn}' attribute contactgroups matching the current contactgroup '$group'.");
                                 if (defined($CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'contactgroups'})) {
                                     DebugOutput("$$ GENERATE HOSTCONFIG 2x", "contactgroups attribute found: '$CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'contactgroups'}'. Matches '$group'?.");
+
                                     # this is ugly, find a better match condition
                                     if ($CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'contactgroups'} =~ /$group/) {
                                         push @users, $CONTACTS->{$contact}->{cn};
@@ -1687,12 +1748,15 @@ sub genHostConfig2x {
                         my @contacts = split /,/, $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$cfg->{ldap}->{prefix}.'servicecontacts'};
                         push @users, @contacts;
                     } else {
+
                         #DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Skipping $service notification, no contacts found.");
                     }
 
                     if (@users) {
+
                         # make sure that group members and contacts remain unique
                         @users = uniq(@users);
+
                         #DebugOutput("$$ GENERATE HOSTCONFIG 2x", Dumper(@users));
                     }
 
@@ -1701,9 +1765,11 @@ sub genHostConfig2x {
                     # now that we've got all users, get their notification commands
                     foreach my $user (@users) {
                         my $notification_cnt = 0;
+
                         #DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Looking for user $user in ".Dumper($CONTACTS));
 
                         foreach my $contact (keys %{$CONTACTS}) {
+
                             #DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Looking for user $user in ".Dumper($CONTACTS->{$contact}));
 
                             if ($CONTACTS->{$contact}->{cn} eq $user) {
@@ -1712,9 +1778,10 @@ sub genHostConfig2x {
                                 # build the notification based on the commands
                                 my @service_notification_commands = ();
                                 if (defined($CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'contactservicenotificationcommands'})) {
-                                        @service_notification_commands = split /,/, $CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'contactservicenotificationcommands'};
+                                    @service_notification_commands = split /,/, $CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'contactservicenotificationcommands'};
                                 } else {
                                     beVerbose("$$ GENERATE HOSTCONFIG 2x", "Can not build notification for service '$service' and contact '$user', please define a contact service notification command!");
+
                                     # TODO: Should we use the default mail notification command?
                                     next;
                                 }
@@ -1854,12 +1921,13 @@ sub genHostConfig2x {
                 print FH "object NotificationCommand \"$notification_command_object_name\" {\n";
                 print FH "\timport \"generic-notification-command\"\n";
                 my $command_line = $notification_commands->{$notification_command_object_name};
+
                 # 1.x definition
                 if ($command_line =~ /\$(USER\d+)\$/) {
-                        $command_line = "\"".escape_str($command_line)."\""; # escape quotes
+                    $command_line = "\"".escape_str($command_line)."\""; # escape quotes
                 }
                 if ($command_line !~ /^"/) {
-                        $command_line = "\"".escape_str($command_line)."\""; # escape quotes
+                    $command_line = "\"".escape_str($command_line)."\""; # escape quotes
                 }
                 print FH "\tcommand = $command_line\n";
                 print FH "}\n";
@@ -1870,12 +1938,13 @@ sub genHostConfig2x {
                 print FH "object EventCommand \"$event_command_object_name\" {\n";
                 print FH "\timport \"generic-event-command\"\n";
                 my $command_line = $event_commands->{$event_command_object_name};
+
                 # 1.x definition
                 if ($command_line =~ /\$(USER\d+)\$/) {
-                        $command_line = "\"".escape_str($command_line)."\""; # escape quotes
+                    $command_line = "\"".escape_str($command_line)."\""; # escape quotes
                 }
                 if ($command_line !~ /^"/) {
-                        $command_line = "\"".escape_str($command_line)."\""; # escape quotes
+                    $command_line = "\"".escape_str($command_line)."\""; # escape quotes
                 }
                 print FH "\tcommand = $command_line\n";
                 print FH "}\n";

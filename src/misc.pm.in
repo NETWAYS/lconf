@@ -46,13 +46,13 @@
 #
 # Nagios and the Nagios logo are registered trademarks of Ethan Galstad.
 
-
 sub LeaveScript {
     my $exitCode = $_[0];
     my $comment  = $_[1];
 
     # unlock exporter
     if (defined(fileno(LOCK))) {
+
         # only remove the lockfile if we have an exclusive lock
         unlink($cfg->{export}->{lock}) if flock(LOCK, LOCK_EX|LOCK_NB);
         close(LOCK);
@@ -67,6 +67,7 @@ sub beVerbose {
     my $text = shift;
 
     if (defined $opt->{verbose}) {
+
         # generate message
         my $message = localtime(time)." | Verbose: $type: $text\n";
 
@@ -130,7 +131,7 @@ sub BuildFilepath {
     my $filedn = shift;
     my $filepath = shift;
     $filepath .= '/';
-    
+
     my $suffix = (defined($cfg->{export}->{format}) && $cfg->{export}->{format} == 2) ? ".conf" : ".cfg";
 
     # build file path
@@ -139,6 +140,7 @@ sub BuildFilepath {
     my @path = split(",", $path);
     @path = reverse(@path);
     foreach my $items (@path) {
+
         # file or folder?
         if ($items =~ /cn=/) {
             my $val = (split(/\=/, $items))[1];
@@ -221,7 +223,7 @@ sub slurp {
         open ( my $fh, "<", $file ) or die "Could not open $file: $!";
         return do {
             <$fh>;
-        }
+          }
     } elsif (! -r $file) {
         print " ERROR: $file not readable. check permissions/user!\n"
     } else {
@@ -274,8 +276,8 @@ sub str2arr_by_delim_without_excludes {
     my @arr = ();
 
     @arr = map { s/^\s+//; s/\s+$//; $_ }
-            grep { !/^!/ }
-            split (/$delim/, $str);
+      grep { !/^!/ }
+      split (/$delim/, $str);
 
     if ($sort == 1) {
         @arr = sort (@arr);
@@ -329,7 +331,7 @@ sub convert_notification_options_to_filter_2x {
         's' => 'DowntimeStart, DowntimeEnd, DowntimeRemoved',
         'r' => 'Recovery',
         'f' => 'FlappingStart, FlappingEnd'
-    };
+      };
     my $filter_by = {
         'o' => 'state',
         'w' => 'state',
@@ -339,7 +341,7 @@ sub convert_notification_options_to_filter_2x {
         's' => 'type',
         'r' => 'type',
         'f' => 'type'
-    };
+      };
 
     # split the string
     my @options = str2arr_by_delim_without_excludes($notification_options, ',', 1);
@@ -431,7 +433,7 @@ sub convert_dependendy_failure_criteria_2x {
         'c' => 'Critical',
         'u' => 'Unknown',
         'd' => 'Down',
-    };
+      };
 
     # by default checks are run
     # but notifications suppressed
@@ -568,16 +570,16 @@ sub convert_legacy_command_macros_2x {
     $str =~ s/\$TOTALSERVICESUNKNOWN\$/\$icinga.num_services_unknown\$/g;
 
     if (
-    $str =~ /\$(TOTALHOSTSDOWNUNHANDLED)\$/ ||
-    $str =~ /\$(TOTALHOSTSUNREACHABLEUNHANDLED)\$/ ||
-    $str =~ /\$(TOTALHOSTPROBLEMS)\$/ ||
-    $str =~ /\$(TOTALHOSTPROBLEMSUNHANDLED)\$/ ||
-    $str =~ /\$(TOTALSERVICESWARNINGUNHANDLED)\$/ ||
-    $str =~ /\$(TOTALSERVICESCRITICALUNHANDLED)\$/ ||
-    $str =~ /\$(TOTALSERVICESUNKNOWNUNHANDLED)\$/ ||
-    $str =~ /\$(TOTALSERVICEPROBLEMS)\$/ ||
-    $str =~ /\$(TOTALSERVICEPROBLEMSUNHANDLED)\$/
-    ) {
+        $str =~ /\$(TOTALHOSTSDOWNUNHANDLED)\$/ ||
+        $str =~ /\$(TOTALHOSTSUNREACHABLEUNHANDLED)\$/ ||
+        $str =~ /\$(TOTALHOSTPROBLEMS)\$/ ||
+        $str =~ /\$(TOTALHOSTPROBLEMSUNHANDLED)\$/ ||
+        $str =~ /\$(TOTALSERVICESWARNINGUNHANDLED)\$/ ||
+        $str =~ /\$(TOTALSERVICESCRITICALUNHANDLED)\$/ ||
+        $str =~ /\$(TOTALSERVICESUNKNOWNUNHANDLED)\$/ ||
+        $str =~ /\$(TOTALSERVICEPROBLEMS)\$/ ||
+        $str =~ /\$(TOTALSERVICEPROBLEMSUNHANDLED)\$/
+      ) {
         beVerbose("Migrate Runtime Macros", "Cannot convert $1 - manual interaction required.");
     }
 
