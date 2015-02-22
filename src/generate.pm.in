@@ -1259,15 +1259,24 @@ sub genHostConfig2x {
             # parse contacts, contactgroups
             my @users = ();
             if (defined($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostcontactgroups'})) {
-                foreach my $contactgroup (keys %{$CONTACTGROUPS}) {
-                    #DebugOutput("$$ GENERATE HOSTCONFIG 2x", Dumper($CONTACTGROUPS->{$contactgroup}));
-                    if ($CONTACTGROUPS->{$contactgroup}->{cn} eq $CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostcontactgroups'}) {
-                        my @members = split /,/, $CONTACTGROUPS->{$contactgroup}->{$cfg->{ldap}->{prefix}.'members'};
-                        push @users, @members;
+                # yikes, comma separated groups string
+                my $groups_str = $CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostcontactgroups'};
+
+                DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Migrating contactgroups: '$groups_str' from host '$CLIENTS->{$client}->{cn}'.");
+                my @groups = str2arr_by_delim_without_excludes($groups_str, ',', 0);
+
+                # fetch all members from all contactgroups
+                foreach my $group (@groups) {
+                    foreach my $contactgroup (keys %{$CONTACTGROUPS}) {
+                        #DebugOutput("$$ GENERATE HOSTCONFIG 2x", Dumper($CONTACTGROUPS->{$contactgroup}));
+                        if ($CONTACTGROUPS->{$contactgroup}->{cn} eq $group) {
+                            my @members = split /,/, $CONTACTGROUPS->{$contactgroup}->{$cfg->{ldap}->{prefix}.'members'};
+                            push @users, @members;
+                        }
                     }
                 }
             } else {
-                #DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Skipping $CLIENTS->{$client}->{cn} notification, no contactgroups found.");
+                DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Skipping $CLIENTS->{$client}->{cn} notification, no contactgroups found.");
             }
 
             if (defined($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostcontacts'})) {
@@ -1301,7 +1310,8 @@ sub genHostConfig2x {
                         if (defined($CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'contacthostnotificationcommands'})) {
                             @host_notification_commands = split /,/, $CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'contacthostnotificationcommands'};
                         } else {
-                            DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Can not build notification for host '$CLIENTS->{$client}->{cn}' and user '$user', please define a contact host notification command!");
+                            beVerbose("$$ GENERATE HOSTCONFIG 2x", "Can not build notification for host '$CLIENTS->{$client}->{cn}' and contact '$user', please define a contact host notification command!");
+                            # TODO: Should we use the default mail notification command?
                             next;
                         }
 
@@ -1620,15 +1630,24 @@ sub genHostConfig2x {
                     # parse contacts, contactgroups
                     my @users = ();
                     if (defined($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$cfg->{ldap}->{prefix}.'servicecontactgroups'})) {
-                        foreach my $contactgroup (keys %{$CONTACTGROUPS}) {
-                            #DebugOutput("$$ GENERATE HOSTCONFIG 2x", Dumper($CONTACTGROUPS->{$contactgroup}));
-                            if ($CONTACTGROUPS->{$contactgroup}->{cn} eq $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$cfg->{ldap}->{prefix}.'servicecontactgroups'}) {
-                                my @members = split /,/, $CONTACTGROUPS->{$contactgroup}->{$cfg->{ldap}->{prefix}.'members'};
-                                push @users, @members;
+                        # fancy, we've got multiple contactgroups as well
+                        my $groups_str = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$cfg->{ldap}->{prefix}.'servicecontactgroups'};
+                        DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Migrating contactgroups: '$groups_str' from service '$service'.");
+                        my @groups = str2arr_by_delim_without_excludes($groups_str, ',', 0);
+
+                        # fetch all members from all contactgroups
+                        foreach my $group (@groups) {
+                            # we don't care about unique members now, but later with uniq()
+                            foreach my $contactgroup (keys %{$CONTACTGROUPS}) {
+                                #DebugOutput("$$ GENERATE HOSTCONFIG 2x", Dumper($CONTACTGROUPS->{$contactgroup}));
+                                if ($CONTACTGROUPS->{$contactgroup}->{cn} eq $group) {
+                                    my @members = split /,/, $CONTACTGROUPS->{$contactgroup}->{$cfg->{ldap}->{prefix}.'members'};
+                                    push @users, @members;
+                                }
                             }
                         }
                     } else {
-                        #DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Skipping $service notification, no contactgroups found.");
+                        DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Skipping $service notification, no contactgroups found.");
                     }
 
                     if (defined($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$cfg->{ldap}->{prefix}.'servicecontacts'})) {
@@ -1643,7 +1662,7 @@ sub genHostConfig2x {
                         @users = uniq(@users);
                         #DebugOutput("$$ GENERATE HOSTCONFIG 2x", Dumper(@users));
                     }
-                    
+
                     my $user_cnt = 0;
 
                     # now that we've got all users, get their notification commands
@@ -1662,7 +1681,8 @@ sub genHostConfig2x {
                                 if (defined($CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'contactservicenotificationcommands'})) {
                                         @service_notification_commands = split /,/, $CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'contactservicenotificationcommands'};
                                 } else {
-                                    DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Can not build notification for service '$service' and user '$user', please define a contact service notification command!");
+                                    beVerbose("$$ GENERATE HOSTCONFIG 2x", "Can not build notification for service '$service' and contact '$user', please define a contact service notification command!");
+                                    # TODO: Should we use the default mail notification command?
                                     next;
                                 }
 
