@@ -1512,7 +1512,7 @@ sub genHostConfig2x {
                             print FH "\tcheck_period = \"$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}\"\n";
                         } elsif ($val1 eq "$cfg->{ldap}->{prefix}servicecheckinterval") {
                             print FH "\tcheck_interval = ".convert_interval_2x($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1})."\n";
-                        } elsif ($val1 eq "$cfg->{ldap}->{prefix}servicecheckretryinteral") {
+                        } elsif ($val1 eq "$cfg->{ldap}->{prefix}servicecheckretryinterval") {
                             print FH "\tretry_interval = ".convert_interval_2x($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1})."\n";
                         } elsif ($val1 eq "$cfg->{ldap}->{prefix}servicecheckmaxcheckattempts") {
                             print FH "\tmax_check_attempts = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}\n";
