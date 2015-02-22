@@ -64,7 +64,7 @@ echo cfg_dir=$LCONFTMP >> $ICINGATMPCONFIG
 echo export config from LDAP
 # export original full config from LDAP
 
-(cd $LCONFBINPATH; $SUDOCOMMAND $LCONFBINPATH/LConfExport.pl -o $LCONFTMP)
+(cd $LCONFBINPATH; $SUDOCOMMAND $LCONFBINPATH/LConfExport.pl -o $LCONFTMP -v)
 
 if [ $? != "0" ]; then
 exit $?	

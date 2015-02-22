@@ -68,7 +68,7 @@ EOF
 echo "export config from LDAP"
 # export original full config from LDAP
 
-(cd $LCONFBINPATH; $SUDOCOMMAND $LCONFBINPATH/LConfExport.pl -o $LCONFTMP --format 2)
+(cd $LCONFBINPATH; $SUDOCOMMAND $LCONFBINPATH/LConfExport.pl -o $LCONFTMP --format 2 -v)
 
 if [ $? != "0" ]; then
 	exit $?
