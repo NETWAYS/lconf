@@ -129,6 +129,11 @@ and `service_notification_command` defined
 If one of these requirements is missing, the migration export will not generate any notification
 object.
 
+> **Tip**
+>
+> Run `LConfExport.pl` with parameters `-v` or `-d` to get more verbose logging on why the notification
+> generation failed.
+
 > **Note**
 >
 > The relation `host/service -> contacts -> notification_command` will generate one `Notification`
