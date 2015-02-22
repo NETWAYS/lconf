@@ -1267,11 +1267,28 @@ sub genHostConfig2x {
 
                 # fetch all members from all contactgroups
                 foreach my $group (@groups) {
+
+                    # STAGE 1: get all contactgroup members which are matching
                     foreach my $contactgroup (keys %{$CONTACTGROUPS}) {
+                        DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Generating Notifications, STAGE 1: Looking for contactgroup '$CONTACTGROUPS->{$contactgroup}->{cn}' members attribute.");
                         #DebugOutput("$$ GENERATE HOSTCONFIG 2x", Dumper($CONTACTGROUPS->{$contactgroup}));
                         if ($CONTACTGROUPS->{$contactgroup}->{cn} eq $group) {
-                            my @members = split /,/, $CONTACTGROUPS->{$contactgroup}->{$cfg->{ldap}->{prefix}.'members'};
-                            push @users, @members;
+                            if (defined($CONTACTGROUPS->{$contactgroup}->{$cfg->{ldap}->{prefix}.'members'})) {
+                                my @members = split /,/, $CONTACTGROUPS->{$contactgroup}->{$cfg->{ldap}->{prefix}.'members'};
+                                push @users, @members;
+                            }
+                        }
+                    }
+
+                    # STAGE 2: loop over all contacts and compare if their groups match the requested one
+                    foreach my $contact (keys %{$CONTACTS}) {
+                        DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Generating Notifications, STAGE 2: Looking for contacts '$CONTACTS->{$contact}->{cn}' attribute contactgroups matching the current contactgroup '$group'.");
+                        if (defined($CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'contactgroups'})) {
+                            DebugOutput("$$ GENERATE HOSTCONFIG 2x", "contactgroups attribute found: '$CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'contactgroups'}'. Matches '$group'?.");
+                            # this is ugly, find a better match condition
+                            if ($CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'contactgroups'} =~ /$group/) {
+                                push @users, $CONTACTS->{$contact}->{cn};
+                            }
                         }
                     }
                 }
@@ -1637,12 +1654,28 @@ sub genHostConfig2x {
 
                         # fetch all members from all contactgroups
                         foreach my $group (@groups) {
-                            # we don't care about unique members now, but later with uniq()
+
+                            # STAGE 1: get all contactgroup members which are matching
                             foreach my $contactgroup (keys %{$CONTACTGROUPS}) {
+                                DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Generating Notifications, STAGE 1: Looking for contactgroup '$CONTACTGROUPS->{$contactgroup}->{cn}' members attribute.");
                                 #DebugOutput("$$ GENERATE HOSTCONFIG 2x", Dumper($CONTACTGROUPS->{$contactgroup}));
                                 if ($CONTACTGROUPS->{$contactgroup}->{cn} eq $group) {
-                                    my @members = split /,/, $CONTACTGROUPS->{$contactgroup}->{$cfg->{ldap}->{prefix}.'members'};
-                                    push @users, @members;
+                                    if (defined($CONTACTGROUPS->{$contactgroup}->{$cfg->{ldap}->{prefix}.'members'})) {
+                                        my @members = split /,/, $CONTACTGROUPS->{$contactgroup}->{$cfg->{ldap}->{prefix}.'members'};
+                                        push @users, @members;
+                                    }
+                                }
+                            }
+
+                            # STAGE 2: loop over all contacts and compare if their groups match the requested one
+                            foreach my $contact (keys %{$CONTACTS}) {
+                                DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Generating Notifications, STAGE 2: Looking for contacts '$CONTACTS->{$contact}->{cn}' attribute contactgroups matching the current contactgroup '$group'.");
+                                if (defined($CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'contactgroups'})) {
+                                    DebugOutput("$$ GENERATE HOSTCONFIG 2x", "contactgroups attribute found: '$CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'contactgroups'}'. Matches '$group'?.");
+                                    # this is ugly, find a better match condition
+                                    if ($CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'contactgroups'} =~ /$group/) {
+                                        push @users, $CONTACTS->{$contact}->{cn};
+                                    }
                                 }
                             }
                         }
