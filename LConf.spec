@@ -7,11 +7,11 @@
 # package are under the same license as the package itself.
 #
 
-%define revision 0
+%define revision 1.beta2
 
 Name:           LConf
 Summary:        LDAP based configuration tool for Icinga and Nagios
-Version:        1.4.3
+Version:        1.5.0
 Release:        %{revision}%{?dist}%{?custom}
 Url:            https://www.netways.org/projects/lconf
 License:        GPL v2 or later

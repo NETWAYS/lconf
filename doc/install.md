@@ -16,7 +16,7 @@ Look for old version info
 
 Edit version info
 
-    vim m4/verison.m4
+    vim m4/version.m4
     vim LConf.spec
 
 Regenerate configure
