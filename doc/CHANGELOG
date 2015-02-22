@@ -9,6 +9,8 @@ upgrade information!
 
 * #424: Add icon_image and icon_image_alt to ldap schema
 * #2680: Rewritten TreeBuilder export
+* #2845: Icinga2: Use the default NotificationCommand 'mail-{host,service}-notification'
+  if the contact does not provide {host,service}_notification_commands
 
 ### FEATURES
 
