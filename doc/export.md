@@ -122,7 +122,8 @@ a type (and optional escalation) and the users and usergroups, as well as the re
 There is an ugly workaround for migration the old contacts notification style into the
 new `Notification` objects, but this required the following conditions met:
 
-* host/service objects have `contacts` and `contactgroups` set
+* host/service objects have the attributes `contacts` and/or `contactgroups` set
+    * you can define contactgroup members, or assign contacts to contactgroups, both ways work
 * all contacts for host/service objects **must** have at least one `host_notification_command`
 and `service_notification_command` defined
 
@@ -138,7 +139,8 @@ object.
 >
 > The relation `host/service -> contacts -> notification_command` will generate one `Notification`
 > object per command per contact per host/service. This is certainly something you do not want
-> for readability and maintenance. Consider using notification apply rules instead.
+> for readability and maintenance. There is no way in keeping the original group/user relations.
+> Be happy that it even works like this - consider using notification apply rules instead though.
 
 The following host and service attributes are migrated:
 
