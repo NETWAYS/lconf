@@ -1,5 +1,15 @@
 # Upgrading LConf
 
+## Upgrading from 1.4.x to 1.5.x
+
+* There were new attributes added to the schema definition.
+Please make sure to update netways.schema in your LDAP server
+configuration, and apply the itemMap changes from config.pm!
+
+* TreeRewrite recursion loop has been refactored. No more process
+forks but additional memory required.
+* perl module Parallel::ForkManager was dropped
+
 
 ## Upgrading from 1.3.x to 1.4.x
 

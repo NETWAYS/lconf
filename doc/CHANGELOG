@@ -3,6 +3,17 @@
 NOTE: Please read doc/upgrading.md for detailed information on changes and
 upgrade information!
 
+## 1.5.0 - XX/YY/2015
+
+### CHANGES
+
+* #424: Add icon_image and icon_image_alt to ldap schema
+* #2680: Rewritten TreeBuilder export
+
+### FEATURES
+
+### FIXES
+
 ## 1.5.0 Beta2 - 10/02/2015
 
 ### FIXES
