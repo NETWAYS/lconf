@@ -352,7 +352,7 @@ sub TreeBuilder {
 				$attribute =~ /$cfg->{ldap}->{prefix}servicecustomvar/ ||
 				$attribute =~ /description/
 			   ) {
-				foreach my $service (keys %{${tmp_forward->{SERVICES}}) {
+				foreach my $service (keys %{${tmp_forward->{SERVICES}}}) {
 					if (ref($forward{$attribute}) eq "HASH") {
 						foreach my $val1 (keys %{${forward}{$attribute}}) {
 							${tmp_forward}{SERVICES}{$service}{$attribute}{$val1} = ${forward}{$attribute}{$val1};
