@@ -127,8 +127,11 @@ new `Notification` objects, but this required the following conditions met:
 * all contacts for host/service objects **must** have at least one `host_notification_command`
 and `service_notification_command` defined
 
-If one of these requirements is missing, the migration export will not generate any notification
-object.
+If one of these requirements is missing, the migration export log a verbose warning that it failed
+to fetch the commands.
+If will then use a fallback: `mail-host-notification` and `mail-service-notification` are
+already provided in the `default-templates.conf` file. You'll see a log entry with 'ATTENTION'
+then.
 
 > **Tip**
 >

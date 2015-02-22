@@ -1322,14 +1322,22 @@ sub genHostConfig2x {
                     if ($CONTACTS->{$contact}->{cn} eq $user) {
                         DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Building notification for host '$CLIENTS->{$client}->{cn}' and user '$user'");
 
+                        my $default_notification_command = undef;
                         # build the notification based on the commands
                         my @host_notification_commands = ();
                         if (defined($CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'contacthostnotificationcommands'})) {
                             @host_notification_commands = split /,/, $CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'contacthostnotificationcommands'};
                         } else {
-                            beVerbose("$$ GENERATE HOSTCONFIG 2x", "Can not build notification for host '$CLIENTS->{$client}->{cn}' and contact '$user', please define a contact host notification command!");
-                            # TODO: Should we use the default mail notification command?
-                            next;
+                            my $msg = "Can not build notification for host '$CLIENTS->{$client}->{cn}' and contact '$user', please define a contact host notification command!";
+                            beVerbose("$$ GENERATE HOSTCONFIG 2x", $msg);
+                            DebugOutput("$$ GENERATE HOSTCONFIG 2x", $msg);
+
+                            # FIXME Should we use the default mail notification command?
+                            $default_notification_command = "mail-host-notification";
+                            push @host_notification_commands, $default_notification_command;
+                            $msg = "ATTENTION: Using the default NotificationCommand '$default_notification_command' for the notification on host '$CLIENTS->{$client}->{cn}'!";
+                            beVerbose("$$ GENERATE HOSTCONFIG 2x", $msg);
+                            DebugOutput("$$ GENERATE HOSTCONFIG 2x", $msg);
                         }
 
                         foreach my $notification_command_name (@host_notification_commands) {
@@ -1342,21 +1350,26 @@ sub genHostConfig2x {
 
                             print FH "\thost_name = \"$CLIENTS->{$client}->{cn}\"\n";
 
-                            # get the command line, add a new notification command
-                            my $notification_command_line; # we don't have args for notification commands
-                            foreach my $command (keys %{$COMMANDS}) {
-                                if ($COMMANDS->{$command}->{cn} eq $notification_command_name) {
-                                    $notification_command_line = escape_str($COMMANDS->{$command}->{$cfg->{ldap}->{prefix}.'commandline'});
-                                    goto FOUND_NOTIFICATION;
+                            if (!defined($default_notification_command)) {
+                                # get the command line, add a new notification command
+                                my $notification_command_line; # we don't have args for notification commands
+                                foreach my $command (keys %{$COMMANDS}) {
+                                    if ($COMMANDS->{$command}->{cn} eq $notification_command_name) {
+                                        $notification_command_line = $COMMANDS->{$command}->{$cfg->{ldap}->{prefix}.'commandline'};
+                                        goto FOUND_NOTIFICATION;
+                                    }
                                 }
+
+                                FOUND_NOTIFICATION:
+
+                                $notification_commands->{$notification_command_object_name} = $notification_command_line;
+
+                                # notification command
+                                print FH "\tcommand = \"$notification_command_object_name\"\n";
+                            } else {
+                                # notification command
+                                print FH "\tcommand = \"$default_notification_command\"\n";
                             }
-
-                            FOUND_NOTIFICATION:
-
-                            $notification_commands->{$notification_command_object_name} = $notification_command_line;
-
-                            # notification command
-                            print FH "\tcommand = \"$notification_command_object_name\"\n";
 
                             # notification options
                             if (defined($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostnotificationoptions'})) {
@@ -1709,14 +1722,25 @@ sub genHostConfig2x {
                             if ($CONTACTS->{$contact}->{cn} eq $user) {
                                 DebugOutput("$$ GENERATE HOSTCONFIG 2x", "Building notification for service '$service' and user '$user'");
 
+                                my $default_notification_command = undef;
                                 # build the notification based on the commands
                                 my @service_notification_commands = ();
                                 if (defined($CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'contactservicenotificationcommands'})) {
                                         @service_notification_commands = split /,/, $CONTACTS->{$contact}->{$cfg->{ldap}->{prefix}.'contactservicenotificationcommands'};
                                 } else {
-                                    beVerbose("$$ GENERATE HOSTCONFIG 2x", "Can not build notification for service '$service' and contact '$user', please define a contact service notification command!");
-                                    # TODO: Should we use the default mail notification command?
-                                    next;
+                                    my $msg = "Can not build notification for service '$service' on host '$CLIENTS->{$client}->{cn}' and contact '$user', please define a contact service notification command!";
+
+                                    beVerbose("$$ GENERATE HOSTCONFIG 2x", $msg);
+                                    DebugOutput("$$ GENERATE HOSTCONFIG 2x", $msg);
+
+                                    # FIXME Should we use the default mail notification command?
+                                    $default_notification_command = "mail-service-notification";
+                                    push @service_notification_commands, $default_notification_command;
+
+                                    $msg = "ATTENTION: Using the default NotificationCommand '$default_notification_command' for service '$service' on host '$CLIENTS->{$client}->{cn}' for notifications!";
+
+                                    beVerbose("$$ GENERATE HOSTCONFIG 2x", $msg);
+                                    DebugOutput("$$ GENERATE HOSTCONFIG 2x", $msg);
                                 }
 
                                 foreach my $notification_command_name (@service_notification_commands) {
@@ -1730,21 +1754,28 @@ sub genHostConfig2x {
                                     print FH "\thost_name = \"$CLIENTS->{$client}->{cn}\"\n";
                                     print FH "\tservice_name = \"$CLIENTS->{$client}->{'SERVICES'}->{$service}->{cn}\"\n";
 
-                                    # get the command line, add a new notification command
-                                    my $notification_command_line; # we don't have args for notification commands
-                                    foreach my $command (keys %{$COMMANDS}) {
-                                        if ($COMMANDS->{$command}->{cn} eq $notification_command_name) {
-                                            $notification_command_line = escape_str($COMMANDS->{$command}->{$cfg->{ldap}->{prefix}.'commandline'});
-                                            goto FOUND_NOTIFICATION;
+                                    # workaround for default templates
+                                    if (!defined($default_notification_command)) {
+
+                                        # get the command line, add a new notification command
+                                        my $notification_command_line; # we don't have args for notification commands
+                                        foreach my $command (keys %{$COMMANDS}) {
+                                            if ($COMMANDS->{$command}->{cn} eq $notification_command_name) {
+                                                $notification_command_line = $COMMANDS->{$command}->{$cfg->{ldap}->{prefix}.'commandline'};
+                                                goto FOUND_NOTIFICATION;
+                                            }
                                         }
+
+                                        FOUND_NOTIFICATION:
+
+                                        $notification_commands->{$notification_command_object_name} = $notification_command_line;
+
+                                        # notification command
+                                        print FH "\tcommand = \"$notification_command_object_name\"\n";
+                                    } else {
+                                        # notification command
+                                        print FH "\tcommand = \"$default_notification_command\"\n";
                                     }
-
-                                    FOUND_NOTIFICATION:
-
-                                    $notification_commands->{$notification_command_object_name} = $notification_command_line;
-
-                                    # notification command
-                                    print FH "\tcommand = \"$notification_command_object_name\"\n";
 
                                     # notification options
                                     if (defined($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$cfg->{ldap}->{prefix}.'servicenotificationoptions'})) {
