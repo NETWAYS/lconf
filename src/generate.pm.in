@@ -1178,7 +1178,7 @@ sub genHostConfig2x {
                     my $groups = join ",", grep length, @groups;
                     $groups =~ s/,/\", \"/g;
                     print FH "\tgroups = [ \"$groups\" ]\n";
-                } elsif ($val1 eq "$cfg->{ldap}->{prefix}alias") {
+                } elsif ($val1 eq "$cfg->{ldap}->{prefix}alias" && !defined($CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostdisplayname"})) {
                     print FH "\tdisplay_name = \"$CLIENTS->{$client}->{$val1}\"\n";
                 } elsif ($val1 eq "$cfg->{ldap}->{prefix}hostdisplayname") {
                     print FH "\tdisplay_name = \"$CLIENTS->{$client}->{$val1}\"\n";
