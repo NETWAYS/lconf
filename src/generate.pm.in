@@ -1350,25 +1350,30 @@ sub genHostConfig2x {
 
                             print FH "\thost_name = \"$CLIENTS->{$client}->{cn}\"\n";
 
-                            if (!defined($default_notification_command)) {
-                                # get the command line, add a new notification command
-                                my $notification_command_line; # we don't have args for notification commands
-                                foreach my $command (keys %{$COMMANDS}) {
-                                    if ($COMMANDS->{$command}->{cn} eq $notification_command_name) {
-                                        $notification_command_line = $COMMANDS->{$command}->{$cfg->{ldap}->{prefix}.'commandline'};
-                                        goto FOUND_NOTIFICATION;
-                                    }
+                            # get the command line, add a new notification command
+                            my $notification_command_line = undef; # we don't have args for notification commands
+                            foreach my $command (keys %{$COMMANDS}) {
+                                if ($COMMANDS->{$command}->{cn} eq $notification_command_name) {
+                                    $notification_command_line = $COMMANDS->{$command}->{$cfg->{ldap}->{prefix}.'commandline'};
+                                    break;
                                 }
+                            }
 
-                                FOUND_NOTIFICATION:
-
+                            # if the command line was found, we assume to create a new notification command.
+                            # if not, the user supplied an external notification command (e.g. defined in default-templates.conf)
+                            # we don't care about that but will log a warning while setting the attribute
+                            if (defined($notification_command_line)) {
                                 $notification_commands->{$notification_command_object_name} = $notification_command_line;
-
                                 # notification command
                                 print FH "\tcommand = \"$notification_command_object_name\"\n";
                             } else {
+                                $msg = "WARNING: Using the external NotificationCommand '$notification_command_name' for service '$service' on host '$CLIENTS->{$client}->{cn}' for notifications!";
+
+                                beVerbose("$$ GENERATE HOSTCONFIG 2x", $msg);
+                                DebugOutput("$$ GENERATE HOSTCONFIG 2x", $msg);
+
                                 # notification command
-                                print FH "\tcommand = \"$default_notification_command\"\n";
+                                print FH "\tcommand = \"$notification_command_name\"\n";
                             }
 
                             # notification options
@@ -1754,27 +1759,30 @@ sub genHostConfig2x {
                                     print FH "\thost_name = \"$CLIENTS->{$client}->{cn}\"\n";
                                     print FH "\tservice_name = \"$CLIENTS->{$client}->{'SERVICES'}->{$service}->{cn}\"\n";
 
-                                    # workaround for default templates
-                                    if (!defined($default_notification_command)) {
-
-                                        # get the command line, add a new notification command
-                                        my $notification_command_line; # we don't have args for notification commands
-                                        foreach my $command (keys %{$COMMANDS}) {
-                                            if ($COMMANDS->{$command}->{cn} eq $notification_command_name) {
-                                                $notification_command_line = $COMMANDS->{$command}->{$cfg->{ldap}->{prefix}.'commandline'};
-                                                goto FOUND_NOTIFICATION;
-                                            }
+                                    # get the command line, add a new notification command
+                                    my $notification_command_line = undef; # we don't have args for notification commands
+                                    foreach my $command (keys %{$COMMANDS}) {
+                                        if ($COMMANDS->{$command}->{cn} eq $notification_command_name) {
+                                            $notification_command_line = $COMMANDS->{$command}->{$cfg->{ldap}->{prefix}.'commandline'};
+                                            break;
                                         }
+                                    }
 
-                                        FOUND_NOTIFICATION:
-
+                                    # if the command line was found, we assume to create a new notification command.
+                                    # if not, the user supplied an external notification command (e.g. defined in default-templates.conf)
+                                    # we don't care about that but will log a warning while setting the attribute
+                                    if (defined($notification_command_line)) {
                                         $notification_commands->{$notification_command_object_name} = $notification_command_line;
-
                                         # notification command
                                         print FH "\tcommand = \"$notification_command_object_name\"\n";
                                     } else {
+                                        $msg = "WARNING: Using the external NotificationCommand '$notification_command_name' for service '$service' on host '$CLIENTS->{$client}->{cn}' for notifications!";
+
+                                        beVerbose("$$ GENERATE HOSTCONFIG 2x", $msg);
+                                        DebugOutput("$$ GENERATE HOSTCONFIG 2x", $msg);
+
                                         # notification command
-                                        print FH "\tcommand = \"$default_notification_command\"\n";
+                                        print FH "\tcommand = \"$notification_command_name\"\n";
                                     }
 
                                     # notification options
