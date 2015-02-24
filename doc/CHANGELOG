@@ -29,6 +29,24 @@ upgrade information!
 
 * #2680: Rewritten TreeBuilder export
 
+## 1.4.4 - 24/02/2015
+
+### CHANGES
+
+* Feature #2845: Icinga2: Use the default NotificationCommand if the contact does not provide {host,service}_notification_commands
+
+### FIXES
+
+* Bug #2819: Icinga 2: Flap Detection Enable not exported
+* Bug #2829: Notifications are not exported when contacts use 'contactgroups' attribute
+* Bug #2831: Icinga2: Notifications are not generated when multiple contactgroups are assigned to Host/Service objects
+* Bug #2833: Icinga2: Notifications are not exported when the contactgroup is prefixed with an "+"
+* Bug #2835: Icinga2: lconfServiceCheckInterval is not exported
+* Bug #2837: Icinga2: lconfServiceCheckRetryInterval is not exported
+* Bug #2847: icinga2: prefer hostdisplayname over hostalias
+* Bug #2849: icinga2: custom notification commands (mail-service-notification) which do not exist in ldap do not work
+* Feature #2845: Icinga2: Use the default NotificationCommand if the contact does not provide {host,service}_notification_commands
+
 
 ## 1.4.3 - 19/12/2014
 
