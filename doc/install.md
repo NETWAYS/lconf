@@ -23,14 +23,21 @@ Regenerate configure
 
     autoconf
 
+Commit the release
+
+    git commit -v -m "Release <VERSION>"
+
 Add a git tag
 
-    git tag v1.4.0
+MF:
+
+    git tag -u D14A1F16 -m "Version <VERSION>" v<VERSION>
 
 Create release tarball
 
-    VERSION=1.4.0
+    VERSION=1.4.4
     git archive --format=tar --prefix=LConf-$VERSION/ tags/v$VERSION | gzip >LConf-$VERSION.tar.gz
+    md5sum LConf-$VERSION.tar.gz > LConf-$VERSION.tar.gz.md5
 
 Push origin
 
