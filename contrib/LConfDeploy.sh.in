@@ -43,7 +43,7 @@ fi
 RUNUSER=$(whoami)
 SUDOCOMMAND=""
 if [ "$RUNUSER" != $ICINGAUSER ] ; then
-SUDOCOMMAND="sudo -u $ICINGAUSER -i"
+SUDOCOMMAND="sudo -u $ICINGAUSER"
 fi
 
 
