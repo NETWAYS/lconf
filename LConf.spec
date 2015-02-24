@@ -7,7 +7,7 @@
 # package are under the same license as the package itself.
 #
 
-%define revision 1.beta2
+%define revision 1.rc1
 
 Name:           LConf
 Summary:        LDAP based configuration tool for Icinga and Nagios

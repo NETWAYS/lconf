@@ -3,18 +3,22 @@
 NOTE: Please read doc/upgrading.md for detailed information on changes and
 upgrade information!
 
-## 1.5.0 - XX/YY/2015
+## 1.5.0 RC1 - 24/02/2015
 
 ### CHANGES
 
 * #424: Add icon_image and icon_image_alt to ldap schema
 * #2680: Rewritten TreeBuilder export
-* #2845: Icinga2: Use the default NotificationCommand 'mail-{host,service}-notification'
-  if the contact does not provide {host,service}_notification_commands
 
 ### FEATURES
 
+* Feature #424: Add attributes icon_image, statusmap_image to ldap schema
+* Feature #2639: LConfDeployIcinga2.sh: add zones.d support
+* Feature #2843: Run LConfExport with '-v' in LConfDeploy scripts
+
 ### FIXES
+
+* Bug #2680: dclone wastes too much time / TreeBuilder algorithm is exponential
 
 ## 1.5.0 Beta2 - 10/02/2015
 
