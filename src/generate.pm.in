@@ -1198,6 +1198,8 @@ sub genHostConfig2x {
                     print FH "\tenable_perfdata = $CLIENTS->{$client}->{$val1}\n";
                 } elsif ($val1 eq "$cfg->{ldap}->{prefix}hostnotificationsenabled") {
                     print FH "\tenable_notifications = $CLIENTS->{$client}->{$val1}\n";
+                } elsif ($val1 eq "$cfg->{ldap}->{prefix}hostflapdetectionenabled") {
+                    print FH "\tenable_flapping = $CLIENTS->{$client}->{$val1}\n";
                 } elsif ($val1 eq "$cfg->{ldap}->{prefix}hosteventhandler") {
                     my ($event_command_name, @event_command_macros) = split /!/, "$CLIENTS->{$client}->{$val1}";
 
@@ -1622,6 +1624,8 @@ sub genHostConfig2x {
                             print FH "\tenable_perfdata = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}\n";
                         } elsif ($val1 eq "$cfg->{ldap}->{prefix}servicenotificationsenabled") {
                             print FH "\tenable_notifications = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}\n";
+                        } elsif ($val1 eq "$cfg->{ldap}->{prefix}serviceflapdetectionenabled") {
+                            print FH "\tenable_flapping = $CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}\n";
                         } elsif ($val1 eq "$cfg->{ldap}->{prefix}serviceeventhandler") {
 
                             my ($event_command_name, @event_command_macros) = split /!/, "$CLIENTS->{$client}->{'SERVICES'}->{$service}->{$val1}";
