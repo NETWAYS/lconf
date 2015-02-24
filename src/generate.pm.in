@@ -1421,7 +1421,7 @@ sub genHostConfig2x {
                                 # notification command
                                 print FH "\tcommand = \"$notification_command_object_name\"\n";
                             } else {
-                                $msg = "WARNING: Using the external NotificationCommand '$notification_command_name' for service '$service' on host '$CLIENTS->{$client}->{cn}' for notifications!";
+                                $msg = "WARNING: Using the external NotificationCommand '$notification_command_name' for host '$CLIENTS->{$client}->{cn}' for notifications!";
 
                                 beVerbose("$$ GENERATE HOSTCONFIG 2x", $msg);
                                 DebugOutput("$$ GENERATE HOSTCONFIG 2x", $msg);
