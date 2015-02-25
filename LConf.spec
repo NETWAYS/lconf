@@ -1,7 +1,7 @@
 #
 # spec file for package LConf
 #
-# (c) 2012-2014 Netways GmbH, support@netways.de
+# (c) 2012 - 2015 Netways GmbH, support@netways.de
 #
 # This file and all modifications and additions to the pristine
 # package are under the same license as the package itself.
