@@ -27,7 +27,7 @@ template Service "generic-service" {
 }
 
 template User "generic-user" {
-  states = [ OK, Warning, Critical, Unknown ]
+  states = [ OK, Warning, Critical, Unknown, Up, Down ]
   types = [ Problem, Recovery ]
 }
 
