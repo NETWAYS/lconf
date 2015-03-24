@@ -1496,6 +1496,11 @@ sub genHostConfig2x {
                                 print FH "\tinterval = ".convert_interval_2x($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostnotificationinterval'})."\n";
                             }
 
+                            # notification delay
+                            if (defined($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostfirstnotificationdelay'})) {
+                                print FH "\ttimes.begin = ".convert_interval_2x($CLIENTS->{$client}->{$cfg->{ldap}->{prefix}.'hostfirstnotificationdelay'})."\n";
+                            }
+
                             print FH "\tusers = [ \"$user\" ]\n";
 
                             print FH "}\n";
@@ -1919,6 +1924,11 @@ sub genHostConfig2x {
                                     # notification interval
                                     if (defined($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$cfg->{ldap}->{prefix}.'servicenotificationinterval'})) {
                                         print FH "\tinterval = ".convert_interval_2x($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$cfg->{ldap}->{prefix}.'servicenotificationinterval'})."\n";
+                                    }
+
+                                    # notification delay
+                                    if (defined($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$cfg->{ldap}->{prefix}.'servicefirstnotificationdelay'})) {
+                                        print FH "\ttimes.begin = ".convert_interval_2x($CLIENTS->{$client}->{'SERVICES'}->{$service}->{$cfg->{ldap}->{prefix}.'servicefirstnotificationdelay'})."\n";
                                     }
 
                                     print FH "\tusers = [ \"$user\" ]\n";

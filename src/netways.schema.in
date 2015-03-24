@@ -428,6 +428,18 @@ attributetype ( 1.3.6.1.4.1.26840.144.2.3.533 NAME '@LDAP_PREFIX@HostIconImageAl
     SUBSTR caseIgnoreSubstringsMatch
     SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
 
+attributetype ( 1.3.6.1.4.1.26840.144.2.3.534 NAME '@LDAP_PREFIX@HostDependencyInheritsParent'
+    DESC 'Nagios / Icinga Host Dependency inherits parent'
+    EQUALITY caseIgnoreMatch
+    SUBSTR caseIgnoreSubstringsMatch
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.3.535 NAME '@LDAP_PREFIX@HostFirstNotificationDelay'
+    DESC 'Nagios / Icinga First Notification Delay (e.g. first_notification_delay 5)'
+    EQUALITY caseIgnoreMatch
+    SUBSTR caseIgnoreSubstringsMatch
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} SINGLE-VALUE )
+
 #
 # .2.4   | @LDAP_PREFIX@ attributes (service)
 #
@@ -630,6 +642,30 @@ attributetype ( 1.3.6.1.4.1.26840.144.2.4.531 NAME '@LDAP_PREFIX@ServiceIsVolati
         SUBSTR caseIgnoreSubstringsMatch
         SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
 
+attributetype ( 1.3.6.1.4.1.26840.144.2.4.532 NAME '@LDAP_PREFIX@ServiceIconImage'
+    DESC 'Nagios / Icinga Icon Image URL (icon_image vendors/nagios.gif)'
+    EQUALITY caseIgnoreMatch
+    SUBSTR caseIgnoreSubstringsMatch
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.4.533 NAME '@LDAP_PREFIX@ServiceIconImageAlt'
+    DESC 'Nagios / Icinga Icon Image Alt (icon_image_alt Nagios Service)'
+    EQUALITY caseIgnoreMatch
+    SUBSTR caseIgnoreSubstringsMatch
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.4.534 NAME '@LDAP_PREFIX@ServiceDependencyInheritsParent'
+    DESC 'Nagios / Icinga ervice Dependency inherits parent'
+    EQUALITY caseIgnoreMatch
+    SUBSTR caseIgnoreSubstringsMatch
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.26840.144.2.4.535 NAME '@LDAP_PREFIX@ServiceFirstNotificationDelay'
+    DESC 'Nagios / Icinga First Notification Delay (e.g. first_notification_delay 5)'
+    EQUALITY caseIgnoreMatch
+    SUBSTR caseIgnoreSubstringsMatch
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} SINGLE-VALUE )
+
 #
 # .2.5   | @LDAP_PREFIX@ attributes (host escalations)
 #
@@ -756,10 +792,11 @@ objectclass ( 1.3.6.1.4.1.26840.144.3.1 NAME '@LDAP_PREFIX@TemplateHost'
         @LDAP_PREFIX@HostFlapDetectionEnabled $ @LDAP_PREFIX@HostFlapDetectionOptions $ @LDAP_PREFIX@HostEventhandler $
         @LDAP_PREFIX@HostNotesURL $ @LDAP_PREFIX@HostActionURL $ @LDAP_PREFIX@HostDisable $
         @LDAP_PREFIX@Parent $ @LDAP_PREFIX@HostCheckcommand $ @LDAP_PREFIX@Hostgroups $
-        @LDAP_PREFIX@HostDependency $ @LDAP_PREFIX@HostDependencyExecutionFailureCriteria $ @LDAP_PREFIX@HostDependencyNotificationFailureCriteria $
+        @LDAP_PREFIX@HostDependency $ @LDAP_PREFIX@HostDependencyInheritsParent $ @LDAP_PREFIX@HostDependencyExecutionFailureCriteria $ @LDAP_PREFIX@HostDependencyNotificationFailureCriteria $
         @LDAP_PREFIX@HostCheckFreshness $ @LDAP_PREFIX@HostFreshnessThreshold $ @LDAP_PREFIX@HostNotes $ @LDAP_PREFIX@HostDisplayName $
         @LDAP_PREFIX@HostLowFlapThreshold $ @LDAP_PREFIX@HostHighFlapThreshold $ @LDAP_PREFIX@HostIsVolatile  $
-        @LDAP_PREFIX@HostIconImage $ @LDAP_PREFIX@HostIconImageAlt) )
+        @LDAP_PREFIX@HostIconImage $ @LDAP_PREFIX@HostIconImageAlt $
+	@LDAP_PREFIX@HostFirstNotificationDelay) )
 
 objectclass ( 1.3.6.1.4.1.26840.144.3.2 NAME '@LDAP_PREFIX@TemplateService'
     DESC 'Template for a Nagios / Icinga service'
@@ -771,9 +808,11 @@ objectclass ( 1.3.6.1.4.1.26840.144.3.2 NAME '@LDAP_PREFIX@TemplateService'
         @LDAP_PREFIX@ServiceFlapDetectionEnabled $ @LDAP_PREFIX@ServiceFlapDetectionOptions $ @LDAP_PREFIX@ServiceEventhandler $
         @LDAP_PREFIX@ServiceNotesURL $ @LDAP_PREFIX@ServiceActionURL $ @LDAP_PREFIX@ServiceDisable $
         @LDAP_PREFIX@ServiceCheckcommand $ @LDAP_PREFIX@Servicegroups $
-        @LDAP_PREFIX@ServiceDependency $ @LDAP_PREFIX@ServiceDependencyExecutionFailureCriteria $ @LDAP_PREFIX@ServiceDependencyNotificationFailureCriteria $
+        @LDAP_PREFIX@ServiceDependency $ @LDAP_PREFIX@ServiceDependencyInheritsParent $ @LDAP_PREFIX@ServiceDependencyExecutionFailureCriteria $ @LDAP_PREFIX@ServiceDependencyNotificationFailureCriteria $
         @LDAP_PREFIX@ServiceCheckFreshness $ @LDAP_PREFIX@ServiceFreshnessThreshold $ @LDAP_PREFIX@ServiceNotes $ @LDAP_PREFIX@ServiceDisplayname
-        $ @LDAP_PREFIX@ServiceLowFlapThreshold $ @LDAP_PREFIX@ServiceHighFlapThreshold $ @LDAP_PREFIX@ServiceIsVolatile ) )
+        $ @LDAP_PREFIX@ServiceLowFlapThreshold $ @LDAP_PREFIX@ServiceHighFlapThreshold $ @LDAP_PREFIX@ServiceIsVolatile $
+	@LDAP_PREFIX@ServiceIconImage $ @LDAP_PREFIX@ServiceIconImageAlt $
+	@LDAP_PREFIX@ServiceFirstNotificationDelay ) )
 
 
 #
@@ -786,23 +825,23 @@ objectclass ( 1.3.6.1.4.1.26840.144.4.1 NAME '@LDAP_PREFIX@StructuralObject'
     MUST ( ou )
     MAY ( description $
         @LDAP_PREFIX@HostCustomvar $ @LDAP_PREFIX@HostContacts $ @LDAP_PREFIX@HostContactgroups $
-        @LDAP_PREFIX@HostNotificationOptions $ @LDAP_PREFIX@HostNotificationInterval $ @LDAP_PREFIX@HostNotificationPeriod $ @LDAP_PREFIX@HostNotificationsEnabled $
+        @LDAP_PREFIX@HostNotificationOptions $ @LDAP_PREFIX@HostFirstNotificationDelay $ @LDAP_PREFIX@HostNotificationInterval $ @LDAP_PREFIX@HostNotificationPeriod $ @LDAP_PREFIX@HostNotificationsEnabled $
         @LDAP_PREFIX@HostCheckPeriod $ @LDAP_PREFIX@HostCheckInterval $ @LDAP_PREFIX@HostCheckRetryInterval $ @LDAP_PREFIX@HostCheckMaxCheckAttempts $
         @LDAP_PREFIX@HostProcessPerfData $ @LDAP_PREFIX@HostActiveChecksEnabled $ @LDAP_PREFIX@HostPassiveChecksEnabled $
         @LDAP_PREFIX@HostFlapDetectionEnabled $ @LDAP_PREFIX@HostFlapDetectionOptions $ @LDAP_PREFIX@HostEventhandler $
         @LDAP_PREFIX@HostNotesURL $ @LDAP_PREFIX@HostActionURL $ @LDAP_PREFIX@HostDisable $
         @LDAP_PREFIX@Parent $ @LDAP_PREFIX@HostCheckcommand $ @LDAP_PREFIX@Hostgroups $
-        @LDAP_PREFIX@HostDependency $ @LDAP_PREFIX@HostDependencyExecutionFailureCriteria $ @LDAP_PREFIX@HostDependencyNotificationFailureCriteria $
+        @LDAP_PREFIX@HostDependency $ @LDAP_PREFIX@HostDependencyInheritsParent $ @LDAP_PREFIX@HostDependencyExecutionFailureCriteria $ @LDAP_PREFIX@HostDependencyNotificationFailureCriteria $
         @LDAP_PREFIX@HostCheckFreshness $ @LDAP_PREFIX@HostFreshnessThreshold $ @LDAP_PREFIX@HostNotes $ @LDAP_PREFIX@HostDisplayName $
         @LDAP_PREFIX@HostIconImage $ @LDAP_PREFIX@HostIconImageAlt $
         @LDAP_PREFIX@ServiceCustomvar $ @LDAP_PREFIX@ServiceContacts $ @LDAP_PREFIX@ServiceContactgroups $
-        @LDAP_PREFIX@ServiceNotificationOptions $ @LDAP_PREFIX@ServiceNotificationInterval $ @LDAP_PREFIX@ServiceNotificationPeriod $ @LDAP_PREFIX@ServiceNotificationsEnabled $
+        @LDAP_PREFIX@ServiceNotificationOptions $ @LDAP_PREFIX@ServiceFirstNotificationDelay $ @LDAP_PREFIX@ServiceNotificationInterval $ @LDAP_PREFIX@ServiceNotificationPeriod $ @LDAP_PREFIX@ServiceNotificationsEnabled $
         @LDAP_PREFIX@ServiceCheckPeriod $ @LDAP_PREFIX@ServiceCheckInterval $ @LDAP_PREFIX@ServiceCheckRetryInterval $ @LDAP_PREFIX@ServiceCheckMaxCheckAttempts $
         @LDAP_PREFIX@ServiceProcessPerfData $ @LDAP_PREFIX@ServiceActiveChecksEnabled $ @LDAP_PREFIX@ServicePassiveChecksEnabled $
         @LDAP_PREFIX@ServiceFlapDetectionEnabled $ @LDAP_PREFIX@ServiceFlapDetectionOptions $ @LDAP_PREFIX@ServiceEventhandler $
         @LDAP_PREFIX@ServiceNotesURL $ @LDAP_PREFIX@ServiceActionURL $ @LDAP_PREFIX@ServiceDisable $
         @LDAP_PREFIX@ServiceCheckcommand $ @LDAP_PREFIX@Servicegroups $
-        @LDAP_PREFIX@ServiceDependency $ @LDAP_PREFIX@ServiceDependencyExecutionFailureCriteria $ @LDAP_PREFIX@ServiceDependencyNotificationFailureCriteria $
+        @LDAP_PREFIX@ServiceDependency $ @LDAP_PREFIX@ServiceDependencyInheritsParent $ @LDAP_PREFIX@ServiceDependencyExecutionFailureCriteria $ @LDAP_PREFIX@ServiceDependencyNotificationFailureCriteria $
         @LDAP_PREFIX@ServiceCheckFreshness $ @LDAP_PREFIX@ServiceFreshnessThreshold $
         @LDAP_PREFIX@Checkcommand $ @LDAP_PREFIX@ServiceNotes $ @LDAP_PREFIX@ServiceDisplayName ) )
 
