@@ -24,7 +24,7 @@ $cfg->{export}->{exportDN}               = 'ou=IcingaConfig'; # below rootDN
 $cfg->{export}->{tmpdir}                 = '@TMP_DIR@';
 $cfg->{export}->{onlydiffs}              = 0;
 $cfg->{export}->{childs}                 = 2;
-# 1 .. Icinga 1.x, 2 .. Icinga 2.x
+# 0 .. Nagios, 1 .. Icinga 1.x, 2 .. Icinga 2.x
 #$cfg->{export}->{format}                 = 2;
 
 # set Tree Rewrite, use with care! For details, please refer to the docs
@@ -116,9 +116,16 @@ $cfg->{test}->{output}                   = "/tmp/lconf-test-out";
     @LDAP_PREFIX@contacthostnotificationsenabled              => 'host_notifications_enabled',
     @LDAP_PREFIX@contactcansubmitcommands                     => 'can_submit_commands',
     @LDAP_PREFIX@contactgroups                                => 'contactgroups',
+    @LDAP_PREFIX@contactaddress1                              => 'address1',
+    @LDAP_PREFIX@contactaddress2                              => 'address2',
+    @LDAP_PREFIX@contactaddress3                              => 'address3',
+    @LDAP_PREFIX@contactaddress4                              => 'address4',
+    @LDAP_PREFIX@contactaddress5                              => 'address5',
+    @LDAP_PREFIX@contactaddress6                              => 'address6',
 
     # .2.3 | lconf attributes (host)
     @LDAP_PREFIX@address                                      => 'address',
+    @LDAP_PREFIX@address6                                     => 'address6',
     @LDAP_PREFIX@parent                                       => 'parents',
     @LDAP_PREFIX@hostcustomvar                                => 'PLACEHOLDER',
     @LDAP_PREFIX@hostcontacts                                 => 'contacts',
@@ -242,9 +249,16 @@ $cfg->{test}->{output}                   = "/tmp/lconf-test-out";
     @LDAP_PREFIX@contacthostnotificationsenabled              => 'host_notifications_enabled',
     @LDAP_PREFIX@contactcansubmitcommands                     => 'can_submit_commands',
     @LDAP_PREFIX@contactgroups                                => 'groups',
+    @LDAP_PREFIX@contactaddress1                              => 'address1',
+    @LDAP_PREFIX@contactaddress2                              => 'address2',
+    @LDAP_PREFIX@contactaddress3                              => 'address3',
+    @LDAP_PREFIX@contactaddress4                              => 'address4',
+    @LDAP_PREFIX@contactaddress5                              => 'address5',
+    @LDAP_PREFIX@contactaddress6                              => 'address6',
 
     # .2.3 | lconf attributes (host)
     @LDAP_PREFIX@address                                      => 'address',
+    @LDAP_PREFIX@address6                                     => 'address6',
     @LDAP_PREFIX@parent                                       => 'parents',
     @LDAP_PREFIX@hostcustomvar                                => 'PLACEHOLDER',
     @LDAP_PREFIX@hostcontacts                                 => 'users',
@@ -344,4 +358,3 @@ $cfg->{test}->{output}                   = "/tmp/lconf-test-out";
 );
 
 # vi: sw=4 ts=4 expandtab :
-

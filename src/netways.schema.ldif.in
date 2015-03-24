@@ -17,411 +17,446 @@ olcAttributeTypes: {3}( 1.3.6.1.4.1.26840.144.2.1.4 NAME '@LDAP_PREFIX@Members' 
  atch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{
  512} SINGLE-VALUE )
 olcAttributeTypes: {4}( 1.3.6.1.4.1.26840.144.2.1.5 NAME '@LDAP_PREFIX@HostgroupMemb
- ers' DESC 'Nagios / Icinga Hostgroup Memebers (hostgroup_members hg1,hg2,hg
- 3)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.
- 1.4.1.1466.115.121.1.15{512} SINGLE-VALUE )
+ ers' DESC 'Nagios / Icinga Hostgroup Members (hostgroup_members hg1,hg2,hg3
+ )' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1
+ .4.1.1466.115.121.1.15{512} SINGLE-VALUE )
 olcAttributeTypes: {5}( 1.3.6.1.4.1.26840.144.2.1.6 NAME '@LDAP_PREFIX@TimeperiodExc
  lude' DESC 'Nagios / Icinga Hostgroup Memebers (hostgroup_members hg1,hg2,h
  g3)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6
  .1.4.1.1466.115.121.1.15{128} SINGLE-VALUE )
-olcAttributeTypes: {6}( 1.3.6.1.4.1.26840.144.2.2.1 NAME '@LDAP_PREFIX@Email' DESC '
+olcAttributeTypes: {6}( 1.3.6.1.4.1.26840.144.2.1.7 NAME '@LDAP_PREFIX@ServicegroupM
+ embers' DESC 'Nagios / Icinga Servicegroup Members (servicegroup_members sg
+ 1,sg2,sg3)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTA
+ X 1.3.6.1.4.1.1466.115.121.1.15{512} SINGLE-VALUE )
+olcAttributeTypes: {7}( 1.3.6.1.4.1.26840.144.2.1.8 NAME '@LDAP_PREFIX@ContactgroupM
+ embers' DESC 'Nagios / Icinga Contactgroup Members (contactgroup_members cg
+ 1,cg2,cg3)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTA
+ X 1.3.6.1.4.1.1466.115.121.1.15{512} SINGLE-VALUE )
+olcAttributeTypes: {8}( 1.3.6.1.4.1.26840.144.2.2.1 NAME '@LDAP_PREFIX@Email' DESC '
  Nagios / Icinga E-Mail (email test.user@test.net)' EQUALITY caseIgnoreMatch
   SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128}
   SINGLE-VALUE )
-olcAttributeTypes: {7}( 1.3.6.1.4.1.26840.144.2.2.2 NAME '@LDAP_PREFIX@Pager' DESC '
+olcAttributeTypes: {9}( 1.3.6.1.4.1.26840.144.2.2.2 NAME '@LDAP_PREFIX@Pager' DESC '
  Nagios / Icinga Pager (pager +491701234567)' EQUALITY caseIgnoreMatch SUBST
  R caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} SINGL
  E-VALUE )
-olcAttributeTypes: {8}( 1.3.6.1.4.1.26840.144.2.2.3 NAME '@LDAP_PREFIX@ContactServic
- eNotificationPeriod' DESC 'Nagios / Icinga Contact Service Notification Per
- iod (service_notification_period 24x7)' EQUALITY caseIgnoreMatch SUBSTR cas
- eIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} SINGLE-VAL
- UE )
-olcAttributeTypes: {9}( 1.3.6.1.4.1.26840.144.2.2.4 NAME '@LDAP_PREFIX@ContactHostNo
- tificationPeriod' DESC 'Nagios / Icinga Contact Host Notification Period (h
- ost_notification_period 24x7)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSu
- bstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} SINGLE-VALUE )
-olcAttributeTypes: {10}( 1.3.6.1.4.1.26840.144.2.2.5 NAME '@LDAP_PREFIX@ContactServi
+olcAttributeTypes: {10}( 1.3.6.1.4.1.26840.144.2.2.3 NAME '@LDAP_PREFIX@ContactServi
+ ceNotificationPeriod' DESC 'Nagios / Icinga Contact Service Notification Pe
+ riod (service_notification_period 24x7)' EQUALITY caseIgnoreMatch SUBSTR ca
+ seIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} SINGLE-VA
+ LUE )
+olcAttributeTypes: {11}( 1.3.6.1.4.1.26840.144.2.2.4 NAME '@LDAP_PREFIX@ContactHostN
+ otificationPeriod' DESC 'Nagios / Icinga Contact Host Notification Period (
+ host_notification_period 24x7)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreS
+ ubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} SINGLE-VALUE )
+olcAttributeTypes: {12}( 1.3.6.1.4.1.26840.144.2.2.5 NAME '@LDAP_PREFIX@ContactServi
  ceNotificationOptions' DESC 'Nagios / Icinga Contact Service Notification O
  ptions (service_notification_options c,r)' EQUALITY caseIgnoreMatch SUBSTR 
  caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-V
  ALUE )
-olcAttributeTypes: {11}( 1.3.6.1.4.1.26840.144.2.2.6 NAME '@LDAP_PREFIX@ContactHostN
+olcAttributeTypes: {13}( 1.3.6.1.4.1.26840.144.2.2.6 NAME '@LDAP_PREFIX@ContactHostN
  otificationOptions' DESC 'Nagios / Icinga Contact Host Notification Options
   (host_notification_options d,u,r)' EQUALITY caseIgnoreMatch SUBSTR caseIgn
  oreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
-olcAttributeTypes: {12}( 1.3.6.1.4.1.26840.144.2.2.7 NAME '@LDAP_PREFIX@ContactServi
+olcAttributeTypes: {14}( 1.3.6.1.4.1.26840.144.2.2.7 NAME '@LDAP_PREFIX@ContactServi
  ceNotificationCommands' DESC 'Nagios / Icinga Contact Service Notification 
  Commands (service_notification_commands service-notify-by-mail)' EQUALITY c
  aseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115
  .121.1.15{256} SINGLE-VALUE )
-olcAttributeTypes: {13}( 1.3.6.1.4.1.26840.144.2.2.8 NAME '@LDAP_PREFIX@ContactHostN
+olcAttributeTypes: {15}( 1.3.6.1.4.1.26840.144.2.2.8 NAME '@LDAP_PREFIX@ContactHostN
  otificationCommands' DESC 'Nagios / Icinga Contact Host Notification Comman
  ds (host_notification_commands host-notify-by-mail)' EQUALITY caseIgnoreMat
  ch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{25
  6} SINGLE-VALUE )
-olcAttributeTypes: {14}( 1.3.6.1.4.1.26840.144.2.2.9 NAME '@LDAP_PREFIX@ContactServi
+olcAttributeTypes: {16}( 1.3.6.1.4.1.26840.144.2.2.9 NAME '@LDAP_PREFIX@ContactServi
  ceNotificationsEnabled' DESC 'Nagios / Icinga Contact Service Notification 
  Enabled (service_notifications_enabled 1)' EQUALITY caseIgnoreMatch SUBSTR 
  caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-V
  ALUE )
-olcAttributeTypes: {15}( 1.3.6.1.4.1.26840.144.2.2.10 NAME '@LDAP_PREFIX@ContactHost
+olcAttributeTypes: {17}( 1.3.6.1.4.1.26840.144.2.2.10 NAME '@LDAP_PREFIX@ContactHost
  NotificationsEnabled' DESC 'Nagios / Icinga Contact Host Notification Enabl
  ed (host_notifications_enabled 1)' EQUALITY caseIgnoreMatch SUBSTR caseIgno
  reSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
-olcAttributeTypes: {16}( 1.3.6.1.4.1.26840.144.2.2.11 NAME '@LDAP_PREFIX@ContactCanS
+olcAttributeTypes: {18}( 1.3.6.1.4.1.26840.144.2.2.11 NAME '@LDAP_PREFIX@ContactCanS
  ubmitCommands' DESC 'Nagios / Icinga Contact Can Submit Commands (can_submi
  t_commands [0/1])' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatc
  h SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
-olcAttributeTypes: {17}( 1.3.6.1.4.1.26840.144.2.2.12 NAME '@LDAP_PREFIX@Contactgrou
+olcAttributeTypes: {19}( 1.3.6.1.4.1.26840.144.2.2.12 NAME '@LDAP_PREFIX@Contactgrou
  ps' DESC 'Nagios / Icinga contactgroups' EQUALITY caseIgnoreMatch SUBSTR ca
  seIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VA
  LUE )
-olcAttributeTypes: {18}( 1.3.6.1.4.1.26840.144.2.3.1 NAME '@LDAP_PREFIX@Address' DES
+olcAttributeTypes: {20}( 1.3.6.1.4.1.26840.144.2.2.21 NAME '@LDAP_PREFIX@ContactAddr
+ ess1' DESC 'Nagios / Icinga contact address1' EQUALITY caseIgnoreMatch SUBS
+ TR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SING
+ LE-VALUE )
+olcAttributeTypes: {21}( 1.3.6.1.4.1.26840.144.2.2.22 NAME '@LDAP_PREFIX@ContactAddr
+ ess2' DESC 'Nagios / Icinga contact address2' EQUALITY caseIgnoreMatch SUBS
+ TR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SING
+ LE-VALUE )
+olcAttributeTypes: {22}( 1.3.6.1.4.1.26840.144.2.2.23 NAME '@LDAP_PREFIX@ContactAddr
+ ess3' DESC 'Nagios / Icinga contact address3' EQUALITY caseIgnoreMatch SUBS
+ TR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SING
+ LE-VALUE )
+olcAttributeTypes: {23}( 1.3.6.1.4.1.26840.144.2.2.24 NAME '@LDAP_PREFIX@ContactAddr
+ ess4' DESC 'Nagios / Icinga contact address4' EQUALITY caseIgnoreMatch SUBS
+ TR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SING
+ LE-VALUE )
+olcAttributeTypes: {24}( 1.3.6.1.4.1.26840.144.2.2.25 NAME '@LDAP_PREFIX@ContactAddr
+ ess5' DESC 'Nagios / Icinga contact address5' EQUALITY caseIgnoreMatch SUBS
+ TR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SING
+ LE-VALUE )
+olcAttributeTypes: {25}( 1.3.6.1.4.1.26840.144.2.2.26 NAME '@LDAP_PREFIX@ContactAddr
+ ess6' DESC 'Nagios / Icinga contact address6' EQUALITY caseIgnoreMatch SUBS
+ TR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SING
+ LE-VALUE )
+olcAttributeTypes: {26}( 1.3.6.1.4.1.26840.144.2.3.1 NAME '@LDAP_PREFIX@Address' DES
  C 'Nagios / Icinga Address (address 192.168.1.1)' EQUALITY caseIgnoreMatch 
  SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} 
  SINGLE-VALUE )
-olcAttributeTypes: {19}( 1.3.6.1.4.1.26840.144.2.3.2 NAME '@LDAP_PREFIX@Parent' DESC
+olcAttributeTypes: {27}( 1.3.6.1.4.1.26840.144.2.3.2 NAME '@LDAP_PREFIX@Parent' DESC
   'Nagios / Icinga Parent (parent switch_nr1)' EQUALITY caseIgnoreMatch SUBS
  TR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} SING
  LE-VALUE )
-olcAttributeTypes: {20}( 1.3.6.1.4.1.26840.144.2.3.500 NAME '@LDAP_PREFIX@HostCustom
+olcAttributeTypes: {28}( 1.3.6.1.4.1.26840.144.2.3.3 NAME '@LDAP_PREFIX@Address6' DE
+ SC 'Icinga Address6 (address6 ::1)' EQUALITY caseIgnoreMatch SUBSTR caseIgn
+ oreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} SINGLE-VALUE )
+olcAttributeTypes: {29}( 1.3.6.1.4.1.26840.144.2.3.500 NAME '@LDAP_PREFIX@HostCustom
  var' DESC 'Nagios / Icinga Custom Variable (_MyCustomVar Ingolstadt)' EQUAL
  ITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.146
  6.115.121.1.15{512} )
-olcAttributeTypes: {21}( 1.3.6.1.4.1.26840.144.2.3.501 NAME '@LDAP_PREFIX@HostContac
+olcAttributeTypes: {30}( 1.3.6.1.4.1.26840.144.2.3.501 NAME '@LDAP_PREFIX@HostContac
  ts' DESC 'Nagios / Icinga Contact (contacts admin)' EQUALITY caseIgnoreMatc
  h SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256
  } SINGLE-VALUE )
-olcAttributeTypes: {22}( 1.3.6.1.4.1.26840.144.2.3.502 NAME '@LDAP_PREFIX@HostContac
+olcAttributeTypes: {31}( 1.3.6.1.4.1.26840.144.2.3.502 NAME '@LDAP_PREFIX@HostContac
  tgroups' DESC 'Nagios / Icinga Contact Group (contact_groups admins)' EQUAL
  ITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.146
  6.115.121.1.15{256} SINGLE-VALUE )
-olcAttributeTypes: {23}( 1.3.6.1.4.1.26840.144.2.3.503 NAME '@LDAP_PREFIX@HostNotifi
+olcAttributeTypes: {32}( 1.3.6.1.4.1.26840.144.2.3.503 NAME '@LDAP_PREFIX@HostNotifi
  cationOptions' DESC 'Nagios / Icinga Notification Options (notification_opt
  ions w,u,c,r)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SY
  NTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
-olcAttributeTypes: {24}( 1.3.6.1.4.1.26840.144.2.3.504 NAME '@LDAP_PREFIX@HostNotifi
+olcAttributeTypes: {33}( 1.3.6.1.4.1.26840.144.2.3.504 NAME '@LDAP_PREFIX@HostNotifi
  cationInterval' DESC 'Nagios / Icinga Notification Interval (notification_i
  nterval 60)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNT
  AX 1.3.6.1.4.1.1466.115.121.1.15{128} SINGLE-VALUE )
-olcAttributeTypes: {25}( 1.3.6.1.4.1.26840.144.2.3.505 NAME '@LDAP_PREFIX@HostNotifi
+olcAttributeTypes: {34}( 1.3.6.1.4.1.26840.144.2.3.505 NAME '@LDAP_PREFIX@HostNotifi
  cationPeriod' DESC 'Nagios / Icinga Notification Period (notification_perio
  d 24x7)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1
  .3.6.1.4.1.1466.115.121.1.15{128} SINGLE-VALUE )
-olcAttributeTypes: {26}( 1.3.6.1.4.1.26840.144.2.3.506 NAME '@LDAP_PREFIX@HostCheckP
+olcAttributeTypes: {35}( 1.3.6.1.4.1.26840.144.2.3.506 NAME '@LDAP_PREFIX@HostCheckP
  eriod' DESC 'Nagios / Icinga Check Period (check_period 24x7)' EQUALITY cas
  eIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.1
  21.1.15{128} SINGLE-VALUE )
-olcAttributeTypes: {27}( 1.3.6.1.4.1.26840.144.2.3.507 NAME '@LDAP_PREFIX@HostCheckI
+olcAttributeTypes: {36}( 1.3.6.1.4.1.26840.144.2.3.507 NAME '@LDAP_PREFIX@HostCheckI
  nterval' DESC 'Nagios / Icinga Check Interval (check_interval 5)' EQUALITY 
  caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.11
  5.121.1.15{128} SINGLE-VALUE )
-olcAttributeTypes: {28}( 1.3.6.1.4.1.26840.144.2.3.508 NAME '@LDAP_PREFIX@HostCheckR
+olcAttributeTypes: {37}( 1.3.6.1.4.1.26840.144.2.3.508 NAME '@LDAP_PREFIX@HostCheckR
  etryInterval' DESC 'Nagios / Icinga Retry Interval (retry_interval 1)' EQUA
  LITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.14
  66.115.121.1.15{16} SINGLE-VALUE )
-olcAttributeTypes: {29}( 1.3.6.1.4.1.26840.144.2.3.509 NAME '@LDAP_PREFIX@HostCheckM
+olcAttributeTypes: {38}( 1.3.6.1.4.1.26840.144.2.3.509 NAME '@LDAP_PREFIX@HostCheckM
  axCheckAttempts' DESC 'Nagios / Icinga Max Check Attempts (max_check_attemp
  ts 3)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3
  .6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
-olcAttributeTypes: {30}( 1.3.6.1.4.1.26840.144.2.3.510 NAME '@LDAP_PREFIX@HostProces
+olcAttributeTypes: {39}( 1.3.6.1.4.1.26840.144.2.3.510 NAME '@LDAP_PREFIX@HostProces
  sPerfData' DESC 'Nagios / Icinga Process Perf Data (process_perf_data 1)' E
  QUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1
  .1466.115.121.1.15{16} SINGLE-VALUE )
-olcAttributeTypes: {31}( 1.3.6.1.4.1.26840.144.2.3.511 NAME '@LDAP_PREFIX@HostActive
+olcAttributeTypes: {40}( 1.3.6.1.4.1.26840.144.2.3.511 NAME '@LDAP_PREFIX@HostActive
  ChecksEnabled' DESC 'Nagios / Icinga Active Checks Enabled (active_checks_e
  nabled 1)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX
   1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
-olcAttributeTypes: {32}( 1.3.6.1.4.1.26840.144.2.3.512 NAME '@LDAP_PREFIX@HostPassiv
+olcAttributeTypes: {41}( 1.3.6.1.4.1.26840.144.2.3.512 NAME '@LDAP_PREFIX@HostPassiv
  eChecksEnabled' DESC 'Nagios / Icinga Passive Checks Enabled (passive_check
  s_enabled 1)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYN
  TAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
-olcAttributeTypes: {33}( 1.3.6.1.4.1.26840.144.2.3.513 NAME '@LDAP_PREFIX@HostFlapDe
+olcAttributeTypes: {42}( 1.3.6.1.4.1.26840.144.2.3.513 NAME '@LDAP_PREFIX@HostFlapDe
  tectionEnabled' DESC 'Nagios / Icinga Flap Detection Enabled (flap_detectio
  n_enabled 1)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYN
  TAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
-olcAttributeTypes: {34}( 1.3.6.1.4.1.26840.144.2.3.514 NAME '@LDAP_PREFIX@HostFlapDe
+olcAttributeTypes: {43}( 1.3.6.1.4.1.26840.144.2.3.514 NAME '@LDAP_PREFIX@HostFlapDe
  tectionOptions' DESC 'Nagios / Icinga Flap Detection Options (flap_detectio
  n_options o,d,u)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
-olcAttributeTypes: {35}( 1.3.6.1.4.1.26840.144.2.3.515 NAME '@LDAP_PREFIX@HostEventh
+olcAttributeTypes: {44}( 1.3.6.1.4.1.26840.144.2.3.515 NAME '@LDAP_PREFIX@HostEventh
  andler' DESC 'Nagios / Icinga Eventhandler (event_handler restart-httpd)' E
  QUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1
  .1466.115.121.1.15{256} SINGLE-VALUE )
-olcAttributeTypes: {36}( 1.3.6.1.4.1.26840.144.2.3.516 NAME '@LDAP_PREFIX@HostNotesU
+olcAttributeTypes: {45}( 1.3.6.1.4.1.26840.144.2.3.516 NAME '@LDAP_PREFIX@HostNotesU
  RL' DESC 'Nagios / Icinga Notes URL (notes_url http://www.google.de)' EQUAL
  ITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.146
  6.115.121.1.15{512} SINGLE-VALUE )
-olcAttributeTypes: {37}( 1.3.6.1.4.1.26840.144.2.3.517 NAME '@LDAP_PREFIX@HostAction
+olcAttributeTypes: {46}( 1.3.6.1.4.1.26840.144.2.3.517 NAME '@LDAP_PREFIX@HostAction
  URL' DESC 'Nagios / Icinga Action URL (action_url http://www.google.de)' EQ
  UALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.
  1466.115.121.1.15{512} SINGLE-VALUE )
-olcAttributeTypes: {38}( 1.3.6.1.4.1.26840.144.2.3.518 NAME '@LDAP_PREFIX@HostDisabl
+olcAttributeTypes: {47}( 1.3.6.1.4.1.26840.144.2.3.518 NAME '@LDAP_PREFIX@HostDisabl
  e' DESC 'Nagios / Icinga Disable (Disable all below this entry)' EQUALITY c
  aseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115
  .121.1.15{16} SINGLE-VALUE )
-olcAttributeTypes: {39}( 1.3.6.1.4.1.26840.144.2.3.519 NAME '@LDAP_PREFIX@Hostgroups
+olcAttributeTypes: {48}( 1.3.6.1.4.1.26840.144.2.3.519 NAME '@LDAP_PREFIX@Hostgroups
  ' DESC 'Nagios / Icinga Hostgroup (hostgroups example-hostgroup)' EQUALITY 
  caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.11
  5.121.1.15{512} SINGLE-VALUE )
-olcAttributeTypes: {40}( 1.3.6.1.4.1.26840.144.2.3.520 NAME '@LDAP_PREFIX@HostDepend
+olcAttributeTypes: {49}( 1.3.6.1.4.1.26840.144.2.3.520 NAME '@LDAP_PREFIX@HostDepend
  ency' DESC 'Nagios / Icinga Host Dependency (example-host)' EQUALITY caseIg
  noreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.
  1.15{256} SINGLE-VALUE )
-olcAttributeTypes: {41}( 1.3.6.1.4.1.26840.144.2.3.521 NAME '@LDAP_PREFIX@HostDepend
+olcAttributeTypes: {50}( 1.3.6.1.4.1.26840.144.2.3.521 NAME '@LDAP_PREFIX@HostDepend
  encyExecutionFailureCriteria' DESC 'Execution Failure Criteria (execution_f
  ailure_criteria [o,d,u,p,n])' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSub
  stringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
-olcAttributeTypes: {42}( 1.3.6.1.4.1.26840.144.2.3.522 NAME '@LDAP_PREFIX@HostDepend
+olcAttributeTypes: {51}( 1.3.6.1.4.1.26840.144.2.3.522 NAME '@LDAP_PREFIX@HostDepend
  encyNotificationFailureCriteria' DESC 'Notification Failure Criteria (notif
  ication_failure_cirteria [o,d,u,p,n])' EQUALITY caseIgnoreMatch SUBSTR case
  IgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE
   )
-olcAttributeTypes: {43}( 1.3.6.1.4.1.26840.144.2.3.523 NAME '@LDAP_PREFIX@HostNotifi
+olcAttributeTypes: {52}( 1.3.6.1.4.1.26840.144.2.3.523 NAME '@LDAP_PREFIX@HostNotifi
  cationsEnabled' DESC 'Nagios / Icinga Notifications Enabled (notifications_
  enabled 0/1)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYN
  TAX 1.3.6.1.4.1.1466.115.121.1.15{128} SINGLE-VALUE )
-olcAttributeTypes: {44}( 1.3.6.1.4.1.26840.144.2.3.524 NAME '@LDAP_PREFIX@HostFreshn
+olcAttributeTypes: {53}( 1.3.6.1.4.1.26840.144.2.3.524 NAME '@LDAP_PREFIX@HostFreshn
  essThreshold' DESC 'Nagios / Icinga Freshness Threshold (freshness_threshol
  d #)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.
  6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
-olcAttributeTypes: {45}( 1.3.6.1.4.1.26840.144.2.3.525 NAME '@LDAP_PREFIX@HostCheckF
+olcAttributeTypes: {54}( 1.3.6.1.4.1.26840.144.2.3.525 NAME '@LDAP_PREFIX@HostCheckF
  reshness' DESC 'Host Freshness Checking (check_freshness [0/1]' EQUALITY ca
  seIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.
  121.1.15{16} SINGLE-VALUE )
-olcAttributeTypes: {46}( 1.3.6.1.4.1.26840.144.2.3.526 NAME '@LDAP_PREFIX@HostCheckc
+olcAttributeTypes: {55}( 1.3.6.1.4.1.26840.144.2.3.526 NAME '@LDAP_PREFIX@HostCheckc
  ommand' DESC 'Nagios / Icinga Check Command (check_command check_disk $ARG1
  $ $ARG2$)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX
   1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
-olcAttributeTypes: {47}( 1.3.6.1.4.1.26840.144.2.3.527 NAME '@LDAP_PREFIX@HostNotes'
+olcAttributeTypes: {56}( 1.3.6.1.4.1.26840.144.2.3.527 NAME '@LDAP_PREFIX@HostNotes'
   DESC 'Nagios / Icinga Notes directive to define an optional string' EQUALI
  TY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466
  .115.121.1.15{512} SINGLE-VALUE )
-olcAttributeTypes: {48}( 1.3.6.1.4.1.26840.144.2.3.528 NAME '@LDAP_PREFIX@HostDispla
+olcAttributeTypes: {57}( 1.3.6.1.4.1.26840.144.2.3.528 NAME '@LDAP_PREFIX@HostDispla
  yName' DESC 'Nagios / Icinga display_name directive to add an alternate nam
  e that should be displayed in the web interface' EQUALITY caseIgnoreMatch S
  UBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{512} S
  INGLE-VALUE )
-olcAttributeTypes: {49}( 1.3.6.1.4.1.26840.144.2.3.529 NAME '@LDAP_PREFIX@HostLowFla
+olcAttributeTypes: {58}( 1.3.6.1.4.1.26840.144.2.3.529 NAME '@LDAP_PREFIX@HostLowFla
  pThreshold' DESC 'Nagios / Icinga Low Flap Threshold (low_flap_threshold #)
  ' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.
  4.1.1466.115.121.1.15{256} SINGLE-VALUE )
-olcAttributeTypes: {50}( 1.3.6.1.4.1.26840.144.2.3.530 NAME '@LDAP_PREFIX@HostHighFl
+olcAttributeTypes: {59}( 1.3.6.1.4.1.26840.144.2.3.530 NAME '@LDAP_PREFIX@HostHighFl
  apThreshold' DESC 'Nagios / Icinga High Flap Threshold (high_flap_threshold
   #)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6
  .1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
-olcAttributeTypes: {51}( 1.3.6.1.4.1.26840.144.2.3.531 NAME '@LDAP_PREFIX@HostIsVola
+olcAttributeTypes: {60}( 1.3.6.1.4.1.26840.144.2.3.531 NAME '@LDAP_PREFIX@HostIsVola
  tile' DESC 'Host Is Volatile (is_volatile [0/1]' EQUALITY caseIgnoreMatch S
  UBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SI
  NGLE-VALUE )
-olcAttributeTypes: {52}( 1.3.6.1.4.1.26840.144.2.3.532 NAME '@LDAP_PREFIX@HostIconIm
+olcAttributeTypes: {61}( 1.3.6.1.4.1.26840.144.2.3.532 NAME '@LDAP_PREFIX@HostIconIm
  age' DESC 'Nagios / Icinga Icon Image URL (icon_image vendors/nagios.gif)' 
  EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.
  1.1466.115.121.1.15{256} SINGLE-VALUE )
-olcAttributeTypes: {53}( 1.3.6.1.4.1.26840.144.2.3.533 NAME '@LDAP_PREFIX@HostIconIm
+olcAttributeTypes: {62}( 1.3.6.1.4.1.26840.144.2.3.533 NAME '@LDAP_PREFIX@HostIconIm
  ageAlt' DESC 'Nagios / Icinga Icon Image Alt (icon_image_alt Nagios Service
  )' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1
  .4.1.1466.115.121.1.15{256} SINGLE-VALUE )
-olcAttributeTypes: {54}( 1.3.6.1.4.1.26840.144.2.4.1 NAME '@LDAP_PREFIX@Checkcommand
+olcAttributeTypes: {63}( 1.3.6.1.4.1.26840.144.2.4.1 NAME '@LDAP_PREFIX@Checkcommand
  ' DESC 'Nagios / Icinga Check Command (check_command check_disk $ARG1$ $ARG
  2$)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6
  .1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
-olcAttributeTypes: {55}( 1.3.6.1.4.1.26840.144.2.4.500 NAME '@LDAP_PREFIX@ServiceCus
+olcAttributeTypes: {64}( 1.3.6.1.4.1.26840.144.2.4.500 NAME '@LDAP_PREFIX@ServiceCus
  tomvar' DESC 'Nagios / Icinga Custom Variable (_MyCustomVar Ingolstadt)' EQ
  UALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.
  1466.115.121.1.15{512} )
-olcAttributeTypes: {56}( 1.3.6.1.4.1.26840.144.2.4.501 NAME '@LDAP_PREFIX@ServiceCon
+olcAttributeTypes: {65}( 1.3.6.1.4.1.26840.144.2.4.501 NAME '@LDAP_PREFIX@ServiceCon
  tacts' DESC 'Nagios / Icinga Contact (contacts admin)' EQUALITY caseIgnoreM
  atch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{
  256} SINGLE-VALUE )
-olcAttributeTypes: {57}( 1.3.6.1.4.1.26840.144.2.4.502 NAME '@LDAP_PREFIX@ServiceCon
+olcAttributeTypes: {66}( 1.3.6.1.4.1.26840.144.2.4.502 NAME '@LDAP_PREFIX@ServiceCon
  tactgroups' DESC 'Nagios / Icinga Contact Group (contact_groups admins)' EQ
  UALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.
  1466.115.121.1.15{256} SINGLE-VALUE )
-olcAttributeTypes: {58}( 1.3.6.1.4.1.26840.144.2.4.503 NAME '@LDAP_PREFIX@ServiceNot
+olcAttributeTypes: {67}( 1.3.6.1.4.1.26840.144.2.4.503 NAME '@LDAP_PREFIX@ServiceNot
  ificationOptions' DESC 'Nagios / Icinga Notification Options (notification_
  options w,u,c,r)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
-olcAttributeTypes: {59}( 1.3.6.1.4.1.26840.144.2.4.504 NAME '@LDAP_PREFIX@ServiceNot
+olcAttributeTypes: {68}( 1.3.6.1.4.1.26840.144.2.4.504 NAME '@LDAP_PREFIX@ServiceNot
  ificationInterval' DESC 'Nagios / Icinga Notification Interval (notificatio
  n_interval 60)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch S
  YNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} SINGLE-VALUE )
-olcAttributeTypes: {60}( 1.3.6.1.4.1.26840.144.2.4.505 NAME '@LDAP_PREFIX@ServiceNot
+olcAttributeTypes: {69}( 1.3.6.1.4.1.26840.144.2.4.505 NAME '@LDAP_PREFIX@ServiceNot
  ificationPeriod' DESC 'Nagios / Icinga Notification Period (notification_pe
  riod 24x7)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTA
  X 1.3.6.1.4.1.1466.115.121.1.15{128} SINGLE-VALUE )
-olcAttributeTypes: {61}( 1.3.6.1.4.1.26840.144.2.4.506 NAME '@LDAP_PREFIX@ServiceChe
+olcAttributeTypes: {70}( 1.3.6.1.4.1.26840.144.2.4.506 NAME '@LDAP_PREFIX@ServiceChe
  ckPeriod' DESC 'Nagios / Icinga Check Period (check_period 24x7)' EQUALITY 
  caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.11
  5.121.1.15{128} SINGLE-VALUE )
-olcAttributeTypes: {62}( 1.3.6.1.4.1.26840.144.2.4.507 NAME '@LDAP_PREFIX@ServiceChe
+olcAttributeTypes: {71}( 1.3.6.1.4.1.26840.144.2.4.507 NAME '@LDAP_PREFIX@ServiceChe
  ckInterval' DESC 'Nagios / Icinga Check Interval (check_interval 5)' EQUALI
  TY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466
  .115.121.1.15{128} SINGLE-VALUE )
-olcAttributeTypes: {63}( 1.3.6.1.4.1.26840.144.2.4.508 NAME '@LDAP_PREFIX@ServiceChe
+olcAttributeTypes: {72}( 1.3.6.1.4.1.26840.144.2.4.508 NAME '@LDAP_PREFIX@ServiceChe
  ckRetryInterval' DESC 'Nagios / Icinga Retry Interval (retry_interval 1)' E
  QUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1
  .1466.115.121.1.15{16} SINGLE-VALUE )
-olcAttributeTypes: {64}( 1.3.6.1.4.1.26840.144.2.4.509 NAME '@LDAP_PREFIX@ServiceChe
+olcAttributeTypes: {73}( 1.3.6.1.4.1.26840.144.2.4.509 NAME '@LDAP_PREFIX@ServiceChe
  ckMaxCheckAttempts' DESC 'Nagios / Icinga Max Check Attempts (max_check_att
  empts 3)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 
  1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
-olcAttributeTypes: {65}( 1.3.6.1.4.1.26840.144.2.4.510 NAME '@LDAP_PREFIX@ServicePro
+olcAttributeTypes: {74}( 1.3.6.1.4.1.26840.144.2.4.510 NAME '@LDAP_PREFIX@ServicePro
  cessPerfData' DESC 'Nagios / Icinga Process Perf Data (process_perf_data 1)
  ' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.
  4.1.1466.115.121.1.15{16} SINGLE-VALUE )
-olcAttributeTypes: {66}( 1.3.6.1.4.1.26840.144.2.4.511 NAME '@LDAP_PREFIX@ServiceAct
+olcAttributeTypes: {75}( 1.3.6.1.4.1.26840.144.2.4.511 NAME '@LDAP_PREFIX@ServiceAct
  iveChecksEnabled' DESC 'Nagios / Icinga Active Checks Enabled (active_check
  s_enabled 1)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYN
  TAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
-olcAttributeTypes: {67}( 1.3.6.1.4.1.26840.144.2.4.512 NAME '@LDAP_PREFIX@ServicePas
+olcAttributeTypes: {76}( 1.3.6.1.4.1.26840.144.2.4.512 NAME '@LDAP_PREFIX@ServicePas
  siveChecksEnabled' DESC 'Nagios / Icinga Passive Checks Enabled (passive_ch
  ecks_enabled 1)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch 
  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
-olcAttributeTypes: {68}( 1.3.6.1.4.1.26840.144.2.4.513 NAME '@LDAP_PREFIX@ServiceFla
+olcAttributeTypes: {77}( 1.3.6.1.4.1.26840.144.2.4.513 NAME '@LDAP_PREFIX@ServiceFla
  pDetectionEnabled' DESC 'Nagios / Icinga Flap Detection Enabled (flap_detec
  tion_enabled 1)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch 
  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
-olcAttributeTypes: {69}( 1.3.6.1.4.1.26840.144.2.4.514 NAME '@LDAP_PREFIX@ServiceFla
+olcAttributeTypes: {78}( 1.3.6.1.4.1.26840.144.2.4.514 NAME '@LDAP_PREFIX@ServiceFla
  pDetectionOptions' DESC 'Nagios / Icinga Flap Detection Options (flap_detec
  tion_options o,d,u)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMa
  tch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
-olcAttributeTypes: {70}( 1.3.6.1.4.1.26840.144.2.4.515 NAME '@LDAP_PREFIX@ServiceEve
+olcAttributeTypes: {79}( 1.3.6.1.4.1.26840.144.2.4.515 NAME '@LDAP_PREFIX@ServiceEve
  nthandler' DESC 'Nagios / Icinga Eventhandler (event_handler restart-httpd)
  ' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.
  4.1.1466.115.121.1.15{256} SINGLE-VALUE )
-olcAttributeTypes: {71}( 1.3.6.1.4.1.26840.144.2.4.516 NAME '@LDAP_PREFIX@ServiceNot
+olcAttributeTypes: {80}( 1.3.6.1.4.1.26840.144.2.4.516 NAME '@LDAP_PREFIX@ServiceNot
  esURL' DESC 'Nagios / Icinga Notes URL (notes_url http://www.google.de)' EQ
  UALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.
  1466.115.121.1.15{512} SINGLE-VALUE )
-olcAttributeTypes: {72}( 1.3.6.1.4.1.26840.144.2.4.517 NAME '@LDAP_PREFIX@ServiceAct
+olcAttributeTypes: {81}( 1.3.6.1.4.1.26840.144.2.4.517 NAME '@LDAP_PREFIX@ServiceAct
  ionURL' DESC 'Nagios / Icinga Action URL (action_url http://www.google.de)'
   EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4
  .1.1466.115.121.1.15{512} SINGLE-VALUE )
-olcAttributeTypes: {73}( 1.3.6.1.4.1.26840.144.2.4.518 NAME '@LDAP_PREFIX@ServiceDis
+olcAttributeTypes: {82}( 1.3.6.1.4.1.26840.144.2.4.518 NAME '@LDAP_PREFIX@ServiceDis
  able' DESC 'Nagios / Icinga Disable (Disable all below this entry)' EQUALIT
  Y caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.
  115.121.1.15{16} SINGLE-VALUE )
-olcAttributeTypes: {74}( 1.3.6.1.4.1.26840.144.2.4.519 NAME '@LDAP_PREFIX@ServiceDep
+olcAttributeTypes: {83}( 1.3.6.1.4.1.26840.144.2.4.519 NAME '@LDAP_PREFIX@ServiceDep
  endency' DESC 'Nagios / Icinga Service Dependency (example-host -> example-
  service)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 
  1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
-olcAttributeTypes: {75}( 1.3.6.1.4.1.26840.144.2.4.520 NAME '@LDAP_PREFIX@ServiceDep
+olcAttributeTypes: {84}( 1.3.6.1.4.1.26840.144.2.4.520 NAME '@LDAP_PREFIX@ServiceDep
  endencyExecutionFailureCriteria' DESC 'Execution Failure Criteria (executio
  n_failure_criteria [o,d,u,p,n])' EQUALITY caseIgnoreMatch SUBSTR caseIgnore
  SubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
-olcAttributeTypes: {76}( 1.3.6.1.4.1.26840.144.2.4.521 NAME '@LDAP_PREFIX@ServiceDep
+olcAttributeTypes: {85}( 1.3.6.1.4.1.26840.144.2.4.521 NAME '@LDAP_PREFIX@ServiceDep
  endencyNotificationFailureCriteria' DESC 'Notification Failure Criteria (no
  tification_failure_cirteria [o,d,u,p,n])' EQUALITY caseIgnoreMatch SUBSTR c
  aseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VA
  LUE )
-olcAttributeTypes: {77}( 1.3.6.1.4.1.26840.144.2.4.522 NAME '@LDAP_PREFIX@ServiceNot
+olcAttributeTypes: {86}( 1.3.6.1.4.1.26840.144.2.4.522 NAME '@LDAP_PREFIX@ServiceNot
  ificationsEnabled' DESC 'Nagios / Icinga Notifications Enabled (notificatio
  ns_enabled 0/1)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch 
  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} SINGLE-VALUE )
-olcAttributeTypes: {78}( 1.3.6.1.4.1.26840.144.2.4.523 NAME '@LDAP_PREFIX@ServiceFre
+olcAttributeTypes: {87}( 1.3.6.1.4.1.26840.144.2.4.523 NAME '@LDAP_PREFIX@ServiceFre
  shnessThreshold' DESC 'Nagios / Icinga Freshness Threshold (freshness_thres
  hold #)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1
  .3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
-olcAttributeTypes: {79}( 1.3.6.1.4.1.26840.144.2.4.524 NAME '@LDAP_PREFIX@ServiceChe
+olcAttributeTypes: {88}( 1.3.6.1.4.1.26840.144.2.4.524 NAME '@LDAP_PREFIX@ServiceChe
  ckFreshness' DESC 'Service Freshness Checking (check_freshness [0/1]' EQUAL
  ITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.146
  6.115.121.1.15{16} SINGLE-VALUE )
-olcAttributeTypes: {80}( 1.3.6.1.4.1.26840.144.2.4.525 NAME '@LDAP_PREFIX@Servicegro
+olcAttributeTypes: {89}( 1.3.6.1.4.1.26840.144.2.4.525 NAME '@LDAP_PREFIX@Servicegro
  ups' DESC 'Nagios / Icinga Servicegroup (servicegroups example-servicegroup
  )' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1
  .4.1.1466.115.121.1.15{512} SINGLE-VALUE )
-olcAttributeTypes: {81}( 1.3.6.1.4.1.26840.144.2.4.526 NAME '@LDAP_PREFIX@ServiceChe
+olcAttributeTypes: {90}( 1.3.6.1.4.1.26840.144.2.4.526 NAME '@LDAP_PREFIX@ServiceChe
  ckcommand' DESC 'Nagios / Icinga Check Command (check_command check_disk $A
  RG1$ $ARG2$)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYN
  TAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
-olcAttributeTypes: {82}( 1.3.6.1.4.1.26840.144.2.4.527 NAME '@LDAP_PREFIX@ServiceNot
+olcAttributeTypes: {91}( 1.3.6.1.4.1.26840.144.2.4.527 NAME '@LDAP_PREFIX@ServiceNot
  es' DESC 'Nagios / Icinga Notes directive to define an optional string' EQU
  ALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1
  466.115.121.1.15{512} SINGLE-VALUE )
-olcAttributeTypes: {83}( 1.3.6.1.4.1.26840.144.2.4.528 NAME '@LDAP_PREFIX@ServiceDis
+olcAttributeTypes: {92}( 1.3.6.1.4.1.26840.144.2.4.528 NAME '@LDAP_PREFIX@ServiceDis
  playName' DESC 'Nagios / Icinga display_name directive to add an alternate 
  name that should be displayed in the web interface' EQUALITY caseIgnoreMatc
  h SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{512
  } SINGLE-VALUE )
-olcAttributeTypes: {84}( 1.3.6.1.4.1.26840.144.2.4.529 NAME '@LDAP_PREFIX@ServiceLow
+olcAttributeTypes: {93}( 1.3.6.1.4.1.26840.144.2.4.529 NAME '@LDAP_PREFIX@ServiceLow
  FlapThreshold' DESC 'Nagios / Icinga Low Flap Threshold (low_flap_threshold
   #)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6
  .1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
-olcAttributeTypes: {85}( 1.3.6.1.4.1.26840.144.2.4.530 NAME '@LDAP_PREFIX@ServiceHig
+olcAttributeTypes: {94}( 1.3.6.1.4.1.26840.144.2.4.530 NAME '@LDAP_PREFIX@ServiceHig
  hFlapThreshold' DESC 'Nagios / Icinga High Flap Threshold (high_flap_thresh
  old #)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.
  3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
-olcAttributeTypes: {86}( 1.3.6.1.4.1.26840.144.2.4.531 NAME '@LDAP_PREFIX@ServiceIsV
+olcAttributeTypes: {95}( 1.3.6.1.4.1.26840.144.2.4.531 NAME '@LDAP_PREFIX@ServiceIsV
  olatile' DESC 'Host Is Volatile (is_volatile [0/1]' EQUALITY caseIgnoreMatc
  h SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16}
   SINGLE-VALUE )
-olcAttributeTypes: {87}( 1.3.6.1.4.1.26840.144.2.5.500 NAME '@LDAP_PREFIX@HostEscala
+olcAttributeTypes: {96}( 1.3.6.1.4.1.26840.144.2.5.500 NAME '@LDAP_PREFIX@HostEscala
  tionFirstNotification' DESC 'Nagios / Icinga Host Escalation attribute (fir
  st_notification #)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMat
  ch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
-olcAttributeTypes: {88}( 1.3.6.1.4.1.26840.144.2.5.501 NAME '@LDAP_PREFIX@HostEscala
+olcAttributeTypes: {97}( 1.3.6.1.4.1.26840.144.2.5.501 NAME '@LDAP_PREFIX@HostEscala
  tionLastNotification' DESC 'Nagios / Icinga Host Escalation attribute (last
  _notification #)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch
   SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
-olcAttributeTypes: {89}( 1.3.6.1.4.1.26840.144.2.5.502 NAME '@LDAP_PREFIX@HostEscala
+olcAttributeTypes: {98}( 1.3.6.1.4.1.26840.144.2.5.502 NAME '@LDAP_PREFIX@HostEscala
  tionNotificationInterval' DESC 'Nagios / Icinga Host Escalation attribute (
  notification_interval #)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstri
  ngsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
-olcAttributeTypes: {90}( 1.3.6.1.4.1.26840.144.2.5.503 NAME '@LDAP_PREFIX@HostEscala
+olcAttributeTypes: {99}( 1.3.6.1.4.1.26840.144.2.5.503 NAME '@LDAP_PREFIX@HostEscala
  tionContacts' DESC 'Nagios / Icinga Host Escalation attribute (contacts <co
  ntact/s>)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX
   1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
-olcAttributeTypes: {91}( 1.3.6.1.4.1.26840.144.2.5.504 NAME '@LDAP_PREFIX@HostEscala
- tionContactgroups' DESC 'Nagios / Icinga Host Escalation attribute (contact
- _groups <contact_group/s>)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubst
- ringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
-olcAttributeTypes: {92}( 1.3.6.1.4.1.26840.144.2.5.505 NAME '@LDAP_PREFIX@HostEscala
- tionPeriod' DESC 'Nagios / Icinga Host Escalation attribute (escalation_per
- iod <timeperiod>)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatc
- h SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} SINGLE-VALUE )
-olcAttributeTypes: {93}( 1.3.6.1.4.1.26840.144.2.5.506 NAME '@LDAP_PREFIX@HostEscala
- tionOptions' DESC 'Nagios / Icinga Host Escalation attribute (escalation_op
- tions [d,u,r])' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch S
- YNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
-olcAttributeTypes: {94}( 1.3.6.1.4.1.26840.144.2.5.507 NAME '@LDAP_PREFIX@HostEscala
- tionHostGroups' DESC 'Nagios / Icinga Host Escalation attribute (escalation
- _HostGroups <host_group/s>)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubs
+olcAttributeTypes: {100}( 1.3.6.1.4.1.26840.144.2.5.504 NAME '@LDAP_PREFIX@HostEscal
+ ationContactgroups' DESC 'Nagios / Icinga Host Escalation attribute (contac
+ t_groups <contact_group/s>)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubs
  tringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
-olcAttributeTypes: {95}( 1.3.6.1.4.1.26840.144.2.6.500 NAME '@LDAP_PREFIX@ServiceEsc
- alationFirstNotification' DESC 'Nagios / Icinga Service Escalation attribut
- e (first_notification #)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstri
- ngsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
-olcAttributeTypes: {96}( 1.3.6.1.4.1.26840.144.2.6.501 NAME '@LDAP_PREFIX@ServiceEsc
- alationLastNotification' DESC 'Nagios / Icinga Service Escalation attribute
-  (last_notification #)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstring
- sMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
-olcAttributeTypes: {97}( 1.3.6.1.4.1.26840.144.2.6.502 NAME '@LDAP_PREFIX@ServiceEsc
- alationNotificationInterval' DESC 'Nagios / Icinga Service Escalation attri
- bute (notification_interval #)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreS
- ubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
-olcAttributeTypes: {98}( 1.3.6.1.4.1.26840.144.2.6.503 NAME '@LDAP_PREFIX@ServiceEsc
- alationContacts' DESC 'Nagios / Icinga Service Escalation attribute (contac
- ts <contact/s>)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch 
- SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
-olcAttributeTypes: {99}( 1.3.6.1.4.1.26840.144.2.6.504 NAME '@LDAP_PREFIX@ServiceEsc
- alationContactgroups' DESC 'Nagios / Icinga Service Escalation attribute (c
- ontact_groups <contact_group/s>)' EQUALITY caseIgnoreMatch SUBSTR caseIgnor
- eSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
-olcAttributeTypes: {100}( 1.3.6.1.4.1.26840.144.2.6.505 NAME '@LDAP_PREFIX@ServiceEs
+olcAttributeTypes: {101}( 1.3.6.1.4.1.26840.144.2.5.505 NAME '@LDAP_PREFIX@HostEscal
+ ationPeriod' DESC 'Nagios / Icinga Host Escalation attribute (escalation_pe
+ riod <timeperiod>)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMat
+ ch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} SINGLE-VALUE )
+olcAttributeTypes: {102}( 1.3.6.1.4.1.26840.144.2.5.506 NAME '@LDAP_PREFIX@HostEscal
+ ationOptions' DESC 'Nagios / Icinga Host Escalation attribute (escalation_o
+ ptions [d,u,r])' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch 
+ SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+olcAttributeTypes: {103}( 1.3.6.1.4.1.26840.144.2.5.507 NAME '@LDAP_PREFIX@HostEscal
+ ationHostGroups' DESC 'Nagios / Icinga Host Escalation attribute (escalatio
+ n_HostGroups <host_group/s>)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSub
+ stringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
+olcAttributeTypes: {104}( 1.3.6.1.4.1.26840.144.2.6.500 NAME '@LDAP_PREFIX@ServiceEs
+ calationFirstNotification' DESC 'Nagios / Icinga Service Escalation attribu
+ te (first_notification #)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstr
+ ingsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+olcAttributeTypes: {105}( 1.3.6.1.4.1.26840.144.2.6.501 NAME '@LDAP_PREFIX@ServiceEs
+ calationLastNotification' DESC 'Nagios / Icinga Service Escalation attribut
+ e (last_notification #)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstrin
+ gsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+olcAttributeTypes: {106}( 1.3.6.1.4.1.26840.144.2.6.502 NAME '@LDAP_PREFIX@ServiceEs
+ calationNotificationInterval' DESC 'Nagios / Icinga Service Escalation attr
+ ibute (notification_interval #)' EQUALITY caseIgnoreMatch SUBSTR caseIgnore
+ SubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
+olcAttributeTypes: {107}( 1.3.6.1.4.1.26840.144.2.6.503 NAME '@LDAP_PREFIX@ServiceEs
+ calationContacts' DESC 'Nagios / Icinga Service Escalation attribute (conta
+ cts <contact/s>)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
+olcAttributeTypes: {108}( 1.3.6.1.4.1.26840.144.2.6.504 NAME '@LDAP_PREFIX@ServiceEs
+ calationContactgroups' DESC 'Nagios / Icinga Service Escalation attribute (
+ contact_groups <contact_group/s>)' EQUALITY caseIgnoreMatch SUBSTR caseIgno
+ reSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
+olcAttributeTypes: {109}( 1.3.6.1.4.1.26840.144.2.6.505 NAME '@LDAP_PREFIX@ServiceEs
  calationPeriod' DESC 'Nagios / Icinga Service Escalation attribute (escalat
  ion_period <timeperiod>)' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstri
  ngsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{128} SINGLE-VALUE )
-olcAttributeTypes: {101}( 1.3.6.1.4.1.26840.144.2.6.506 NAME '@LDAP_PREFIX@ServiceEs
+olcAttributeTypes: {110}( 1.3.6.1.4.1.26840.144.2.6.506 NAME '@LDAP_PREFIX@ServiceEs
  calationOptions' DESC 'Nagios / Icinga Service Escalation attribute (escala
  tion_options [d,u,r])' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstrings
  Match SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{16} SINGLE-VALUE )
-olcAttributeTypes: {102}( 1.3.6.1.4.1.26840.144.2.6.507 NAME '@LDAP_PREFIX@ServiceEs
+olcAttributeTypes: {111}( 1.3.6.1.4.1.26840.144.2.6.507 NAME '@LDAP_PREFIX@ServiceEs
  calationHostGroups' DESC 'Nagios / Icinga Service Escalation attribute (esc
  alation_HostGroups <host_group/s>)' EQUALITY caseIgnoreMatch SUBSTR caseIgn
  oreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
-olcAttributeTypes: {103}( 1.3.6.1.4.1.26840.144.2.6.508 NAME '@LDAP_PREFIX@ServiceEs
+olcAttributeTypes: {112}( 1.3.6.1.4.1.26840.144.2.6.508 NAME '@LDAP_PREFIX@ServiceEs
  calationServiceGroups' DESC 'Nagios / Icinga Service Escalation attribute (
  escalation_ServiceGroups <service_group/s>)' EQUALITY caseIgnoreMatch SUBST
  R caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGL
@@ -442,7 +477,7 @@ olcObjectClasses: {0}( 1.3.6.1.4.1.26840.144.3.1 NAME '@LDAP_PREFIX@TemplateHost
   $ @LDAP_PREFIX@HostHighFlapThreshold $ @LDAP_PREFIX@HostIsVolatile $ @LDAP_PREFIX@HostIconImage $ 
  @LDAP_PREFIX@HostIconImageAlt ) )
 olcObjectClasses: {1}( 1.3.6.1.4.1.26840.144.3.2 NAME '@LDAP_PREFIX@TemplateService'
-  DESC 'Tempalte for a Nagios / Icinga service' SUP top STRUCTURAL MAY ( lco
+  DESC 'Template for a Nagios / Icinga service' SUP top STRUCTURAL MAY ( lco
  nfServiceCustomvar $ @LDAP_PREFIX@ServiceContacts $ @LDAP_PREFIX@ServiceContactgroups $ lco
  nfServiceNotificationOptions $ @LDAP_PREFIX@ServiceNotificationInterval $ @LDAP_PREFIX@Serv
  iceNotificationPeriod $ @LDAP_PREFIX@ServiceNotificationsEnabled $ @LDAP_PREFIX@ServiceChec
@@ -495,13 +530,15 @@ olcObjectClasses: {5}( 1.3.6.1.4.1.26840.144.5.3 NAME '@LDAP_PREFIX@Contact' DES
  ons $ @LDAP_PREFIX@ContactHostNotificationOptions $ @LDAP_PREFIX@ContactServiceNotification
  Commands $ @LDAP_PREFIX@ContactHostNotificationCommands $ @LDAP_PREFIX@ContactServiceNotifi
  cationsEnabled $ @LDAP_PREFIX@ContactHostNotificationsEnabled $ @LDAP_PREFIX@ContactCanSubm
- itCommands $ @LDAP_PREFIX@Contactgroups ) )
+ itCommands $ @LDAP_PREFIX@Contactgroups $ @LDAP_PREFIX@ContactAddress1 $ @LDAP_PREFIX@ContactAddres
+ s2 $ @LDAP_PREFIX@ContactAddress3 $ @LDAP_PREFIX@ContactAddress4 $ @LDAP_PREFIX@ContactAddress5 $ l
+ confContactAddress6 ) )
 olcObjectClasses: {6}( 1.3.6.1.4.1.26840.144.5.4 NAME '@LDAP_PREFIX@Contactgroup' DE
  SC 'Nagios / Icinga Host Group' SUP top STRUCTURAL MUST ( cn $ @LDAP_PREFIX@Alias )
-  MAY ( description $ @LDAP_PREFIX@Members ) )
+  MAY ( description $ @LDAP_PREFIX@Members $ @LDAP_PREFIX@ContactgroupMembers ) )
 olcObjectClasses: {7}( 1.3.6.1.4.1.26840.144.5.5 NAME '@LDAP_PREFIX@Host' DESC 'Nagi
  os / Icinga Host' SUP @LDAP_PREFIX@TemplateHost STRUCTURAL MUST ( cn $ @LDAP_PREFIX@Address
-  ) MAY ( description $ @LDAP_PREFIX@Alias $ @LDAP_PREFIX@HostCustomvar ) )
+  $ @LDAP_PREFIX@Address6 ) MAY ( description $ @LDAP_PREFIX@Alias $ @LDAP_PREFIX@HostCustomvar ) )
 olcObjectClasses: {8}( 1.3.6.1.4.1.26840.144.5.6 NAME '@LDAP_PREFIX@Hostgroup' DESC 
  'Nagios / Icinga Hostgroup' SUP top STRUCTURAL MUST ( cn $ @LDAP_PREFIX@Alias ) MAY
   ( description $ @LDAP_PREFIX@Members $ @LDAP_PREFIX@HostgroupMembers ) )
@@ -511,7 +548,7 @@ olcObjectClasses: {9}( 1.3.6.1.4.1.26840.144.5.7 NAME '@LDAP_PREFIX@Service' DES
  ommand ) )
 olcObjectClasses: {10}( 1.3.6.1.4.1.26840.144.5.8 NAME '@LDAP_PREFIX@Servicegroup' D
  ESC 'Nagios / Icinga Servicegroup' SUP top STRUCTURAL MUST ( cn $ @LDAP_PREFIX@Alia
- s ) MAY ( description $ @LDAP_PREFIX@Members ) )
+ s ) MAY ( description $ @LDAP_PREFIX@Members $ @LDAP_PREFIX@ServicegroupMembers ) )
 olcObjectClasses: {11}( 1.3.6.1.4.1.26840.144.5.9 NAME '@LDAP_PREFIX@HostEscalation'
   DESC 'Nagios / Icinga Host Escalation' SUP top STRUCTURAL MUST ( cn $ lcon
  fHostEscalationFirstNotification $ @LDAP_PREFIX@HostEscalationLastNotification $ lc

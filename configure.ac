@@ -53,7 +53,7 @@ AC_ARG_WITH(ldap_bind_dn,AC_HELP_STRING([--with-ldap-bind-dn=<ldap bind dn>],[se
 AC_SUBST(ldap_bind_dn)
 AC_DEFINE_UNQUOTED(DEFAULT_LDAP_BIND_DN,"$ldap_bind_dn",[sets ldap bind dn])
 
-AC_ARG_WITH(ldap_bind_password,AC_HELP_STRING([--with-ldap-bind-password=<ldap bind password>],[sets ldap bind password]),ldap_bind_password=$withval,ldap_bind_password=)
+AC_ARG_WITH(ldap_bind_password,AC_HELP_STRING([--with-ldap-bind-password=<ldap bind password>],[sets ldap bind password]),ldap_bind_password=$withval,ldap_bind_password=icinga)
 AC_SUBST(ldap_bind_password)
 AC_DEFINE_UNQUOTED(DEFAULT_LDAP_BIND_PASSWORD,"$ldap_bind_password",[sets ldap bind password])
 

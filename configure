@@ -1997,7 +1997,7 @@ _ACEOF
 if test "${with_ldap_bind_password+set}" = set; then :
   withval=$with_ldap_bind_password; ldap_bind_password=$withval
 else
-  ldap_bind_password=
+  ldap_bind_password=icinga
 fi
 
 

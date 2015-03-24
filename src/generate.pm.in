@@ -392,6 +392,13 @@ sub genContactgroups1x {
                 }
             }
         }
+
+        if (defined $CONTACTGROUPS->{$contactgroup}->{$cfg->{ldap}->{prefix}.'contactgroupmembers'}) {
+            my @groups = split(',', $CONTACTGROUPS->{$contactgroup}->{$cfg->{ldap}->{prefix}.'contactgroupmembers'});
+            my $groups = join ",", grep length,  @groups;
+            print FH "\tcontactgroup_members\t$groups\n";
+        }
+
         print FH "}\n";
 
         # close target file
@@ -414,6 +421,13 @@ sub genContactgroups2x {
             print FH "\tdisplay_name = \"$CONTACTGROUPS->{$contactgroup}->{$cfg->{ldap}->{prefix}.'alias'}\"\n";
         } else {
             print FH "\tdisplay_name = \"$CONTACTGROUPS->{$contactgroup}->{cn}\"\n";
+        }
+
+        if (defined $CONTACTGROUPS->{$contactgroup}->{$cfg->{ldap}->{prefix}.'contactgroupmembers'}) {
+            my @groups = split(',', $CONTACTGROUPS->{$contactgroup}->{$cfg->{ldap}->{prefix}.'contactgroupmembers'});
+            my $groups = join ",", grep length,  @groups;
+            $groups =~ s/,/\", \"/g;
+            print FH "\tgroups = [ \"$groups\" ]\n";
         }
 
         if (defined $CONTACTGROUPS->{$contactgroup}->{$cfg->{ldap}->{prefix}.'members'}) {
@@ -769,6 +783,13 @@ sub genServicegroups1x {
         } else {
             print FH "\talias\t$SERVICEGROUPS->{$servicegroup}->{cn}\n";
         }
+
+        if (defined $SERVICEGROUPS->{$servicegroup}->{$cfg->{ldap}->{prefix}.'servicegroupmembers'}) {
+            my @groups = split(',', $SERVICEGROUPS->{$servicegroup}->{$cfg->{ldap}->{prefix}.'servicegroupmembers'});
+            my $groups = join ",", grep length,  @groups;
+            print FH "\thostgroup_members\t$groups\n";
+        }
+
         print FH "}\n";
 
         # close target file
@@ -794,6 +815,14 @@ sub genServicegroups2x {
         } else {
             print FH "\tdisplay_name = \"$SERVICEGROUPS->{$servicegroup}->{cn}\"\n";
         }
+
+        if (defined $SERVICEGROUPS->{$servicegroup}->{$cfg->{ldap}->{prefix}.'servicegroupmembers'}) {
+            my @groups = split(',', $SERVICEGROUPS->{$servicegroup}->{$cfg->{ldap}->{prefix}.'servicegroupmembers'});
+            my $groups = join ",", grep length,  @groups;
+            $groups =~ s/,/\", \"/g;
+            print FH "\tgroups = [ \"$groups\" ]\n";
+        }
+
         print FH "}\n";
 
         # close target file
@@ -927,7 +956,18 @@ sub genHostConfig1x {
                 # ...but look after type; only host items
                 # and no service dependency attributes;
                 # they will be handled in an other way
-                if (($val1 =~ /$cfg->{ldap}->{prefix}host/ || $val1 eq "$cfg->{ldap}->{prefix}address" || $val1 eq "$cfg->{ldap}->{prefix}parent" || $val1 eq "$cfg->{ldap}->{prefix}alias") && $val1 !~ /$cfg->{ldap}->{prefix}hostdependency/) {
+                if (($val1 =~ /$cfg->{ldap}->{prefix}host/ ||
+                     $val1 eq "$cfg->{ldap}->{prefix}address" ||
+                     $val1 eq "$cfg->{ldap}->{prefix}address6" ||
+                     $val1 eq "$cfg->{ldap}->{prefix}parent" ||
+                     $val1 eq "$cfg->{ldap}->{prefix}alias") &&
+                     $val1 !~ /$cfg->{ldap}->{prefix}hostdependency/) {
+
+                    # compatibility hack for nagios address6
+                    if ($val1 eq "$cfg->{ldap}->{prefix}address6" && defined $cfg->{export}->{format} && $cfg->{export}->{format} == 0) {
+                        print FH "\t_ADDRESS6\t$CLIENTS->{$client}->{$val1}\n";
+                        next;
+                    }
 
                     # customvar or a default item?
                     if ($val1 =~ /customvar/i) {
