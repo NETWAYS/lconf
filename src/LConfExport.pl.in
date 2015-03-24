@@ -246,6 +246,7 @@ open(FH, ">$opt->{outputDir}/lconf.incomplete") || die "Can't write data: $opt->
 #
 # NOW, WE'RE READY TO RUN :)
 #
+beVerbose("START", "LConfExport $version");
 
 # connect to LDAP server
 our $ldap;
@@ -463,4 +464,3 @@ EXIT:
 LeaveScript($exit->{code}, $exit->{message});
 
 # vi: sw=4 ts=4 expandtab :
-
