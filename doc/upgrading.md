@@ -10,6 +10,8 @@ configuration, and apply the itemMap changes from config.pm!
 forks but additional memory required.
 * perl module Parallel::ForkManager was dropped
 
+* New configure option '--with-ldap-person' for generating the schema.
+Default empty, could be set to 'AUXILIARY'.
 
 ## Upgrading from 1.3.x to 1.4.x
 
