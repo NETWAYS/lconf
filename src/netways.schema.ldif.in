@@ -538,7 +538,7 @@ olcObjectClasses: {6}( 1.3.6.1.4.1.26840.144.5.4 NAME '@LDAP_PREFIX@Contactgroup
   MAY ( description $ @LDAP_PREFIX@Members $ @LDAP_PREFIX@ContactgroupMembers ) )
 olcObjectClasses: {7}( 1.3.6.1.4.1.26840.144.5.5 NAME '@LDAP_PREFIX@Host' DESC 'Nagi
  os / Icinga Host' SUP @LDAP_PREFIX@TemplateHost STRUCTURAL MUST ( cn $ @LDAP_PREFIX@Address
-  $ @LDAP_PREFIX@Address6 ) MAY ( description $ @LDAP_PREFIX@Alias $ @LDAP_PREFIX@HostCustomvar ) )
+  ) MAY ( description $ @LDAP_PREFIX@Address6 $ @LDAP_PREFIX@Alias $ @LDAP_PREFIX@HostCustomvar ) )
 olcObjectClasses: {8}( 1.3.6.1.4.1.26840.144.5.6 NAME '@LDAP_PREFIX@Hostgroup' DESC 
  'Nagios / Icinga Hostgroup' SUP top STRUCTURAL MUST ( cn $ @LDAP_PREFIX@Alias ) MAY
   ( description $ @LDAP_PREFIX@Members $ @LDAP_PREFIX@HostgroupMembers ) )
