@@ -874,13 +874,26 @@ objectclass ( 1.3.6.1.4.1.26840.144.5.8 NAME '@LDAP_PREFIX@Servicegroup'
 objectclass ( 1.3.6.1.4.1.26840.144.5.9 NAME '@LDAP_PREFIX@HostEscalation'
     DESC 'Nagios / Icinga Host Escalation'
     SUP top @LDAP_PERSON@
-    MUST ( cn $ @LDAP_PREFIX@HostEscalationFirstNotification $ @LDAP_PREFIX@HostEscalationLastNotification $ @LDAP_PREFIX@HostEscalationNotificationInterval )
-    MAY ( @LDAP_PREFIX@HostEscalationContacts $ @LDAP_PREFIX@HostEscalationContactgroups $ @LDAP_PREFIX@HostEscalationPeriod $ @LDAP_PREFIX@HostEscalationOptions $ @LDAP_PREFIX@HostEscalationHostGroups ) )
+    MUST ( cn $ @LDAP_PREFIX@HostEscalationFirstNotification $
+	        @LDAP_PREFIX@HostEscalationLastNotification $
+		@LDAP_PREFIX@HostEscalationNotificationInterval )
+    MAY ( @LDAP_PREFIX@HostEscalationContacts $
+	  @LDAP_PREFIX@HostEscalationContactgroups $
+	  @LDAP_PREFIX@HostEscalationPeriod $
+	  @LDAP_PREFIX@HostEscalationOptions $
+	  @LDAP_PREFIX@HostEscalationHostGroups ) )
 
 objectclass ( 1.3.6.1.4.1.26840.144.5.10 NAME '@LDAP_PREFIX@ServiceEscalation'
     DESC 'Nagios / Icinga Service Escalation'
     SUP top @LDAP_PERSON@
-    MUST ( cn $ @LDAP_PREFIX@ServiceEscalationFirstNotification $ @LDAP_PREFIX@ServiceEscalationLastNotification $ @LDAP_PREFIX@ServiceEscalationNotificationInterval )
-    MAY ( @LDAP_PREFIX@ServiceEscalationContacts $ @LDAP_PREFIX@ServiceEscalationContactgroups $ @LDAP_PREFIX@ServiceEscalationPeriod $ @LDAP_PREFIX@ServiceEscalationOptions $ @LDAP_PREFIX@ServiceEscalationServiceGroups $ @LDAP_PREFIX@ServiceEscalationHostGroups) )
+    MUST ( cn $ @LDAP_PREFIX@ServiceEscalationFirstNotification $
+	        @LDAP_PREFIX@ServiceEscalationLastNotification $
+		@LDAP_PREFIX@ServiceEscalationNotificationInterval )
+    MAY ( @LDAP_PREFIX@ServiceEscalationContacts $
+	  @LDAP_PREFIX@ServiceEscalationContactgroups $
+	  @LDAP_PREFIX@ServiceEscalationPeriod $
+	  @LDAP_PREFIX@ServiceEscalationOptions $
+	  @LDAP_PREFIX@ServiceEscalationServiceGroups $
+	  @LDAP_PREFIX@ServiceEscalationHostGroups ) )
 
 # vi: sw=4 ts=4 expandtab :
