@@ -323,7 +323,8 @@ sub TreeBuilder {
 
                     # additive inheritance?
                     if ($CONFIG->{$searchDN}->{$val1} && $CONFIG->{$searchDN}->{$val1} =~ /^\s*\+/) {
-                        my $tmp_var = $CONFIG->{$searchDN}->{$val1}; #$tmp_var =~ s/\+//;
+                        my $tmp_var = $CONFIG->{$searchDN}->{$val1};
+                        $tmp_var =~ s/\+//; # strip the leading + character
                         $forward{$val1} .= ','.$tmp_var;
                     } else {
                         $forward{$val1} = $CONFIG->{$searchDN}->{$val1};
@@ -749,4 +750,3 @@ sub BuildHostConfig {
 1;
 
 # vi: sw=4 ts=4 expandtab :
-
