@@ -279,11 +279,11 @@ sub str2arr_by_delim_without_excludes {
       grep { !/^!/ }
       split (/$delim/, $str);
 
-    if ($sort == 1) {
-        @arr = sort (@arr);
-    }
+    my @new = grep { defined() and length() } @arr;
 
-    return @arr;
+    @new = sort (@new) if $sort == 1;
+
+    return @new;
 }
 
 sub strip_object_name {
