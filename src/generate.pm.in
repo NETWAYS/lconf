@@ -626,22 +626,21 @@ sub genHostgroupEscalations {
     my $outputDir = shift;
     my $hostgroup = shift;
 
-    # Search for escalations below of a hostgroupgroup
-    my $he_result = HashGrep($CONFIG, 'dn', '^[\w]+=[._\w\/\d\s:-]+,'.$hostgroup);
-    my $HOSTESCALATIONS = HashGrep($he_result, 'objectclass', $cfg->{ldap}->{prefix}.'hostescalation$');
-
     if (defined $cfg->{export}->{format} && $cfg->{export}->{format} == 2) {
-        genHostgroupEscalations2x($CONFIG, $CLIENTS, $HOSTESCALATIONS, $hostgroup, $outputDir);
+        genHostgroupEscalations2x($CONFIG, $CLIENTS, $hostgroup, $outputDir);
     } else {
-        genHostgroupEscalations1x($CONFIG, $HOSTESCALATIONS, $hostgroup, $outputDir);
+        genHostgroupEscalations1x($CONFIG, $hostgroup, $outputDir);
     }
 }
 
 sub genHostgroupEscalations1x {
     my $CONFIG  = shift;
-    my $HOSTESCALATIONS  = shift;
     my $hostgroup = shift;
     my $outputDir = shift;
+
+    # Search for escalations below of a hostgroupgroup
+    my $he_result = HashGrep($CONFIG, 'dn', '^[\w]+=[._\w\/\d\s:-]+,'.$hostgroup);
+    my $HOSTESCALATIONS = HashGrep($he_result, 'objectclass', $cfg->{ldap}->{prefix}.'hostescalation$');
 
     foreach my $escalation (keys %{$HOSTESCALATIONS}) {
         my $writeFile = $outputDir."/hostescalations/$he_result->{$escalation}->{cn}.cfg";
@@ -667,9 +666,12 @@ sub genHostgroupEscalations1x {
 sub genHostgroupEscalations2x {
     my $CONFIG  = shift;
     my $CLIENTS = shift;
-    my $HOSTESCALATIONS  = shift;
     my $hostgroup = shift;
     my $outputDir = shift;
+
+    # Search for escalations below of a hostgroupgroup
+    my $he_result = HashGrep($CONFIG, 'dn', '^[\w]+=[._\w\/\d\s:-]+,'.$hostgroup);
+    my $HOSTESCALATIONS = HashGrep($he_result, 'objectclass', $cfg->{ldap}->{prefix}.'hostescalation$');
 
     foreach my $escalation (keys %{$HOSTESCALATIONS}) {
 
@@ -846,22 +848,21 @@ sub genServicegroupEscalations {
     my $outputDir = shift;
     my $servicegroup = shift;
 
-    # Search for escalations below of a servicegroup
-    my $se_result = HashGrep($CONFIG, 'dn', '^[\w]+=[._\w\/\d\s:-]+,'.$servicegroup);
-    my $SERVICEESCALATIONS = HashGrep($se_result, 'objectclass', $cfg->{ldap}->{prefix}.'serviceescalation$');
-
     if (defined $cfg->{export}->{format} && $cfg->{export}->{format} == 2) {
-        genServicegroupEscalations2x($CONFIG, $CLIENTS, $SERVICEESCALATIONS, $servicegroup, $outputDir);
+        genServicegroupEscalations2x($CONFIG, $CLIENTS, $servicegroup, $outputDir);
     } else {
-        genServicegroupEscalations1x($CONFIG, $SERVICEESCALATIONS, $servicegroup, $outputDir);
+        genServicegroupEscalations1x($CONFIG, $servicegroup, $outputDir);
     }
 }
 
 sub genServicegroupEscalations1x {
     my $CONFIG  = shift;
-    my $SERVICEESCALATIONS = shift;
     my $outputDir = shift;
     my $servicegroup = shift;
+
+    # Search for escalations below of a servicegroup
+    my $se_result = HashGrep($CONFIG, 'dn', '^[\w]+=[._\w\/\d\s:-]+,'.$servicegroup);
+    my $SERVICEESCALATIONS = HashGrep($se_result, 'objectclass', $cfg->{ldap}->{prefix}.'serviceescalation$');
 
     foreach my $escalation (keys %{$SERVICEESCALATIONS}) {
         my $writeFile = $outputDir."/serviceescalations/$se_result->{$escalation}->{cn}.cfg";
@@ -886,9 +887,12 @@ sub genServicegroupEscalations1x {
 sub genServicegroupEscalations2x {
     my $CONFIG  = shift;
     my $CLIENTS = shift;
-    my $SERVICEESCALATIONS = shift;
     my $outputDir = shift;
     my $servicegroup = shift;
+
+    # Search for escalations below of a servicegroup
+    my $se_result = HashGrep($CONFIG, 'dn', '^[\w]+=[._\w\/\d\s:-]+,'.$servicegroup);
+    my $SERVICEESCALATIONS = HashGrep($se_result, 'objectclass', $cfg->{ldap}->{prefix}.'serviceescalation$');
 
 =pod
     foreach my $escalation (keys %{$SERVICEESCALATIONS}) {
