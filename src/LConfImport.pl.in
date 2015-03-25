@@ -234,6 +234,12 @@ if ($opt->{objectsCache}) {
 
         # update ldap
         my $result = $entry->update($ldap);
+
+        if ($result->code == 68) {
+            beVerbose("LDAP ADD", "WARNING: timeperiod ".$timeperiod."already exists, skipping - CODE: ".$result->code." - ".$result->error);
+            next;
+        }
+
         if ($result->code != 0) {
             beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error);
             $exit->{code} = 2; $exit->{message} = $result->error;
@@ -265,6 +271,12 @@ if ($opt->{objectsCache}) {
 
         # update ldap
         my $result = $entry->update($ldap);
+
+        if ($result->code == 68) {
+            beVerbose("LDAP ADD", "WARNING: command ".$command."already exists, skipping - CODE: ".$result->code." - ".$result->error);
+            next;
+        }
+
         if ($result->code != 0) {
             beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error);
             $exit->{code} = 2; $exit->{message} = $result->error;
@@ -297,6 +309,12 @@ if ($opt->{objectsCache}) {
 
         # update ldap
         my $result = $entry->update($ldap);
+
+        if ($result->code == 68) {
+            beVerbose("LDAP ADD", "WARNING: contact ".$contact."already exists, skipping - CODE: ".$result->code." - ".$result->error);
+            next;
+        }
+
         if ($result->code != 0) {
             beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error);
             $exit->{code} = 2; $exit->{message} = $result->error;
@@ -330,6 +348,12 @@ if ($opt->{objectsCache}) {
 
         # update ldap
         my $result = $entry->update($ldap);
+
+        if ($result->code == 68) {
+            beVerbose("LDAP ADD", "WARNING: contactgroup ".$contactgroup."already exists, skipping - CODE: ".$result->code." - ".$result->error);
+            next;
+        }
+
         if ($result->code != 0) {
             beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error);
             $exit->{code} = 2; $exit->{message} = $result->error;
@@ -363,6 +387,12 @@ if ($opt->{objectsCache}) {
 
         # update ldap
         my $result = $entry->update($ldap);
+
+        if ($result->code == 68) {
+            beVerbose("LDAP ADD", "WARNING: hostgroup ".$hostgroup."already exists, skipping - CODE: ".$result->code." - ".$result->error);
+            next;
+        }
+
         if ($result->code != 0) {
             beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error);
             $exit->{code} = 2; $exit->{message} = $result->error;
@@ -382,17 +412,27 @@ if ($opt->{objectsCache}) {
         $entry->add(objectClass => "$cfg->{ldap}->{prefix}Host");
         beVerbose("LDAP ADD", "cn=$host,$cfg->{ldap}->{importDN}");
 
+        my $address_found = undef;
         foreach(keys %{$HOSTS->{$host}}) {
             if (values %{$newItemMap->{$_}}) {
                 my $attName = getRightAttributeType($newItemMap->{$_}, 'host');
+                $address_found = 1 if ($_ =~ /address/);
                 $entry->add($attName => "$HOSTS->{$host}->{$_}");
             } elsif ($_ =~ /^_/){
                 $entry->add("$cfg->{ldap}->{prefix}hostcustomvar" => "$_ $HOSTS->{$host}->{$_}");
             }
         }
 
+        $entry->add("$cfg->{ldap}->{prefix}address" => "$host") if (!$address_found);
+
         # update ldap
         my $result = $entry->update($ldap);
+
+        if ($result->code == 68) {
+            beVerbose("LDAP ADD", "WARNING: host ".$host."already exists, skipping - CODE: ".$result->code." - ".$result->error);
+            next;
+        }
+
         if ($result->code != 0) {
             beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error);
             $exit->{code} = 2; $exit->{message} = $result->error;
@@ -429,6 +469,12 @@ if ($opt->{objectsCache}) {
 
             # update ldap
             my $result = $entry->update($ldap);
+
+            if ($result->code == 68) {
+                beVerbose("LDAP ADD", "WARNING: service ".$service."already exists, skipping - CODE: ".$result->code." - ".$result->error);
+                next;
+            }
+
             if ($result->code != 0) {
                 beVerbose("LDAP ADD", "ERROR - CODE: ".$result->code." - ".$result->error);
                 $exit->{code} = 2; $exit->{message} = $result->error;
@@ -490,7 +536,8 @@ sub getItems {
         $mode = 'timeperiod' if $OBJECTSCACHE[$counter] =~ /define timeperiod/;
 
         while($run_again eq 'true') {
-            if ($OBJECTSCACHE[$counter] !~ /define/) {
+
+            if ($OBJECTSCACHE[$counter] !~ /define/ && $OBJECTSCACHE[$counter] !~ /^[#;]/) {
                 my ($val1, $val2);
 
                 if ($mode eq 'timeperiod') {
@@ -506,7 +553,12 @@ sub getItems {
                     $val1 = $1; $val2 = $2;
                 }
 
-                $hash->{$name}->{$val1} = $val2;
+                # remove the annoying inline comments after ';' or '#'
+                if (defined($val2)) {
+                    $val2 =~ s/\s*[;\#](.*)$//;
+
+                    $hash->{$name}->{$val1} = $val2;
+                }
             }
 
             $counter++;
