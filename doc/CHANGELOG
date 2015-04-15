@@ -3,6 +3,37 @@
 NOTE: Please read doc/upgrading.md for detailed information on changes and
 upgrade information!
 
+
+## 1.5.0 - 15/04/2015
+
+### CHANGES
+
+* Schema: Additional object attributes (see below) requiring update
+* Import: Skip already existing objects, set address to host name if not defined
+
+### FEATURES
+
+* Feature #1432: add inherits_parent attribute for host/service dependency
+* Feature #1480: add first_notification_delay as schema attribute to host/service
+* Feature #1886: contact attributes address1-6 missing
+* Feature #2082: Add ldap_person and allow auxiliary objectClass in ldap schema
+* Feature #2429: Add the attribute "address6" for ipv6 dual stack to the host-settings
+* Feature #2495: Add attribute contactgroup_members and servicegroup_members
+* Feature #2690: Complete LDAP schema
+* Feature #2889: LConfImport: Skip already existing objects and continue import
+* Feature #2891: LConfImport: Set host address to name if not existing
+
+### FIXES
+
+* Bug #2192: LConfImport.pl doesn't ignore comments in objects.cache
+* Bug #2240: hostgroup alias/display_name is overridden with cn
+* Bug #2761: Escalations are no longer exported
+* Bug #2857: LConf 1.5.0-rc1: additional hostgroups are exported with a "+"
+* Bug #2859: Default User filter for Icinga2 is too restrictive
+* Bug #2887: str2arr_by_delim_without_excludes() must not return empty array values
+* Bug #2899: customvars with value 0 are not exported
+
+
 ## 1.5.0 RC1 - 24/02/2015
 
 ### CHANGES

@@ -5,6 +5,8 @@ Please refer to https://www.netways.org/projects/lconf/wiki for detailed instruc
 
 # Release Checklist
 
+Update doc/CHANGELOG
+
 Create support branch
 
     git checkout master
