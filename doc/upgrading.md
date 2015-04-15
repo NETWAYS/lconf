@@ -1,5 +1,33 @@
 # Upgrading LConf
 
+## Upgrading from 1.4.x to 1.5.x
+
+* TreeRewrite recursion loop has been refactored. No more process
+forks but additional memory required.
+* perl module Parallel::ForkManager was dropped
+
+* New configure option '--with-ldap-person' for generating the schema.
+Default empty, could be set to 'AUXILIARY'.
+
+* There were new attributes added to the schema definition.
+Please make sure to update netways.schema in your LDAP server
+configuration, and apply the itemMap changes from config.pm!
+**Note**: `tools/update_schema_*` provide additional hints.
+
+You will recognize the following attributes:
+
+* host address6
+* contact address1-6
+* servicegroup servicegroupmembers
+* contactgroup contactgroupmembers
+
+The frontend (LConf Icinga Web or Standalone) requires an update to
+1.5.x as well to use these new attributes!
+
+If you are using Nagios (tm), make sure to set the export method in config.pm
+to '0' in order to write `address6` as custom variable instead. This
+has been implemented for compatibility reasons.
+
 
 ## Upgrading from 1.3.x to 1.4.x
 

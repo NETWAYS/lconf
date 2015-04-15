@@ -1,23 +1,62 @@
 #!/bin/bash
-# LConf deploy script for Icinga 2 >= 2.2
+# DESCRIPTION:
+# 
+# LConf deploy script for Icinga 2 >= 2.2.4
+# zones.d aware
+#
+# Modify configuration and steps for your own
+# usage.
+#
+# COPYRIGHT:
+#
+# This software is Copyright (c) 2014-2015 NETWAYS GmbH
+#                                <support@netways.de>
+#
+# (Except where explicitly superseded by other copyright notices)
+#
+#
+# LICENSE:
+#
+# This work is made available to you under the terms of Version 2 of
+# the GNU General Public License. A copy of that license should have
+# been provided with this software, but in any event can be snarfed
+# from http://www.fsf.org.
+#
+# This work is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301 or visit their web page on the internet at
+# http://www.fsf.org.
+#
+#
+# CONTRIBUTION SUBMISSION POLICY:
+#
+# (The following paragraph is not intended to limit the rights granted
+# to you to modify and distribute this software under the terms of
+# the GNU General Public License and is only of importance to you if
+# you choose to contribute your changes and enhancements to the
+# community by submitting them to NETWAYS GmbH.)
+#
+# By intentionally submitting any modifications, corrections or
+# derivatives to this work, or any other work intended for use with
+# this Software, to NETWAYS GmbH, you confirm that
+# you are the copyright holder for those contributions and you grant
+# NETWAYS GmbH a nonexclusive, worldwide, irrevocable,
+# royalty-free, perpetual, license to use, copy, create derivative
+# works based on those contributions, and sublicense and distribute
+# those contributions and any derivatives thereof.
+
 
 #################################################
 # config
 #################################################
 
-# preset satellites. any on cmd line given will be added
-#SATTELITE="satellite1 satellite2 satellite3"
-
-# use the satellits from the LConf config.pm as default
-SATTELITES="$(perl -e 'BEGIN { unshift @INC, "@SYSCONF_DIR@"; } require config; print split /,/, $cfg->{slavesync}->{HOSTS};')"
-for SH_ARG in $@; do
-SATTELITES="$SATTELITES $SH_ARG"
-done
-
-#any satellit should only be once in the list
-SATTELITES=$(echo $SATTELITES| xargs -n1|sort -u| xargs)
-
-# Define where your icinga binary lies
+# Define where your icinga2 binary lies
 ICINGA2BIN="@ICINGA2_BINPATH@/icinga2"
 # Path of your LConf installation
 LCONFBINPATH="@BIN_DIR@"
@@ -25,10 +64,12 @@ LCONFBINPATH="@BIN_DIR@"
 LCONFDIR="@ICINGA2_CONFIG@/lconf"
 # Define where to export the temporary config to
 LCONFTMP="@TMP_DIR@/lconfexport.tmp"
-# Define where your icinga config lies
+# Define where your icinga2 config lies
 ICINGA2CONFIG="@ICINGA2_CONFIG@/icinga2.conf"
 # Define where your temporary created icinga config should lie
 ICINGA2TMPCONFIG="@TMP_DIR@/lconfexport-icinga2.tmp.conf"
+# Define the zone for i.e. the default-templates.conf
+#GLOBALZONE="base"
 
 ICINGAUSER="@ICINGA2_USER@"
 ICINGAGROUP="@ICINGA2_USER@"
@@ -45,7 +86,7 @@ ICINGA2DAEMON="$ICINGA2BIN daemon"
 RUNUSER=$(whoami)
 SUDOCOMMAND=""
 if [ "$RUNUSER" != $ICINGAUSER ] ; then
-	SUDOCOMMAND="sudo -u $ICINGAUSER -i"
+	SUDOCOMMAND="sudo -u $ICINGAUSER"
 fi
 
 
@@ -58,7 +99,7 @@ install -d -o $ICINGAUSER -g $ICINGAGROUP $LCONFTMP
 
 # generate icinga2.conf with lconf export only
 cat >$ICINGA2TMPCONFIG <<EOF
-const PluginDir = "/usr/lib/nagios/plugins"
+const PluginDir = "/usr/lib64/nagios/plugins"
 include <itl>
 include <plugins>
 include "features-enabled/*.conf"
@@ -68,36 +109,31 @@ EOF
 echo "export config from LDAP"
 # export original full config from LDAP
 
-(cd $LCONFBINPATH; $SUDOCOMMAND $LCONFBINPATH/LConfExport.pl -o $LCONFTMP --format 2)
+(cd $LCONFBINPATH; $SUDOCOMMAND $LCONFBINPATH/LConfExport.pl -o $LCONFTMP --format 2 -v)
 
 if [ $? != "0" ]; then
 	exit $?
 fi
 
+# move to global zone
+if [ ! -z $GLOBALZONE ]; then
+  for src in default-templates.conf hostgroups hostescalations servicegroups serviceescalations; do
+    mv "${LCONFTMP}/${src}" "${LCONFTMP}/${GLOBALZONE}/" 2>&1>/dev/null
+  done
+fi
+
 # first test the config within the tmp dir
-if ( $ICINGA2DAEMON -c $ICINGA2TMPCONFIG -C ) then # config test ##begin
+if ( $ICINGA2DAEMON -DZonesDir=/dev/null -c $ICINGA2TMPCONFIG -C ) then
 
-# generate config for satellites
-# this process may alter the original config
-# (disable checks of satellite components on the master...)
-for HOST in $SATTELITES ; do
-echo deploy config on $HOST
-(cd $LCONFBINPATH ; \
-$SUDOCOMMAND \
-$LCONFBINPATH/LConfSlaveExport.pl -H $HOST \
--D $LCONFTMP/LConfExport.hashdump \
--t $LCONFDIR -v )
-( $SUDOCOMMAND rm -rf "$LCONFTMP/$HOST" )
-done
+  # copy the final config in place
+  $SUDOCOMMAND rsync -a --del "$LCONFTMP"/ "$LCONFDIR"
 
-# copy the final config in place
-$SUDOCOMMAND rsync -a --del "$LCONFTMP"/ "$LCONFDIR"
+  # reload the final config on the master
+  echo reload config on Master $(hostname -f)
+  sudo service icinga2 restart
+  exit $?
+else
+  echo "Icinga 2 config verification failed. Aborting..."
+  exit 1
+fi
 
-# reload the final config on the master
-echo reload config on Master $(hostname -f)
-sudo /etc/init.d/icinga2 restart
-exit $?
-else 	# config test ##
-echo "Config verification failed. Aborting..."
-exit 1
-fi 	# config test ##end

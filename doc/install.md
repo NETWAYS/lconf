@@ -5,10 +5,12 @@ Please refer to https://www.netways.org/projects/lconf/wiki for detailed instruc
 
 # Release Checklist
 
+Update doc/CHANGELOG
+
 Create support branch
 
     git checkout master
-    git checkout -b support/1.4
+    git checkout -b support/1.5
 
 Look for old version info
 
@@ -16,7 +18,7 @@ Look for old version info
 
 Edit version info
 
-    vim m4/verison.m4
+    vim m4/version.m4
     vim LConf.spec
 
 Regenerate configure
@@ -35,13 +37,13 @@ MF:
 
 Create release tarball
 
-    VERSION=1.4.4
+    VERSION=1.5.0
     git archive --format=tar --prefix=LConf-$VERSION/ tags/v$VERSION | gzip >LConf-$VERSION.tar.gz
     md5sum LConf-$VERSION.tar.gz > LConf-$VERSION.tar.gz.md5
 
 Push origin
 
-    git push origin support/1.4
+    git push origin support/1.5
     git push --tags
 
 Merge master, next.

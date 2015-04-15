@@ -151,8 +151,7 @@ GetOptions(
     "v|verbose:s"  => \$opt->{verbose},
     "h|help"       => \$opt->{help},
     "V|version"    => \$opt->{version}
-);
-
+  );
 
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
 # help and version page
@@ -163,7 +162,6 @@ if (defined $opt->{version}) { print $version."\n"; exit 0; }
 
 # should print help?
 if ($opt->{help} || !$opt->{noremote} && !$opt->{target}) { pod2usage(1); }
-
 
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
 # let's go!
@@ -225,6 +223,7 @@ if ($cfg->{ldap}->{binddn} && $cfg->{ldap}->{bindpw}) {
 
 # define target hosts / host is set?
 if (!defined $opt->{host}) {
+
     # search after all hosts
     my $result;
     $result = LDAPsearch($ldap, $cfg->{ldap}->{baseDN}, "sub", "description=LCONF->EXPORT->HOST*");
@@ -241,6 +240,7 @@ my $CONFIG = LDAPsearch($ldap, $cfg->{ldap}->{rootDN}, "sub", "objectclass=*");
 
 # proceed config for each host
 foreach my $host (@hosts) {
+
     # re-map var
     $opt->{host} = $host;
 
@@ -264,9 +264,11 @@ foreach my $host (@hosts) {
 
     # modifications?
     foreach my $client (keys %{$CLIENTS}) {
+
         # delete excluded hosts
         if (defined $CLIENTS->{$client}->{description}) {
             foreach my $desc (keys %{$CLIENTS->{$client}->{description}}) {
+
                 # modify hostattribute if LCONF->EXPORT->MODIFY->HOST is set
                 if ($desc =~ /^LCONF->EXPORT->MODIFY->HOST/) {
                     $desc =~ m/^LCONF->EXPORT->MODIFY->HOST\s+([a-zA-Z]+)\s+(.*)/;
@@ -282,6 +284,7 @@ foreach my $host (@hosts) {
         foreach my $service (keys %{$CLIENTS->{$client}->{SERVICES}}) {
             if (defined $CLIENTS->{$client}->{SERVICES}->{$service}->{description}) {
                 foreach my $desc (keys %{$CLIENTS->{$client}->{SERVICES}->{$service}->{description}}) {
+
                     # modify serviceattribute if LCONF->EXPORT->MODIFY->HOST is set
                     if ($desc =~ /^LCONF->EXPORT->MODIFY->SERVICE/) {
                         $desc =~ m/^LCONF->EXPORT->MODIFY->SERVICE\s+([a-zA-Z]+)\s+(.*)/;
@@ -342,6 +345,7 @@ foreach my $host (@hosts) {
     #
 
     if(!defined $opt->{noremote}) {
+
         # remote dir exists?
         checkRemoteDir($opt->{host}, $opt->{target}, $opt->{port});
 
@@ -355,17 +359,18 @@ foreach my $host (@hosts) {
         beVerbose("COPY", $cmd);
         qx($cmd);
 
-	# reload Icinga (2) on slave (requires passwordless sudo for that command)
-	my $binary = "icinga";
-	if(defined($cfg->{export}->{format}) && $cfg->{export}->{format} == 2) {
-	    $binary = "icinga2";
-	}
+        # reload Icinga (2) on slave (requires passwordless sudo for that command)
+        my $binary = "icinga";
+        if(defined($cfg->{export}->{format}) && $cfg->{export}->{format} == 2) {
+            $binary = "icinga2";
+        }
 
-	if (defined $opt->{port}) {
-		$cmd = "ssh -p $opt->{port} $opt->{host} 'sudo /etc/init.d/$binary reload'";
-	} else {
-		$cmd = "ssh $opt->{host} 'sudo /etc/init.d/$binary reload'";
-	}
+        if (defined $opt->{port}) {
+            $cmd = "ssh -p $opt->{port} $opt->{host} 'sudo /etc/init.d/$binary reload'";
+        } else {
+            $cmd = "ssh $opt->{host} 'sudo /etc/init.d/$binary reload'";
+        }
+
         #beVerbose("RELOAD", $cmd);
         #my $result = qx($cmd);
         #print $result;
@@ -375,7 +380,6 @@ foreach my $host (@hosts) {
 # exit
 EXIT:
 LeaveScript($exit->{code}, $exit->{message});
-
 
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
 # functions

@@ -121,12 +121,10 @@ use POSIX qw/strftime/;
 use Fcntl qw(:flock);
 use Storable qw(dclone);
 use Scalar::Util qw/reftype/;
-use Parallel::ForkManager;
 
 # lconf includes
 use lib '@SYSCONF_DIR@';
 use config;
-
 
 use lib '@LIB_DIR@';
 use ldap;
@@ -153,7 +151,7 @@ GetOptions(
     "y|yes"         => \$opt->{yes},
     "h|help"        => \$opt->{help},
     "V|version"     => \$opt->{version}
-);
+  );
 
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
 # help and version page
@@ -221,7 +219,6 @@ if(!defined($cfg->{export}->{enablemidmaster})) {
     $cfg->{export}->{enablemidmaster} = 0;
 }
 
-
 # export already running?
 open(LOCK, ">$cfg->{export}->{lock}") or LeaveScript(2, "Cannot open $cfg->{export}->{lock}");
 flock(LOCK, LOCK_EX|LOCK_NB) or LeaveScript(2, "LConfExport locked! Someone is already using it!");
@@ -249,6 +246,7 @@ open(FH, ">$opt->{outputDir}/lconf.incomplete") || die "Can't write data: $opt->
 #
 # NOW, WE'RE READY TO RUN :)
 #
+beVerbose("START", "LConfExport $version");
 
 # connect to LDAP server
 our $ldap;
@@ -285,6 +283,7 @@ if (defined $cfg->{export}->{onlydiffs} && $cfg->{export}->{onlydiffs} == 1 && !
         if ($LASTMODIFIED->{$val1}->{objectclass} =~ /$cfg->{ldap}->{prefix}Host/i) {
             $DIFF_EXPORT->{$LASTMODIFIED->{$val1}->{dn}} = $LASTMODIFIED->{$val1}->{dn};
         } else {
+
             # search for links
             # split and reverse the DN
             my $searchDN = $val1;
@@ -314,7 +313,7 @@ if (defined $cfg->{export}->{onlydiffs} && $cfg->{export}->{onlydiffs} == 1 && !
 
                 my $TMP_HOSTS = LDAPsearch($ldap, $do, "sub", "objectclass=$cfg->{ldap}->{prefix}Host");
                 foreach (keys %{$TMP_HOSTS}) {
-                        $DIFF_EXPORT->{$_} = $_;
+                    $DIFF_EXPORT->{$_} = $_;
                 }
             }
         }
@@ -323,15 +322,16 @@ if (defined $cfg->{export}->{onlydiffs} && $cfg->{export}->{onlydiffs} == 1 && !
 
 # get all clients to monitor
 my $CLIENTS = HashGrep($CONFIG, 'objectclass', $cfg->{ldap}->{prefix}.'Host$');
-    # modify $CLIENTS if $cfg->{export}->{onlydiffs} was set
-    if ($cfg->{export}->{onlydiffs}) {
-        foreach my $client (keys %{$CLIENTS}) {
-            delete $CLIENTS->{$client} if !defined $DIFF_EXPORT->{$client};
-        }
-    }
 
-    # modify $CLIENTS if a filter was set
-    if (defined $opt->{filter}) { my $tmp_hash = HashGrep($CLIENTS, 'cn', $opt->{filter}); $CLIENTS = $tmp_hash; }
+# modify $CLIENTS if $cfg->{export}->{onlydiffs} was set
+if ($cfg->{export}->{onlydiffs}) {
+    foreach my $client (keys %{$CLIENTS}) {
+        delete $CLIENTS->{$client} if !defined $DIFF_EXPORT->{$client};
+    }
+}
+
+# modify $CLIENTS if a filter was set
+if (defined $opt->{filter}) { my $tmp_hash = HashGrep($CLIENTS, 'cn', $opt->{filter}); $CLIENTS = $tmp_hash; }
 
 # drop all hosts obove baseDN (eg. examples)
 foreach my $client (keys %{$CLIENTS}) {
@@ -357,57 +357,19 @@ if(defined($cfg->{export}->{format}) && $cfg->{export}->{format} == 2) {
     copyGeneric("@SYSCONF_DIR@/default-templates.cfg", $opt->{outputDir});
 }
 
-# Prepare Forkmanager
-my $pm = Parallel::ForkManager->new($cfg->{export}->{childs});
-
-# Callback from the childs
-# stolen from Forkmanager Examples:
-# http://search.cpan.org/~szabgab/Parallel-ForkManager-1.02/lib/Parallel/ForkManager.pm#Data_structure_retrieval
-my %retrieved_responses = ();  # for collecting responses of the childs
-$pm -> run_on_finish (
-    sub {
-        my ($pid, $exit_code, $ident, $exit_signal, $core_dump, $data_structure_reference) = @_;
-
-        # see what the child sent us, if anything
-        if (defined($data_structure_reference)) {  # test rather than assume child sent anything
-            if (0) {  # simple on/off switch to display the contents
-                my $reftype = ref($data_structure_reference);
-                print qq|ident "$ident" returned a "$reftype" reference.\n\n|;
-                print &Dumper($data_structure_reference) . qq|end of "$ident" sent structure\n\n|;
-            }
-
-            # we can also collect retrieved data structures for processing after all children have exited
-            $retrieved_responses{$ident} = $data_structure_reference;
-        } else {
-             print qq|Warning:Child did not send data to parent.\n\n|;
-        }
-    }
-);
-
-## Fork start (TreeBuilder, BuildHostConfig) for each client
+## Start (TreeBuilder, BuildHostConfig) for each client
 foreach my $client (keys %{$CLIENTS}) {
 
     # create new child
-    my $pid = $pm->start($client) and next;
+    #my $pid = $pm->start($client) and next;
 
     beVerbose("$$ CFG BUILD", "Host $client");
     my %TREE = ();
+
     # start with level 0
     %TREE = TreeBuilder($client, $CONFIG, \%TREE, 0);
     $CLIENTS = BuildHostConfig($client, $CLIENTS, \%TREE);
-
-    # finish child, give $client back to the parent
-    $pm->finish(0, \%{$CLIENTS->{$client}});
 }
-
-# wait until all childs are finished
-$pm->wait_all_children;
-
-# get the data from the child back to $CLIENTS
-for (sort keys %retrieved_responses) {
-    $CLIENTS->{$_} = $retrieved_responses{$_};
-}
-## Fork end
 
 # run custom script (mid)
 # it is important that the mid script runs after all childs are finished (after
@@ -433,6 +395,7 @@ genServicegroups($CONFIG, $CLIENTS);
 if ($cfg->{export}->{enablemidmaster} == 1) {
 
     if (-f '@EXPORT_SCRIPT_DIR@/mid-master.pl') {
+
         # create a copy of modified config just for the master
         $CLIENTS_REF = dclone($CLIENTS);
         require '@EXPORT_SCRIPT_DIR@/mid-master.pl';
@@ -441,12 +404,13 @@ if ($cfg->{export}->{enablemidmaster} == 1) {
 }
 
 # Generating the .cfg files could be done in childs but this is slower as
-# generate the .cfg files in the parent process! 
+# generate the .cfg files in the parent process!
 # We are using $CLIENTS_REF instead of $CLIENTS! $CLIENTS_REF could be a
 # reference to $CLIENTS or a reference to a clone of $CLIENTS (if midmaster ist
 # enable,see above)
 foreach my $client (keys %{$CLIENTS_REF}) {
-    # generate .cfg for one client 
+
+    # generate config for one client
     genHostConfig($CONFIG, $CLIENTS_REF, $client);
 }
 
@@ -479,6 +443,7 @@ $ldap->unbind();
 
 # just modify the hashdump, if $CLIENTS if $cfg->{export}->{onlydiffs} was set
 if ($cfg->{export}->{onlydiffs} && $cfg->{export}->{onlydiffs} == 1) {
+
     # import hashdump
     my $data; my $VAR1;
     open FILE, "<$cfg->{export}->{hashdump}" or die $!; while(<FILE>) { $data .= $_; } close FILE;
@@ -499,4 +464,3 @@ EXIT:
 LeaveScript($exit->{code}, $exit->{message});
 
 # vi: sw=4 ts=4 expandtab :
-

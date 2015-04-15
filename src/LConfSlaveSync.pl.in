@@ -174,7 +174,7 @@ GetOptions(
     "nocheck"        => \$cfg->{slavesync}->{nocheck},
     "h|help"         => \$opt->{help},
     "V|version"      => \$opt->{version}
-);
+  );
 
 pod2usage(1) if !defined $ARGV[0];
 pod2usage(1) if defined $opt->{help};
@@ -202,6 +202,7 @@ if (defined $cfg->{slavesync}->{debug} && $cfg->{slavesync}->{debug} == 1) {
 
 # start or stop?
 if ($ARGV[0] eq 'start') {
+
     # convert variable to array
     my @HOSTS = split(/\s*,\s*/, $cfg->{slavesync}->{HOSTS});
 
@@ -234,7 +235,6 @@ if ($ARGV[0] eq 'start') {
 } else {
     pod2usage(1);
 }
-
 
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
 # functions...
@@ -393,6 +393,7 @@ sub processFilesSpoolDir {
                 my @lines = split(/\n/, $data);
                 foreach(@lines) {
                     if ($_ =~ /PROCESS_HOST_CHECK_RESULT/) {
+
                         # get timestamp
                         my ($timestamp) = split(/\s/, $_);
                         $timestamp =~ m/([\d]+)/;
@@ -434,6 +435,7 @@ sub processFilesSpoolDir {
                     }
 
                     if ($_ =~ /PROCESS_SERVICE_CHECK_RESULT/) {
+
                         # get timestamp
                         my ($timestamp) = split(/\s/, $_);
                         $timestamp =~ m/([\d]+)/;
@@ -476,11 +478,13 @@ sub processFilesSpoolDir {
                 # if we have written data
                 if($records > 0) {
                     beVerbose("PROCESS_FILES", "written $records records to $resultfile");
+
                     # commit by writing .ok file
                     open (MYFILE, ">>$spoolDir/$resultfile.ok");
                     close (MYFILE);
                 }
                 else {
+
                     # remove tempfile we had - cause its empty
                     beVerbose("PROCESS_FILES", "removing empty $resultfile");
                     unlink("$spoolDir/$resultfile");

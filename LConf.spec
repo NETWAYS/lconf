@@ -1,17 +1,17 @@
 #
 # spec file for package LConf
 #
-# (c) 2012-2014 Netways GmbH, support@netways.de
+# (c) 2012 - 2015 Netways GmbH, support@netways.de
 #
 # This file and all modifications and additions to the pristine
 # package are under the same license as the package itself.
 #
 
-%define revision 0
+%define revision 1
 
 Name:           LConf
 Summary:        LDAP based configuration tool for Icinga and Nagios
-Version:        1.4.4
+Version:        1.5.0
 Release:        %{revision}%{?dist}%{?custom}
 Url:            https://www.netways.org/projects/lconf
 License:        GPL v2 or later
@@ -40,9 +40,7 @@ BuildArch:      noarch
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 
 Requires:       perl(Net::LDAP)
-Requires:	perl(Parallel::ForkManager) >= 0.7.6
 BuildRequires:  perl(Net::LDAP)
-BuildRequires:  perl(Parallel::ForkManager) >= 0.7.6
 
 %if "%{_vendor}" == "suse"
 %define slavesynccmdpipepath %{_localstatedir}/run/icinga/icinga.cmd

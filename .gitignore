@@ -32,3 +32,5 @@ src/misc.pm
 src/netways.schema
 src/netways.schema.ldif
 
+# tarballs
+LConf-*.tar.gz*

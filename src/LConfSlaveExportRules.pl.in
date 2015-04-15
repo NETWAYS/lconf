@@ -127,16 +127,15 @@ our @state = ('OK', 'WARNING', 'ERROR', 'UNKNOWN');
 # get command-line parameters
 our $opt;
 GetOptions(
-	"H|host=s"	=> \$opt->{host},
-	"p|port=s"	=> \$opt->{port},
-	"D|hashdump=s" 	=> \$opt->{hashdump},
-	"t|target=s"	=> \$opt->{target},
-	"format:s"      => \$opt->{format},
-	"v|verbose:s"	=> \$opt->{verbose},
-	"h|help"	=> \$opt->{help},
-	"V|version"	=> \$opt->{version}
-);
-
+    "H|host=s"	=> \$opt->{host},
+    "p|port=s"	=> \$opt->{port},
+    "D|hashdump=s" 	=> \$opt->{hashdump},
+    "t|target=s"	=> \$opt->{target},
+    "format:s"      => \$opt->{format},
+    "v|verbose:s"	=> \$opt->{verbose},
+    "h|help"	=> \$opt->{help},
+    "V|version"	=> \$opt->{version}
+  );
 
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
 # help and version page
@@ -147,7 +146,6 @@ if (defined $opt->{version}) { print $version."\n"; exit 0; }
 
 # should print help?
 if ($opt->{help}) { pod2usage(1); }
-
 
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
 # let's go!
@@ -199,9 +197,9 @@ $CLIENTS = $VAR1;
 # connect to LDAP server
 our $ldap;
 if ($cfg->{ldap}->{binddn} && $cfg->{ldap}->{bindpw}) {
-	$ldap = LDAPconnect('auth');
+    $ldap = LDAPconnect('auth');
 } else {
-	$ldap = LDAPconnect();
+    $ldap = LDAPconnect();
 }
 
 # get the whole config from ldap
@@ -212,141 +210,148 @@ my $CLIENTS_backup = $CLIENTS;
 
 # process ruleset per target
 foreach my $target (sort keys %{$cfg->{slaveexportrules}->{targets}}) {
-	print "\n===================\n";
-	print "slave: $target\n";
-	print "rulemap: $cfg->{slaveexportrules}->{targets}->{$target}->{rulemap}\n";
+    print "\n===================\n";
+    print "slave: $target\n";
+    print "rulemap: $cfg->{slaveexportrules}->{targets}->{$target}->{rulemap}\n";
 
-	# define and set vars
-	my $CLIENTS_slave;
-	$CLIENTS = $CLIENTS_backup;
-	$opt->{host}      = $target;
-	$opt->{tmpDir}    = $cfg->{export}->{tmpdir}.'/'.$opt->{host}.'/';
-	$opt->{outputDir} = $cfg->{slaveexportrules}->{targets}->{$target}->{targetDir};
-	$opt->{slaveexportparents} = $cfg->{slaveexportrules}->{'settings'}->{slaveexportparents};
-	$opt->{slaveexportdependencies} = $cfg->{slaveexportrules}->{'settings'}->{slaveexportdependencies};
+    # define and set vars
+    my $CLIENTS_slave;
+    $CLIENTS = $CLIENTS_backup;
+    $opt->{host}      = $target;
+    $opt->{tmpDir}    = $cfg->{export}->{tmpdir}.'/'.$opt->{host}.'/';
+    $opt->{outputDir} = $cfg->{slaveexportrules}->{targets}->{$target}->{targetDir};
+    $opt->{slaveexportparents} = $cfg->{slaveexportrules}->{'settings'}->{slaveexportparents};
+    $opt->{slaveexportdependencies} = $cfg->{slaveexportrules}->{'settings'}->{slaveexportdependencies};
 
-	print "dump: host: $opt->{host}\n";
-	print "dump: tmpDir: $opt->{tmpDir}\n";
-	print "dump: outputDir: $opt->{outputDir}\n";
+    print "dump: host: $opt->{host}\n";
+    print "dump: tmpDir: $opt->{tmpDir}\n";
+    print "dump: outputDir: $opt->{outputDir}\n";
 
+    # split rulemap
+    my @rules = split(/,\s*/, $cfg->{slaveexportrules}->{targets}->{$target}->{rulemap});
 
-	# split rulemap
-	my @rules = split(/,\s*/, $cfg->{slaveexportrules}->{targets}->{$target}->{rulemap});
+    # process rules
+    foreach my $rule (@rules) {
+        print "\n";
+        print "\t--> rule-nr: $rule\n";
+        print "\tobject: $cfg->{slaveexportrules}->{rules}->{$rule}->{object}\n";
+        print "\tpattern: $cfg->{slaveexportrules}->{rules}->{$rule}->{pattern}\n";
+        print "\tattribute: $cfg->{slaveexportrules}->{rules}->{$rule}->{attribute}\n";
+        print "\n";
 
-	# process rules
-	foreach my $rule (@rules) {
-		print "\n";
-		print "\t--> rule-nr: $rule\n";
-		print "\tobject: $cfg->{slaveexportrules}->{rules}->{$rule}->{object}\n";
-		print "\tpattern: $cfg->{slaveexportrules}->{rules}->{$rule}->{pattern}\n";
-		print "\tattribute: $cfg->{slaveexportrules}->{rules}->{$rule}->{attribute}\n";
-		print "\n";
+        my $filtered_objects;
+        if ($cfg->{slaveexportrules}->{rules}->{$rule}->{object} =~ /Host/i) {
+            $filtered_objects = HashGrep($CLIENTS, 'objectclass', $cfg->{slaveexportrules}->{rules}->{$rule}->{object});
+            $filtered_objects = HashGrep($filtered_objects, $cfg->{slaveexportrules}->{rules}->{$rule}->{attribute}, $cfg->{slaveexportrules}->{rules}->{$rule}->{pattern});
 
-		my $filtered_objects;
-		if ($cfg->{slaveexportrules}->{rules}->{$rule}->{object} =~ /Host/i) {
-			$filtered_objects = HashGrep($CLIENTS, 'objectclass', $cfg->{slaveexportrules}->{rules}->{$rule}->{object});
-			$filtered_objects = HashGrep($filtered_objects, $cfg->{slaveexportrules}->{rules}->{$rule}->{attribute}, $cfg->{slaveexportrules}->{rules}->{$rule}->{pattern});
+            foreach my $object (keys %{$filtered_objects}) {
+                $CLIENTS_slave->{$object} = $filtered_objects->{$object};
+            }
+            foreach my $client (keys %{$CLIENTS_slave}) {
 
-			foreach my $object (keys %{$filtered_objects}) {
-				$CLIENTS_slave->{$object} = $filtered_objects->{$object};
-			}
-			foreach my $client (keys %{$CLIENTS_slave}) {
-				# delete any host dependency found, this makes no sense on slaves
-                                if ($opt->{slaveexportdependencies} == 0) {
-                                	if (defined($CLIENTS_slave->{$client}->{HOSTDEPENDENCY})) {
-                                        	delete($CLIENTS_slave->{$client}->{HOSTDEPENDENCY});
-                                        }
-				}
-			}
-		}
-
-		if ($cfg->{slaveexportrules}->{rules}->{$rule}->{object} =~ /Service/i) {
-			foreach my $client (keys %{$CLIENTS}) {
-				foreach my $service (keys %{$CLIENTS->{$client}->{SERVICES}}) {
-					my $serviceattribute = $cfg->{slaveexportrules}->{rules}->{$rule}->{attribute};
-					my $servicepattern = $cfg->{slaveexportrules}->{rules}->{$rule}->{pattern};
-
-					# delete any service dependency found, this makes no sense on slaves
-					if ($opt->{slaveexportdependencies} == 0) {
-						if (defined($CLIENTS->{$client}->{SERVICES}->{$service}->{SERVICEDEPENDENCY})) {
-							delete($CLIENTS->{$client}->{SERVICES}->{$service}->{SERVICEDEPENDENCY});
-						}
-					}
-
-					# this could be optional, so check availibility first (e.g. lconfservicecustomvar)
-					if (defined($CLIENTS->{$client}->{SERVICES}->{$service}->{$serviceattribute})) {
-
-						# customvar is an assoc array, different handling
-						if ($serviceattribute =~ /customvar/i) {
-							foreach my $customvarname (keys %{$CLIENTS->{$client}->{SERVICES}->{$service}->{$serviceattribute}}) {
-								#print "customvarname: $customvarname\n";
-								my $customvarvalue = $CLIENTS->{$client}->{SERVICES}->{$service}->{$serviceattribute}->{$customvarname};
-								next if(!$customvarvalue);
-								#print "attribute: $serviceattribute customvarvalue: $customvarvalue pattern: $servicepattern\n";
-								if ($customvarvalue =~ /$servicepattern/i) {
-									$CLIENTS_slave->{$client}->{SERVICES}->{$service} = $CLIENTS->{$client}->{SERVICES}->{$service};
-									#print "MATCH! $service\n";
-								}
-							}
-						} else {
-							print "attribute: $CLIENTS->{$client}->{SERVICES}->{$service}->{$serviceattribute}} pattern: $servicepattern\n";
-							if ($CLIENTS->{$client}->{SERVICES}->{$service}->{$serviceattribute} =~ /$servicepattern/i) {
-								$CLIENTS_slave->{$client}->{SERVICES}->{$service} = $CLIENTS->{$client}->{SERVICES}->{$service};
-							}
-						}
-					}
-
-				}
-			}
-
-			# re-fill each hosts attributes
-			foreach my $client (keys %{$CLIENTS_slave}) {
-				foreach my $val1 (keys %{$CLIENTS->{$client}}) {
-					$CLIENTS_slave->{$client}->{$val1} = $CLIENTS->{$client}->{$val1} if $val1 !~ /SERVICES/;
-					# this is ugly but parents functionality on slaves is tricky and buggy
-					if ($opt->{slaveexportparents} == 0) {
-						delete($CLIENTS_slave->{$client}->{lconfparent});
-					}
-				#
-				}
-			}
-		}
-	}
-
-	# re-map and export
-	$CLIENTS = $CLIENTS_slave;
-
-        # modifications?
-        foreach my $client (keys %{$CLIENTS}) {
-                # delete excluded hosts
-                if (defined $CLIENTS->{$client}->{description}) {
-                        foreach my $desc (keys %{$CLIENTS->{$client}->{description}}) {
-                                # modify hostattribute if LCONF->EXPORT->MODIFY->HOST is set
-                                if ($desc =~ /^LCONF->EXPORT->MODIFY->HOST/) {
-                                        $desc =~ m/^LCONF->EXPORT->MODIFY->HOST\s+([a-zA-Z]+)\s+(.*)/;
-                                        $CLIENTS->{$client}->{$1} = $2;
-                                }
-
-                                # delete host if LCONF->EXPORT->EXCLUDE is set
-                                delete $CLIENTS->{$client} if $desc eq 'LCONF->EXPORT->EXCLUDE';
-                        }
+                # delete any host dependency found, this makes no sense on slaves
+                if ($opt->{slaveexportdependencies} == 0) {
+                    if (defined($CLIENTS_slave->{$client}->{HOSTDEPENDENCY})) {
+                        delete($CLIENTS_slave->{$client}->{HOSTDEPENDENCY});
+                    }
                 }
-
-                foreach my $service (keys %{$CLIENTS->{$client}->{SERVICES}}) {
-                        if (defined $CLIENTS->{$client}->{SERVICES}->{$service}->{description}) {
-                                foreach my $desc (keys %{$CLIENTS->{$client}->{SERVICES}->{$service}->{description}}) {
-                                        # modify serviceattribute if LCONF->EXPORT->MODIFY->HOST is set
-                                        if ($desc =~ /^LCONF->EXPORT->MODIFY->SERVICE/) {
-                                                $desc =~ m/^LCONF->EXPORT->MODIFY->SERVICE\s+([a-zA-Z]+)\s+(.*)/;
-                                                $CLIENTS->{$client}->{SERVICES}->{$service}->{$1} = $2;
-                                        }
-
-                                        # delete service if LCONF->EXPORT->EXCLUDE is set
-                                        delete $CLIENTS->{$client}->{SERVICES}->{$service} if $desc eq 'LCONF->EXPORT->EXCLUDE';
-                                }
-                        }
-                }
+            }
         }
+
+        if ($cfg->{slaveexportrules}->{rules}->{$rule}->{object} =~ /Service/i) {
+            foreach my $client (keys %{$CLIENTS}) {
+                foreach my $service (keys %{$CLIENTS->{$client}->{SERVICES}}) {
+                    my $serviceattribute = $cfg->{slaveexportrules}->{rules}->{$rule}->{attribute};
+                    my $servicepattern = $cfg->{slaveexportrules}->{rules}->{$rule}->{pattern};
+
+                    # delete any service dependency found, this makes no sense on slaves
+                    if ($opt->{slaveexportdependencies} == 0) {
+                        if (defined($CLIENTS->{$client}->{SERVICES}->{$service}->{SERVICEDEPENDENCY})) {
+                            delete($CLIENTS->{$client}->{SERVICES}->{$service}->{SERVICEDEPENDENCY});
+                        }
+                    }
+
+                    # this could be optional, so check availibility first (e.g. lconfservicecustomvar)
+                    if (defined($CLIENTS->{$client}->{SERVICES}->{$service}->{$serviceattribute})) {
+
+                        # customvar is an assoc array, different handling
+                        if ($serviceattribute =~ /customvar/i) {
+                            foreach my $customvarname (keys %{$CLIENTS->{$client}->{SERVICES}->{$service}->{$serviceattribute}}) {
+
+                                #print "customvarname: $customvarname\n";
+                                my $customvarvalue = $CLIENTS->{$client}->{SERVICES}->{$service}->{$serviceattribute}->{$customvarname};
+                                next if(!$customvarvalue);
+
+                                #print "attribute: $serviceattribute customvarvalue: $customvarvalue pattern: $servicepattern\n";
+                                if ($customvarvalue =~ /$servicepattern/i) {
+                                    $CLIENTS_slave->{$client}->{SERVICES}->{$service} = $CLIENTS->{$client}->{SERVICES}->{$service};
+
+                                    #print "MATCH! $service\n";
+                                }
+                            }
+                        } else {
+                            print "attribute: $CLIENTS->{$client}->{SERVICES}->{$service}->{$serviceattribute}} pattern: $servicepattern\n";
+                            if ($CLIENTS->{$client}->{SERVICES}->{$service}->{$serviceattribute} =~ /$servicepattern/i) {
+                                $CLIENTS_slave->{$client}->{SERVICES}->{$service} = $CLIENTS->{$client}->{SERVICES}->{$service};
+                            }
+                        }
+                    }
+
+                }
+            }
+
+            # re-fill each hosts attributes
+            foreach my $client (keys %{$CLIENTS_slave}) {
+                foreach my $val1 (keys %{$CLIENTS->{$client}}) {
+                    $CLIENTS_slave->{$client}->{$val1} = $CLIENTS->{$client}->{$val1} if $val1 !~ /SERVICES/;
+
+                    # this is ugly but parents functionality on slaves is tricky and buggy
+                    if ($opt->{slaveexportparents} == 0) {
+                        delete($CLIENTS_slave->{$client}->{lconfparent});
+                    }
+                    #
+                }
+            }
+        }
+    }
+
+    # re-map and export
+    $CLIENTS = $CLIENTS_slave;
+
+    # modifications?
+    foreach my $client (keys %{$CLIENTS}) {
+
+        # delete excluded hosts
+        if (defined $CLIENTS->{$client}->{description}) {
+            foreach my $desc (keys %{$CLIENTS->{$client}->{description}}) {
+
+                # modify hostattribute if LCONF->EXPORT->MODIFY->HOST is set
+                if ($desc =~ /^LCONF->EXPORT->MODIFY->HOST/) {
+                    $desc =~ m/^LCONF->EXPORT->MODIFY->HOST\s+([a-zA-Z]+)\s+(.*)/;
+                    $CLIENTS->{$client}->{$1} = $2;
+                }
+
+                # delete host if LCONF->EXPORT->EXCLUDE is set
+                delete $CLIENTS->{$client} if $desc eq 'LCONF->EXPORT->EXCLUDE';
+            }
+        }
+
+        foreach my $service (keys %{$CLIENTS->{$client}->{SERVICES}}) {
+            if (defined $CLIENTS->{$client}->{SERVICES}->{$service}->{description}) {
+                foreach my $desc (keys %{$CLIENTS->{$client}->{SERVICES}->{$service}->{description}}) {
+
+                    # modify serviceattribute if LCONF->EXPORT->MODIFY->HOST is set
+                    if ($desc =~ /^LCONF->EXPORT->MODIFY->SERVICE/) {
+                        $desc =~ m/^LCONF->EXPORT->MODIFY->SERVICE\s+([a-zA-Z]+)\s+(.*)/;
+                        $CLIENTS->{$client}->{SERVICES}->{$service}->{$1} = $2;
+                    }
+
+                    # delete service if LCONF->EXPORT->EXCLUDE is set
+                    delete $CLIENTS->{$client}->{SERVICES}->{$service} if $desc eq 'LCONF->EXPORT->EXCLUDE';
+                }
+            }
+        }
+    }
 
 =pod
 	print "-----\n";
@@ -374,72 +379,72 @@ foreach my $target (sort keys %{$cfg->{slaveexportrules}->{targets}}) {
 
 	exit;
 =cut
-	# create tmp target
-	mkdir("$opt->{tmpDir}") if !-d $opt->{tmpDir};
 
-	# clean tmp target
-	qx(rm -r $opt->{tmpDir}/*) if -f "$opt->{tmpDir}/lconf.identify";
+    # create tmp target
+    mkdir("$opt->{tmpDir}") if !-d $opt->{tmpDir};
 
-	# create identifier
-	open(FH, ">$opt->{tmpDir}/lconf.identify") || die "Can't write data: $opt->{tmpDir}/lconf.identify $!\n"; close(FH);
+    # clean tmp target
+    qx(rm -r $opt->{tmpDir}/*) if -f "$opt->{tmpDir}/lconf.identify";
 
-	# copy defaults locally
-	if(defined($cfg->{export}->{format}) && $cfg->{export}->{format} == 2) {
-	    beVerbose("LOCAL COPY", "cp @SYSCONF_DIR@/default-templates.conf $opt->{outputDir}/");
-	    qx(cp @SYSCONF_DIR@/default-templates.conf $opt->{outputDir}/);
-	} else {
-	    beVerbose("LOCAL COPY", "cp @SYSCONF_DIR@/default-templates.cfg $opt->{outputDir}/");
-	    qx(cp @SYSCONF_DIR@/default-templates.cfg $opt->{outputDir}/);
-	}
+    # create identifier
+    open(FH, ">$opt->{tmpDir}/lconf.identify") || die "Can't write data: $opt->{tmpDir}/lconf.identify $!\n"; close(FH);
 
-	# create dirs and write config
-	createDirs($cfg->{ldap}->{baseDN}, $opt->{tmpDir});
-	mkdir("$opt->{tmpDir}/hostgroups/");
-	mkdir("$opt->{tmpDir}/servicegroups/");
-	genTimeperiods($CONFIG, '', $opt->{tmpDir});
-	genCommands($CONFIG, '', $opt->{tmpDir});
-	genContacts($CONFIG, '', $opt->{tmpDir});
-	genContactgroups($CONFIG, '', $opt->{tmpDir});
-	genHostgroups($CONFIG, $CLIENTS, '', $opt->{tmpDir});
+    # copy defaults locally
+    if(defined($cfg->{export}->{format}) && $cfg->{export}->{format} == 2) {
+        beVerbose("LOCAL COPY", "cp @SYSCONF_DIR@/default-templates.conf $opt->{outputDir}/");
+        qx(cp @SYSCONF_DIR@/default-templates.conf $opt->{outputDir}/);
+    } else {
+        beVerbose("LOCAL COPY", "cp @SYSCONF_DIR@/default-templates.cfg $opt->{outputDir}/");
+        qx(cp @SYSCONF_DIR@/default-templates.cfg $opt->{outputDir}/);
+    }
 
-	# generate each client host
-	foreach my $client (keys %{$CLIENTS}) {
-		genHostConfig($CONFIG, $CLIENTS, $client, $opt->{tmpDir});
-	}
+    # create dirs and write config
+    createDirs($cfg->{ldap}->{baseDN}, $opt->{tmpDir});
+    mkdir("$opt->{tmpDir}/hostgroups/");
+    mkdir("$opt->{tmpDir}/servicegroups/");
+    genTimeperiods($CONFIG, '', $opt->{tmpDir});
+    genCommands($CONFIG, '', $opt->{tmpDir});
+    genContacts($CONFIG, '', $opt->{tmpDir});
+    genContactgroups($CONFIG, '', $opt->{tmpDir});
+    genHostgroups($CONFIG, $CLIENTS, '', $opt->{tmpDir});
 
-	#
-	# NOW, START WORKING ON TARGET SERVER's REMOTE DIR
-	#
+    # generate each client host
+    foreach my $client (keys %{$CLIENTS}) {
+        genHostConfig($CONFIG, $CLIENTS, $client, $opt->{tmpDir});
+    }
 
-	# remote dir exists?
-	checkRemoteDir($opt->{host}, $opt->{outputDir}, $opt->{port});
+    #
+    # NOW, START WORKING ON TARGET SERVER's REMOTE DIR
+    #
 
-	# copy config to client
-	my $cmd;
-	if (defined $opt->{port}) {
-		$cmd = "rsync -zai -e 'ssh -p $opt->{port}' --stats --checksum --omit-dir-times --delay-updates --delete-after $opt->{tmpDir}/* $opt->{host}:$opt->{outputDir}";
-	} else {
-		$cmd = "rsync -zai -e ssh --stats --checksum --omit-dir-times --delay-updates --delete-after $opt->{tmpDir}/* $opt->{host}:$opt->{outputDir}";
-	}
-	beVerbose("COPY", $cmd);
-	qx($cmd);
+    # remote dir exists?
+    checkRemoteDir($opt->{host}, $opt->{outputDir}, $opt->{port});
 
-	# reload Icinga (2) on slave (requires passwordless sudo for that command)
-	my $binary = "icinga";
-	if(defined($cfg->{export}->{format}) && $cfg->{export}->{format} == 2) {
-	    $binary = "icinga2";
-	}
+    # copy config to client
+    my $cmd;
+    if (defined $opt->{port}) {
+        $cmd = "rsync -zai -e 'ssh -p $opt->{port}' --stats --checksum --omit-dir-times --delay-updates --delete-after $opt->{tmpDir}/* $opt->{host}:$opt->{outputDir}";
+    } else {
+        $cmd = "rsync -zai -e ssh --stats --checksum --omit-dir-times --delay-updates --delete-after $opt->{tmpDir}/* $opt->{host}:$opt->{outputDir}";
+    }
+    beVerbose("COPY", $cmd);
+    qx($cmd);
 
-	if (defined $opt->{port}) {
-		$cmd = "ssh -p $opt->{port} $opt->{host} 'sudo /etc/init.d/$binary reload'";
-	} else {
-		$cmd = "ssh $opt->{host} 'sudo /etc/init.d/$binary reload'";
-	}
-	beVerbose("RELOAD", $cmd);
-	my $result = qx($cmd);
-	print $result;
+    # reload Icinga (2) on slave (requires passwordless sudo for that command)
+    my $binary = "icinga";
+    if(defined($cfg->{export}->{format}) && $cfg->{export}->{format} == 2) {
+        $binary = "icinga2";
+    }
+
+    if (defined $opt->{port}) {
+        $cmd = "ssh -p $opt->{port} $opt->{host} 'sudo /etc/init.d/$binary reload'";
+    } else {
+        $cmd = "ssh $opt->{host} 'sudo /etc/init.d/$binary reload'";
+    }
+    beVerbose("RELOAD", $cmd);
+    my $result = qx($cmd);
+    print $result;
 }
-
 
 # proceed config for each host
 #foreach my $host (@hosts) {
@@ -514,17 +519,16 @@ foreach my $target (sort keys %{$cfg->{slaveexportrules}->{targets}}) {
 EXIT:
 LeaveScript($exit->{code}, $exit->{message});
 
-
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
 # functions
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
 
 sub addPaths {
-	my $result = shift;
-	my @to_return = @_;
+    my $result = shift;
+    my @to_return = @_;
 
-	foreach(keys %{$result}) { push(@to_return, $_); }
+    foreach(keys %{$result}) { push(@to_return, $_); }
 
-	return @to_return;
+    return @to_return;
 }
 
