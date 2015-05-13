@@ -521,7 +521,8 @@ sub TreeBuilder {
                     # additive inheritance?
                     # prepend the inherited attribute (begins with + sign) to the existing attribute string
                     if ($CONFIG->{$service}->{$val1} && $CONFIG->{$service}->{$val1} =~ /^\s*\+/) {
-                        my $tmp_var = $CONFIG->{$service}->{$val1}; $tmp_var =~ s/\s//;
+                        my $tmp_var = $CONFIG->{$service}->{$val1};
+                        $tmp_var =~ s/\+//; # strip the leading + character
                         if ($forward{'SERVICES'}{$CONFIG->{$service}->{cn}}{$val1}) {
                             $forward{'SERVICES'}{$CONFIG->{$service}->{cn}}{$val1} = $tmp_var.",".$forward{'SERVICES'}{$CONFIG->{$service}->{cn}}{$val1};
                         } else {
