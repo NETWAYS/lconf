@@ -12,7 +12,7 @@ Default empty, could be set to 'AUXILIARY'.
 * There were new attributes added to the schema definition.
 Please make sure to update netways.schema in your LDAP server
 configuration, and apply the itemMap changes from config.pm!
-**Note**: `tools/update_schema_*` provide additional hints.
+**Note**: `tools/dev/update_schema_*` provide additional hints.
 
 You will recognize the following attributes:
 
