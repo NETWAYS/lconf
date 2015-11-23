@@ -184,7 +184,7 @@ print $version."\n" if defined $opt->{version};
 # let's go!
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * #
 
-# fist of all... check if we're ready to run
+# First of all... check if we're ready to run
 LeaveScript(2, "Variable '\$cfg->{slavesync}->{HOSTS}' not set in config.pm")        if !$cfg->{slavesync}->{HOSTS};
 LeaveScript(2, "Variable '\$cfg->{slavesync}->{localDir}' not set in config.pm")     if !$cfg->{slavesync}->{localDir};
 LeaveScript(2, "Variable '\$cfg->{slavesync}->{remoteDir}' not set in config.pm")    if !$cfg->{slavesync}->{remoteDir};

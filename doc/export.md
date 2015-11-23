@@ -3,7 +3,7 @@
 LConf consists of two modules:
 
 * LConf Backend, holding the LDAP backend and export/import capabilities
-* LConf Fromtend (Standalone Web or Icinga Web Integration)
+* LConf Frontend (Standalone Web or Icinga Web Integration)
 
 ## Icinga 1.x and Nagios
 
@@ -21,13 +21,13 @@ https://www.netways.org/projects/lconf/wiki/Wiki#Export-Icinga-2x-Configuration-
 
 * Host/Service Contacts and Contactgroups will automatically be converted into Host/Service Notification Objects, Commands and Users.
     * If there are no contact notification commands defined, the migration export does not generate any notification objects
-* Depencenies and Escalations will be converted into Icinga 2.x Dependency and Notification objects
+* Dependences and Escalations will be converted into Icinga 2.x Dependency and Notification objects
 * All changed runtime macros (such as `$HOSTADDRESS$`) will be converted into the Icinga 2.x native runtime macros (e.g. `$address$`, `$host.state$`, etc)
 * LConf Export does not use any apply rules with assign/ignore. Look into the Icinga 2 configuration documentation for details on manual configuration.
 
 The migration export logic is integrated into `src/generate.pm` and uses helper functions
 from `src/misc.pm`. The LConf LDAP TreeRewrite and config object generation happens
-independant of this migration export.
+independent of this migration export.
 
 The common naming schema for functions is `gen___1x` and `gen___2x`. Services are bound to
 host objects by the `host_name` attribute. The `apply` keyword is not used, all
@@ -50,7 +50,7 @@ By default all exported objects import these templates:
 
 #### Icinga 2.x Command Arguments
 
-Icinga 2 already ships [Plugin Check Commands](http://docs.icinga.org/icinga2/latest/doc/module/icinga2/chapter/configuring-icinga2#plugin-check-commands)
+Icinga 2 already ships [Plugin Check Commands][]
 for the most common Monitoring Plugins. Additionally you should consider defining
 your own CheckCommand objects outside of the LConf LDAP tree, and only reference
 the CheckCommand name as `lconfservicecheckcommand` or similar.
@@ -60,7 +60,7 @@ use the Icinga 2.x custom attributes which are available as Icinga 1.x custom
 variables in LConf Frontend and Backend.
 
 * Look up the exact command argument name in the
-[Icinga 2.x documentation](http://docs.icinga.org/icinga2/latest/doc/module/icinga2/chapter/configuring-icinga2#plugin-check-commands)
+[Icinga 2.x documentation][Plugin Check Commands]
 or in your own definition
 * Use the old Icinga 1.x custom var notation with a leading `_` prefix and all characters upper-case
 
@@ -75,10 +75,10 @@ will not attempt to change the string to lower case!
 
 on the exported service then.
 
+
 #### Icinga 2.x Apply Rules
 
-Use [apply rules](http://docs.icinga.org/icinga2/latest/doc/module/icinga2/chapter/monitoring-basics#using-apply)
-outside of LConf where it is reasonable to do so.
+Use [apply rules][] outside of LConf where it is reasonable to do so.
 
 * A set of unique custom variables set for the hosts/services
 * Common group membership
@@ -104,8 +104,7 @@ provide enough patterns for your notifications.
 
 While it is still reasonable to organize host and service objects and their attributes
 inside the LConf LDAP tree, the migration export does not use any sorts of
-[apply rules](http://docs.icinga.org/icinga2/latest/doc/module/icinga2/chapter/monitoring-basics#using-apply)
-supported by Icinga 2.
+[apply rules][] supported by Icinga 2.
 
 #### Converting Contacts to Notificiations
 
@@ -290,4 +289,5 @@ objects with a `begin` and `end` time range.
 
 
 
-
+[Plugin Check Commands]: http://docs.icinga.org/icinga2/latest/doc/module/icinga2/toc#!/icinga2/latest/doc/module/icinga2/chapter/plugin-check-commands#plugin-check-commands
+[apply rules]: http://docs.icinga.org/icinga2/latest/doc/module/icinga2/chapter/monitoring-basics#using-apply

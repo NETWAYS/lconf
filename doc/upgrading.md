@@ -74,12 +74,12 @@ is required to speed up performance during LConfExport!
 Please make sure to update netways.schema in your LDAP server
 configuration, and apply the itemMap changes from config.pm!
 
-* LConf*.pl scripts are moved into $prefix/bin by default
+* LConf\*.pl scripts are moved into $prefix/bin by default
 
 * custom scripts are now located in $prefix/lib/custom/
      * can be set with configure
 
-* contrib/lconf_deploy.sh is renamed to contrib/LConfDeploy.sh
+* contrib/lconf\_deploy.sh is renamed to contrib/LConfDeploy.sh
 
 * inheritance of attributes across main and template trees. 
 This feature is disabled by default. To enable it you simply need to set a
@@ -196,4 +196,4 @@ being exported to satelite1.icinga into /etc/icinga/lconf
         },
     };
 
-# vi: sw=4 ts=4 expandtab :
+<!-- vi: sw=4 ts=4 expandtab : -->
