@@ -2,7 +2,7 @@
 #
 ## @author Robin Schneider <robin.schneider@hamcos.de>
 ## @company hamcos IT Service GmbH http://www.hamcos.de
-## @license AGPLv3 <https://www.gnu.org/licenses/agpl-3.0.html>
+## @license GPLv2 <https://www.gnu.org/licenses/gpl-2.0.html>
 
 # Documentation {{{
 
@@ -153,18 +153,18 @@ Copyright (C) 2015 Robin Schneider <robin.schneider@hamcos.de>
 
 hamcos IT Service GmbH http://www.hamcos.de
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as
-published by the Free Software Foundation, version 3 of the
-License.
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation; version 2 of the License.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Affero General Public License for more details.
+GNU General Public License for more details.
 
-You should have received a copy of the GNU Affero General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 =cut
 

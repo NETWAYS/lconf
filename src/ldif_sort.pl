@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 ## @author Robin Schneider <robin.schneider@hamcos.de>
 ## @company hamcos IT Service GmbH http://www.hamcos.de
-## @license AGPLv3 <https://www.gnu.org/licenses/agpl-3.0.html>
+## @license GPLv2 <https://www.gnu.org/licenses/gpl-2.0.html>
 
 ## Let Perl do something where it shines :)
 
