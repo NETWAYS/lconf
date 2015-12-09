@@ -6,6 +6,7 @@
 
 # Documentation {{{
 
+=encoding UTF-8
 =head1 NAME
 
 LConfCleanup.pl - Cleanup unreferenced objects in your LConf.
@@ -238,8 +239,17 @@ my %entry_hash = (
 );
 ## }}}
 
+=head1 SUBROUTINES
+
+=over
+=cut
+
 sub check_file_if_objects_are_used { ## {{{
-    ## Check if the file $filepath uses objects from %{$entry_hash_ref}.
+
+=item check_file_if_objects_are_used()
+
+Check if the file $filepath uses objects from %{$entry_hash_ref}.
+=cut
 
     my $entry_hash_ref = shift;
     my $filepath       = shift;
@@ -261,7 +271,11 @@ sub check_file_if_objects_are_used { ## {{{
 ## }}}
 
 sub check_if_objects_are_used { ## {{{
-    ## Check if objects is used in %entry_hash below $export_base_path.
+
+=item check_if_objects_are_used()
+
+Check if objects is used in %entry_hash below $export_base_path.
+=cut
 
     my $entry_hash_ref           = shift;
     my $export_base_path         = shift;
@@ -294,7 +308,11 @@ sub check_if_objects_are_used { ## {{{
 ## }}}
 
 sub get_object_names_from_ldif { ## {{{
-    ## Read LDIF file and write the found LDAP entries to %entry_hash.
+
+=item get_object_names_from_ldif()
+
+Read LDIF file and write the found LDAP entries to %entry_hash.
+=cut
 
     my $entry_hash_ref         = shift;
     my $input_ldif_file        = shift;
@@ -352,7 +370,11 @@ sub get_object_names_from_ldif { ## {{{
 ## }}}
 
 sub get_object_names_from_ldap { ## {{{
-    ## Query LDAP and write entries to %entry_hash.
+
+=item get_object_names_from_ldap()
+
+Query LDAP and write entries to %entry_hash.
+=cut
 
     my $entry_hash_ref = shift;
 
@@ -382,7 +404,11 @@ sub get_object_names_from_ldap { ## {{{
 ## }}}
 
 sub rename_objects { ## {{{
-    ## Rename objects in LDAP which have a ref count of 0.
+
+=item rename_objects()
+
+Rename objects in LDAP which have a ref count of 0.
+=cut
 
     my $entry_hash_ref       = shift;
     my $opt                  = shift;
@@ -462,7 +488,11 @@ sub rename_objects { ## {{{
 ## }}}
 
 sub add_ldap_object { ## {{{
-    ## Could be used instead of copy_ldap_ou but it makes more assumptions about the LDAP structure.
+
+=item add_ldap_object()
+
+Could be used instead of copy_ldap_ou but it makes more assumptions about the LDAP structure.
+=cut
 
     my $target_dn = shift;
     my $attrs     = shift;
@@ -477,14 +507,11 @@ sub add_ldap_object { ## {{{
 ## }}}
 
 sub clone_ldap_entry { ## {{{
-    ## Copy LDAP object from source to target DN.
 
-    ## Example usage:
-    # clone_ldap_entry(
-    # "ou=commands,ou=global,ou=IcingaConfig,$cfg->{ldap}->{rootDN}",
-    # "ou=test,ou=unused,$cfg->{ldap}->{rootDN}",
-    # …
-    # );
+=item clone_ldap_entry()
+
+Copy LDAP object from source to target DN.
+=cut
 
     my $source_dn            = shift;
     my $target_dn            = shift;
@@ -561,7 +588,11 @@ sub clone_ldap_entry { ## {{{
 ## }}}
 
 sub remove_unreferenced_from_hash { ## {{{
-    ## Remove objects with reference count equal zero from %entry_hash below. Might be useful for printing the hash.
+
+=item remove_unreferenced_from_hash()
+
+Remove objects with reference count equal zero from %entry_hash below. Might be useful for printing the hash.
+=cut
 
     my $entry_hash_ref = shift;
 
@@ -576,7 +607,11 @@ sub remove_unreferenced_from_hash { ## {{{
 ## }}}
 
 sub unreferenced_objects_exist { ## {{{
-    ## Return 1 if there are unreferenced objects.
+
+=item unreferenced_objects_exist()
+
+Return 1 if there are unreferenced objects.
+=cut
 
     my $entry_hash_ref = shift;
 
@@ -593,7 +628,11 @@ sub unreferenced_objects_exist { ## {{{
 ## }}}
 
 sub count_objects { ## {{{
-    ## Return the number of objects.
+
+=item count_objects()
+
+Return the number of objects.
+=cut
 
     my $entry_hash_ref = shift;
     my $count          = 0;
@@ -607,8 +646,12 @@ sub count_objects { ## {{{
 ## }}}
 
 sub delete_LDAP_entry_from_objects { ## {{{
-    ## Delete Net::LDAP::Entry for each element in %${entry_hash_ref}.
-    ## Useful for printing out only the ref_count.
+
+=item delete_LDAP_entry_from_objects()
+
+Delete Net::LDAP::Entry for each element in %${entry_hash_ref}.
+Useful for printing out only the ref_count.
+=cut
 
     my $entry_hash_ref = shift;
 
@@ -621,6 +664,9 @@ sub delete_LDAP_entry_from_objects { ## {{{
     return 0;
 }
 ## }}}
+
+=back
+=cut
 
 # command-line arguments {{{
 
