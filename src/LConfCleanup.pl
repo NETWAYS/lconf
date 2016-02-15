@@ -3,6 +3,7 @@
 ## @author Robin Schneider <robin.schneider@hamcos.de>
 ## @company hamcos IT Service GmbH http://www.hamcos.de
 ## @license GPLv2 <https://www.gnu.org/licenses/gpl-2.0.html>
+## License choosen to be compatible with LConf (also licensed under GPLv2).
 
 # Documentation {{{
 
@@ -14,8 +15,14 @@ LConfCleanup.pl - Cleanup unreferenced objects in your LConf.
 =head1 DESCRIPTION
 
 Allows you to find entries in the global OU like commands and contact groups
-which are not referenced in your LConf setup and move them to a different
-subtree.
+which are not referenced in your active LConf configuration and move them to a
+different subtree.
+
+Warning: Make sure that your last LConf export was successfully otherwise this
+script might leave your LConf LDAP database in an inconsistent state.
+Also make sure that the LConf export does not change while this script is
+running. You can use --lconf-export-dir to point the script to a snapshot of
+the directory to ensure this.
 
 =head1 SYNOPSIS
 
@@ -25,17 +32,17 @@ LConfCleanup.pl [arguments]
 
 Connect to LDAP server as configured in /etc/LConf/config.pm, check if commands,contactgroups,contacts,hostgroups,servicegroups are referenced in the last configuration export and write LDAP commands to the specified LDIF file to move them if they are not referenced:
 
-./LConfCleanup --output-ldif-file /tmp/ldif
+  ./LConfCleanup.pl --output-ldif-file /tmp/ldif
 
 
 Read ./ldap_global_subtree.ldif, check if commands are referenced in the last configuration export and write LDAP commands to the specified LDIF file to move them if they are not referenced:
 
-./LConfCleanup --input-ldif-file ./ldap_global_subtree.ldif --output-ldif-file /tmp/ldif --entry-type commands
+  ./LConfCleanup.pl --input-ldif-file ./ldap_global_subtree.ldif --output-ldif-file /tmp/ldif --entry-type commands
 
 
 Connect to LDAP server as configured in /etc/LConf/config.pm, check if commands,contactgroups,contacts,hostgroups,servicegroups are referenced in the last configuration export and if not, move them in LDAP:
 
-./LConfCleanup --output-mode ldap --verbose
+  ./LConfCleanup.pl --output-mode ldap --verbose
 
 =head1 OPTIONS
 
@@ -199,6 +206,7 @@ use lib '/etc/LConf';
 use config;
 
 use lib '/usr/lib/LConf/';
+use lib '/usr/lib64/LConf/';
 use ldap;
 use misc;
 
@@ -285,13 +293,15 @@ Check if objects is used in %entry_hash below $export_base_path.
         {
             file_filter => sub {
                 not $File::Next::name =~ m/
-                    ^$export_base_path_escaped\/(:?
-                        [^\/]+ # Only include files in subdirectories.
-                        |
-                        [^\/]+?\/(:?global)\/.+ # Skip global directory.
-                    )
-                    \z
-                /xms
+                      ^$export_base_path_escaped\/(:?
+                          [^\/]+ # Only include files in subdirectories.
+                          # |
+                          # [^\/]+?\/(:?global)\/.+ # Skip global directory.
+                          # Can not skip global directory because objects might refer to each other!
+                      )
+                      \z
+                  /xms
+                    and not $File::Next::name =~ m/~\z/xms;
                 }
         },
         $export_base_path
@@ -305,6 +315,27 @@ Check if objects is used in %entry_hash below $export_base_path.
 
     }
 } ## end sub check_if_objects_are_used
+## }}}
+
+sub count_monitoring_nodes { ## {{{
+
+=item count_monitoring_nodes()
+
+Returns the number of directories below $export_base_path.
+=cut
+
+    my $export_base_path = shift;
+
+    opendir( my $dh, $export_base_path );
+    my @number_of_monitoring_nodes =
+        grep { not /^\.\.?\z/xms and -d "$export_base_path/$_" and -d "$export_base_path/$_/global" } readdir $dh;
+    closedir($dh);
+
+    DebugOutput("Monitoring nodes: @number_of_monitoring_nodes");
+    DebugOutput( "Number of monitoring nodes " . scalar @number_of_monitoring_nodes );
+
+    return scalar @number_of_monitoring_nodes;
+}
 ## }}}
 
 sub get_object_names_from_ldif { ## {{{
@@ -380,7 +411,9 @@ Query LDAP and write entries to %entry_hash.
 
     foreach my $entry_type ( keys %{$entry_hash_ref} ) {
         my $search_result = LDAPsearch(
-            $ldap, "ou=$entry_type,ou=global,ou=IcingaConfig," . $cfg->{ldap}->{rootDN},
+            $ldap,
+            "ou=$entry_type,ou=global,ou=IcingaConfig,"
+                . $cfg->{ldap}->{rootDN},
             'sub',
             '(& (objectclass=*) (cn=*) )'
 
@@ -407,7 +440,11 @@ sub rename_objects { ## {{{
 
 =item rename_objects()
 
-Rename objects in LDAP which have a ref count of 0.
+Rename objects in LDAP which have a ref count equal to the number of monitoring
+nodes.
+Because every monitoring node gets the same global directory which contains the
+object definitions if both counts are equal than only the object definition
+exists and no references to the object.
 =cut
 
     my $entry_hash_ref       = shift;
@@ -451,8 +488,10 @@ Rename objects in LDAP which have a ref count of 0.
 
         foreach my $entry_name ( sort keys %{ $entry_hash_ref->{$entry_type} } ) {
 
-            unless ( $entry_hash_ref->{$entry_type}->{$entry_name}->{ref_count} ) {
-                beVerbose( 'Unreferenced Object (marked for moving)', "$entry_type: $entry_name" );
+            my $ref_count =
+                $entry_hash_ref->{$entry_type}->{$entry_name}->{ref_count};
+            if ( $opt->{number_of_monitoring_nodes} == $ref_count ) {
+                beVerbose( 'Unreferenced Object (marked for moving)', "$entry_type: $entry_name\n" );
 
                 unless ( $opt->{dry_run} ) {
 
@@ -475,13 +514,23 @@ Rename objects in LDAP which have a ref count of 0.
                         );
 
                         dump $ldap_result;
-                        if ( not $ldap_result or $ldap_result->{resultCode} != 0 ) {
+                        if ( not $ldap_result
+                            or $ldap_result->{resultCode} != 0 )
+                        {
                             die "Could not delete object in LDAP. Message: $ldap_result->{errorMessage}";
                         }
                     }
 
                 } ## end unless ( $opt->{dry_run} )
-            } ## end unless ( $entry_hash_ref->...)
+            } ## end if ( $opt->{number_of_monitoring_nodes...})
+            elsif ( $opt->{number_of_monitoring_nodes} > $ref_count ) {
+                say "$entry_type: $entry_name was only found $ref_count time"
+                    . ( $ref_count == 1 ? '' : 's' )
+                    . " in the export. It is very lickly that your export is incomplete.";
+                if ( $output_mode ne 'ldif' ) {
+                    die 'Exiting.';
+                }
+            }
         } ## end foreach my $entry_name ( sort...)
     } ## end foreach my $entry_type ( sort...)
 } ## end sub rename_objects
@@ -613,18 +662,19 @@ sub unreferenced_objects_exist { ## {{{
 Return 1 if there are unreferenced objects.
 =cut
 
-    my $entry_hash_ref = shift;
+    my $entry_hash_ref             = shift;
+    my $number_of_monitoring_nodes = shift;
 
     foreach my $entry_type ( keys %{$entry_hash_ref} ) {
         foreach my $entry_name ( keys %{ $entry_hash_ref->{$entry_type} } ) {
-            unless ( $entry_hash_ref->{$entry_type}->{$entry_name}->{ref_count} ) {
+            if ( $number_of_monitoring_nodes < $entry_hash_ref->{$entry_type}->{$entry_name}->{ref_count} ) {
                 return 1;
             }
         }
     }
 
     return 0;
-}
+} ## end sub unreferenced_objects_exist
 ## }}}
 
 sub count_objects { ## {{{
@@ -699,9 +749,13 @@ if ( $opt->{version} ) {
 
 ## --dry-run and --debug imply --verbose.
 $opt->{verbose} =
-    ( not defined( $opt->{verbose} ) and defined( $opt->{dry_run} ) ) ? q{} : $opt->{verbose};
+    ( not defined( $opt->{verbose} ) and defined( $opt->{dry_run} ) )
+    ? q{}
+    : $opt->{verbose};
 $opt->{verbose} =
-    ( not defined( $opt->{verbose} ) and defined( $opt->{debug} ) ) ? q{} : $opt->{verbose};
+    ( not defined( $opt->{verbose} ) and defined( $opt->{debug} ) )
+    ? q{}
+    : $opt->{verbose};
 
 if ( $opt->{output_mode} eq 'ldif' and not $opt->{output_ldif_file} ) {
     die "--output-ldif-file not given in LDIF mode!";
@@ -740,8 +794,10 @@ else {
 }
 
 check_if_objects_are_used( \%entry_hash, $opt->{lconf_export_dir} );
+$opt->{number_of_monitoring_nodes} =
+    count_monitoring_nodes( $opt->{lconf_export_dir} );
 
-if ( unreferenced_objects_exist( \%entry_hash ) ) {
+if ( unreferenced_objects_exist( \%entry_hash, $opt->{number_of_monitoring_nodes} ) ) {
     unless ( $opt->{input_ldif_file} ) {
         our $ldap = LDAPconnect('auth');
     }
@@ -754,7 +810,9 @@ if ( unreferenced_objects_exist( \%entry_hash ) ) {
 }
 elsif ( count_objects( \%entry_hash ) ) {
     if ( $opt->{output_ldif_file} ) {
-        unlink $opt->{output_ldif_file};
+        if ( -f $opt->{output_ldif_file} ) {
+            unlink $opt->{output_ldif_file};
+        }
     }
     say "Looks good. No unreferenced objects found in LDAP/LConf.";
 }
