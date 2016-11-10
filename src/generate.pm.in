@@ -170,7 +170,11 @@ sub genCommands {
     if (defined($target)) { foreach my $val (keys %{$COMMANDS}) { delete $COMMANDS->{$val} if $val !~ /$target$/; } }
 
     if (defined $cfg->{export}->{format} && $cfg->{export}->{format} == 2) {
-        genCommands2x($COMMANDS, $outputDir);
+        genCommands2x($COMMANDS, $outputDir, 'Check');
+        # This is ugly but ensures that we'll have all contact notification commands available as NotificationCommand.
+        # This duplicates all CheckCommands into NotificationCommands, but right now it is way less expensive than generating
+        # one each time a host/service contact list is run through.
+        genCommands2x($COMMANDS, $outputDir, 'Notification');
     } else {
         genCommands1x($COMMANDS, $outputDir);
     }
@@ -206,17 +210,19 @@ sub genCommands1x {
 sub genCommands2x {
     my $COMMANDS = shift;
     my $outputDir = shift;
-    my $type = 'Check'; #FIXME for notifications/events
-    my $template = "generic-check-command";
+    my $type = shift; #FIXME for notifications/events
 
     foreach my $command (keys %{$COMMANDS}) {
 
         # get target file's name and open it for writing
-        my $writeFile = BuildFilepath($COMMANDS->{$command}->{dn}, $outputDir);
+        my $tmpPath = BuildFilepath($COMMANDS->{$command}->{dn}, $outputDir);
+        $tmpPath =~ s/\.conf//g;
+        my $writeFile = $tmpPath."_".lc($type).".conf"; # ugly hack to dump all types within their own file
+
         open(FH, ">$writeFile") || die "Can't write data: $writeFile: $!\n";
 
         print FH "object ".$type."Command \"$COMMANDS->{$command}->{cn}\" {\n";
-        print FH "\timport \"$template\"\n";
+        print FH "\timport \"generic-".lc(type)."-command\"\n";
         foreach (keys %{$COMMANDS->{$command}}) {
             if ($_ =~ /commandline/) {
                 my $command_line = $COMMANDS->{$command}->{$_}; # escape quotes
@@ -1160,13 +1166,13 @@ sub genHostConfig2x {
     my $CONTACTS = HashGrep($CONFIG, 'objectclass', $cfg->{ldap}->{prefix}.'Contact$');
     my $COMMANDS = HashGrep($CONFIG, 'objectclass', $cfg->{ldap}->{prefix}.'Command$');
 
+    my $notification_commands = ();
+    my $event_commands = ();
+
     if (defined $CLIENTS->{$client}->{dn}) {
 
         # only gen config if lconfhostdisable is not set
         if (!defined $CLIENTS->{$client}->{"$cfg->{ldap}->{prefix}hostdisable"}) {
-
-            my $notification_commands = ();
-            my $event_commands = ();
 
             my $host = $CLIENTS->{$client}->{cn};
             #
@@ -1475,9 +1481,12 @@ sub genHostConfig2x {
                             # if not, the user supplied an external notification command (e.g. defined in default-templates.conf)
                             # we don't care about that but will log a warning while setting the attribute
                             if (defined($notification_command_line)) {
-                                $notification_commands->{$notification_command_object_name} = $notification_command_line;
+                                # 2016-07-18, MF: just reference the original notification command, we'll generate it anyways using genCommands2x with type 'Notification'
+                                # This avoids duplicated notification command definitions
+                                print FH "\tcommand = \"$notification_command_name\"\n";
+                                #$notification_commands->{$notification_command_object_name} = $notification_command_line;
                                 # notification command
-                                print FH "\tcommand = \"$notification_command_object_name\"\n";
+                                #print FH "\tcommand = \"$notification_command_object_name\"\n";
                             } else {
                                 $msg = "WARNING: Using the external NotificationCommand '$notification_command_name' for host '$CLIENTS->{$client}->{cn}' for notifications!";
 
@@ -1907,9 +1916,12 @@ sub genHostConfig2x {
                                     # if not, the user supplied an external notification command (e.g. defined in default-templates.conf)
                                     # we don't care about that but will log a warning while setting the attribute
                                     if (defined($notification_command_line)) {
-                                        $notification_commands->{$notification_command_object_name} = $notification_command_line;
+                                       # 2016-07-18, MF: just reference the original notification command, we'll generate it anyways using genCommands2x with type 'Notification'
+                                       # This avoids duplicated notification command definitions
+                                       print FH "\tcommand = \"$notification_command_name\"\n";
+                                        #$notification_commands->{$notification_command_object_name} = $notification_command_line;
                                         # notification command
-                                        print FH "\tcommand = \"$notification_command_object_name\"\n";
+                                        #print FH "\tcommand = \"$notification_command_object_name\"\n";
                                     } else {
                                         $msg = "WARNING: Using the external NotificationCommand '$notification_command_name' for service '$service' on host '$CLIENTS->{$client}->{cn}' for notifications!";
 
@@ -2019,7 +2031,6 @@ sub genHostConfig2x {
 
                         }
                     }
-
                 } else {
                     DebugOutput("GENERATE HOSTCONFIG 2x", "Skipping disabled service '$service' ", 1);
                 }
@@ -2027,24 +2038,6 @@ sub genHostConfig2x {
             }
 
             print FH "\n";
-
-            # print additional commands generated by notifications and event handlers
-            foreach my $notification_command_object_name (keys %{$notification_commands}) {
-                print FH "object NotificationCommand \"$notification_command_object_name\" {\n";
-                print FH "\timport \"generic-notification-command\"\n";
-                my $command_line = $notification_commands->{$notification_command_object_name};
-
-                # 1.x definition
-                if ($command_line =~ /\$(USER\d+)\$/) {
-                    $command_line = "\"".escape_str($command_line)."\""; # escape quotes
-                }
-                if ($command_line !~ /^"/) {
-                    $command_line = "\"".escape_str($command_line)."\""; # escape quotes
-                }
-                print FH "\tcommand = $command_line\n";
-                print FH "}\n";
-                print FH "\n";
-            }
 
             foreach my $event_command_object_name (keys %{$event_commands}) {
                 print FH "object EventCommand \"$event_command_object_name\" {\n";
