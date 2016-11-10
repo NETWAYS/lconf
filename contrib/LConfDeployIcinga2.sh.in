@@ -102,7 +102,7 @@ cat >$ICINGA2TMPCONFIG <<EOF
 const PluginDir = "/usr/lib64/nagios/plugins"
 include <itl>
 include <plugins>
-include "features-enabled/*.conf"
+include "@ICINGA2_CONFIG@/features-enabled/*.conf"
 include_recursive "$LCONFTMP"
 EOF
 
